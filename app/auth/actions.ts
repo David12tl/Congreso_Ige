@@ -68,6 +68,7 @@ export async function signUp(data: {
       data: {
         full_name: data.fullName,
         land_interest: data.landInterest,
+        role: 'user', // Asignamos el rol por defecto explícitamente en el registro
       },
     },
   });

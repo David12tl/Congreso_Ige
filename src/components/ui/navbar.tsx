@@ -27,7 +27,7 @@ export default function Navbar() {
       bgColor: "#2F293A", 
       textColor: "#fff",
       links: [
-        { label: "Registrate", ariaLabel: "aqui", href: "../../../register" }
+        { label: "Registrate", ariaLabel: "aqui", href: "/register" } // Ruta absoluta para evitar 404
       ]
     }
   ];

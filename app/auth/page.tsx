@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   // Protección de ruta: Si no hay usuario, al Login
   if (!user) {
-    redirect("/Login");
+    redirect("/login");
   }
 
   // Extraer metadatos (configurados en el SignUp)

@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       const metadata = user?.user_metadata ?? {};
-      const role = metadata.role as string | undefined;
+      let role = metadata.role as string | undefined;
       const landInterest = metadata.land_interest as string | undefined;
 
       // Si es la primera vez que inicia sesión con Google (sin role o land_interest),
@@ -40,7 +40,10 @@ export async function GET(request: Request) {
       if (!role || !landInterest) {
         const updatedMetadata: Record<string, string> = {};
 
-        if (!role) updatedMetadata.role = "user";
+        if (!role) {
+          updatedMetadata.role = "user";
+          role = "user"; // Actualizamos la variable local para la redirección inmediata
+        }
         if (!landInterest) updatedMetadata.land_interest = "Developer Land";
 
         const { error: updateError } = await supabase.auth.updateUser({
