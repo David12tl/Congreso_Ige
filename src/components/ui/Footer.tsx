@@ -61,20 +61,19 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* COLUMNA 3: SOPORTE / LEGAL */}
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
             Información
           </h4>
           <ul className="space-y-2 text-xs">
             <li>
-              <a href="#" className="hover:text-white transition-colors">Preguntas Frecuentes</a>
+              <a href="/faqs" className="hover:text-white transition-colors">Preguntas Frecuentes</a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition-colors">Términos y Condiciones</a>
+              <a href="/terminos" className="hover:text-white transition-colors">Términos y Condiciones</a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition-colors">Aviso de Privacidad</a>
+              <a href="/privacidad" className="hover:text-white transition-colors">Aviso de Privacidad</a>
             </li>
             <li>
               <span className="text-gray-600 block mt-2 font-mono text-[10px]">📍 Auditorio Metropolitano, Orizaba</span>
