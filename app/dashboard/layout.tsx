@@ -15,6 +15,7 @@ export default async function DashboardLayout({
   }
 
   const role = (user.user_metadata?.role as string) ?? 'user'
+  const nivelAcceso = (user.user_metadata?.nivel_acceso as number) ?? 1
   const userName = (user.user_metadata?.full_name as string) ?? user.email ?? ''
   const userEmail = user.email ?? ''
 
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
           name: userName,
           email: userEmail,
           role: role as 'admin' | 'encargado' | 'user',
+          nivelAcceso,
         }}
       />
       <main className="flex-1 ml-64 p-8 animate-fadeIn">

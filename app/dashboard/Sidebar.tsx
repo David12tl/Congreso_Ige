@@ -24,6 +24,7 @@ interface SidebarUser {
   name: string
   email: string
   role: UserRole
+  nivelAcceso?: number
 }
 
 interface NavItem {

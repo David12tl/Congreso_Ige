@@ -6,9 +6,25 @@ import { redirect } from 'next/navigation';
 export type AuthResult = { error: string } | { success: true };
 
 /**
- * Determina la ruta del dashboard según el rol del usuario.
+ * Jerarquía de niveles de acceso numéricos.
  */
-function getDashboardPath(role?: string): string {
+const NIVEL_ADMIN = 3;
+const NIVEL_ENCARGADO = 2;
+const NIVEL_USUARIO = 1;
+
+/**
+ * Determina la ruta del dashboard según el nivel de acceso del usuario.
+ * Soporta tanto 'nivel_acceso' numérico como 'role' string legacy.
+ */
+function getDashboardPath(role?: string, nivelAcceso?: number): string {
+  // Priorizar nivel_acceso numérico si existe
+  if (nivelAcceso !== undefined && nivelAcceso !== null) {
+    if (nivelAcceso >= NIVEL_ADMIN) return '/dashboard/admin';
+    if (nivelAcceso === NIVEL_ENCARGADO) return '/dashboard/encargado';
+    return '/dashboard/usuario';
+  }
+
+  // Fallback a role string legacy
   switch (role) {
     case 'admin':
       return '/dashboard/admin';
@@ -42,9 +58,10 @@ export async function signInWithPassword(
     return { error: message };
   }
 
-  // Redirigir al dashboard según el rol del usuario
+  // Redirigir al dashboard según el nivel de acceso del usuario
   const role = data.user?.user_metadata?.role as string | undefined;
-  redirect(getDashboardPath(role));
+  const nivelAcceso = data.user?.user_metadata?.nivel_acceso as number | undefined;
+  redirect(getDashboardPath(role, nivelAcceso));
 }
 
 /**
@@ -68,7 +85,8 @@ export async function signUp(data: {
       data: {
         full_name: data.fullName,
         land_interest: data.landInterest,
-        role: 'user', // Asignamos el rol por defecto explícitamente en el registro
+        role: 'user',
+        nivel_acceso: 1, // Nivel 1 (Usuario) por defecto en el registro
       },
     },
   });
@@ -78,9 +96,10 @@ export async function signUp(data: {
     return { error: message };
   }
 
-  // Redirigir al dashboard según el rol del usuario
+  // Redirigir al dashboard según el nivel de acceso del usuario
   const role = signUpData.user?.user_metadata?.role as string | undefined;
-  redirect(getDashboardPath(role));
+  const nivelAcceso = signUpData.user?.user_metadata?.nivel_acceso as number | undefined;
+  redirect(getDashboardPath(role, nivelAcceso));
 }
 
 /**

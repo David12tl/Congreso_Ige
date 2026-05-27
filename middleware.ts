@@ -2,77 +2,120 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/src/lib/supabase/middleware";
 
 /**
- * Determina la ruta del dashboard según el rol del usuario.
- * Se asegura de que las rutas coincidan al 100% con las carpetas físicas.
+ * Jerarquía de niveles de acceso numéricos.
+ * Coinciden con la tabla de roles de la base de datos.
  */
-function getDashboardPath(role?: string): string {
-  switch (role) {
-    case "admin":
-      return "/dashboard/admin";
-    case "encargado":
-      return "/dashboard/encargado";
-    case "user":
-    case "usuario":
-      return "/dashboard/usuario";
-    default:
-      return "/dashboard/usuario";
+const NIVEL_ADMIN = 3;
+const NIVEL_ENCARGADO = 2;
+const NIVEL_USUARIO = 1;
+
+/**
+ * Define el nivel mínimo requerido para acceder a una ruta del dashboard.
+ * Retorna null si la ruta no está dentro del dashboard protegido.
+ */
+function getRequiredLevel(pathname: string): number | null {
+  if (
+    pathname === "/dashboard/admin" ||
+    pathname.startsWith("/dashboard/admin/")
+  ) {
+    return NIVEL_ADMIN;
   }
+  if (
+    pathname === "/dashboard/encargado" ||
+    pathname.startsWith("/dashboard/encargado/")
+  ) {
+    return NIVEL_ENCARGADO;
+  }
+  if (
+    pathname === "/dashboard/usuario" ||
+    pathname.startsWith("/dashboard/usuario/")
+  ) {
+    return NIVEL_USUARIO;
+  }
+  return null;
 }
 
 /**
- * Rutas cuyo acceso está restringido por rol.
- * Cada entrada: [prefijo de ruta, rol requerido]
+ * Retorna la ruta del dashboard que le corresponde al usuario
+ * según su nivel de acceso numérico.
  */
-const roleRestrictedPaths: [string, string][] = [
-  ["/dashboard/admin", "admin"],
-  ["/dashboard/encargado", "encargado"],
+function getDashboardByLevel(nivel: number): string {
+  if (nivel >= NIVEL_ADMIN) return "/dashboard/admin";
+  if (nivel === NIVEL_ENCARGADO) return "/dashboard/encargado";
+  return "/dashboard/usuario";
+}
+
+/**
+ * Rutas públicas que NO requieren autenticación ni pasan por el middleware.
+ */
+const publicRoutes = [
+  "/login",
+  "/register",
+  "/auth",
+  "/faqs",
+  "/terminos",
+  "/privacidad",
 ];
 
 /**
- * Middleware de Next.js para manejar redirecciones y protección de rutas.
+ * Middleware de Next.js: Guardaespaldas de URLs.
+ * Intercepta cualquier intento de acceso a rutas protegidas y valida:
+ * 1. Que el usuario esté autenticado (sesión activa en Supabase).
+ * 2. Que el nivel de acceso del usuario sea suficiente para la ruta solicitada.
+ * 3. Redirige según las reglas estrictas de jerarquía.
  */
 export async function middleware(request: NextRequest) {
-  // Crear el cliente de Supabase para el middleware
   const { supabase, response } = await createClient(request);
 
-  // Refrescar la sesión automáticamente
+  // Refrescar sesión automáticamente
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
-  // --- Lógica de protección de rutas ---
-  const protectedPaths = [
-    "/dashboard",
-    "/perfil",
-  ];
-  
-  const isProtected = protectedPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+  // --- Determinar si la ruta actual es parte del dashboard protegido ---
+  const isDashboardRoute =
+    pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
-  // Si es ruta protegida y no hay usuario autenticado → redirigir a login (en minúsculas)
-  if (isProtected && !user) {
+  // --- REGLA 4: Usuario no autenticado → redirigir a /login ---
+  if (isDashboardRoute && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(loginUrl, 307);
   }
 
-  // --- Validación de acceso por rol ---
-  if (user) {
-    const userRole = user.user_metadata?.role as string | undefined;
+  // --- Validación por nivel de acceso (solo aplica si hay sesión) ---
+  if (isDashboardRoute && user) {
+    // Leer el nivel de acceso desde user_metadata
+    // Soporta tanto 'nivel_acceso' (numérico) como 'role' (string legacy)
+    const nivelAcceso =
+      (user.user_metadata?.nivel_acceso as number | undefined) ??
+      (() => {
+        const role = user.user_metadata?.role as string | undefined;
+        switch (role) {
+          case "admin":
+            return NIVEL_ADMIN;
+          case "encargado":
+            return NIVEL_ENCARGADO;
+          default:
+            return NIVEL_USUARIO;
+        }
+      })();
 
-    for (const [path, requiredRole] of roleRestrictedPaths) {
-      if (
-        pathname.startsWith(path) &&
-        userRole !== requiredRole
-      ) {
-        // Redirigir al dashboard que le corresponde según su rol
+    const requiredLevel = getRequiredLevel(pathname);
+
+    if (requiredLevel !== null) {
+      if (nivelAcceso < requiredLevel) {
+        // REGLA 1 y 2: Redirigir al dashboard que le corresponde
         return NextResponse.redirect(
-          new URL(getDashboardPath(userRole), request.url),
+          new URL(getDashboardByLevel(nivelAcceso), request.url),
+          307,
         );
       }
+
+      // REGLA 3: Nivel 3 (Admin) puede pasar a cualquier ruta del dashboard
+      // (la condición nivelAcceso >= requiredLevel ya lo permite)
     }
   }
 
@@ -82,9 +125,13 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Coincide con todas las rutas excepto las estáticas y las páginas públicas 
-     * explícitas para evitar bucles de redirección.
+     * Coincide con todas las rutas excepto:
+     * - API routes
+     * - Archivos estáticos de Next.js (_next/static, _next/image)
+     * - favicon.ico
+     * - Archivos de imagen/estáticos (.svg, .png, .jpg, .jpeg, .gif, .webp)
+     * - Páginas públicas explícitas (para evitar bucles de redirección)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|login|register|auth|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register|auth|faqs|terminos|privacidad|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
