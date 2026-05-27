@@ -87,21 +87,44 @@ export async function middleware(request: NextRequest) {
 
   // --- Validación por nivel de acceso (solo aplica si hay sesión) ---
   if (isDashboardRoute && user) {
-    // Leer el nivel de acceso desde user_metadata
-    // Soporta tanto 'nivel_acceso' (numérico) como 'role' (string legacy)
-    const nivelAcceso =
-      (user.user_metadata?.nivel_acceso as number | undefined) ??
-      (() => {
-        const role = user.user_metadata?.role as string | undefined;
-        switch (role) {
-          case "admin":
-            return NIVEL_ADMIN;
-          case "encargado":
-            return NIVEL_ENCARGADO;
-          default:
-            return NIVEL_USUARIO;
-        }
-      })();
+    // --- CONSULTAR NIVEL DE ACCESO REAL DESDE LA BASE DE DATOS ---
+    // Esto cubre el caso donde un admin cambió el rol en la BD
+    // y la sesión aún tiene metadata desactualizada (incluso si no se
+    // ha llamado a syncAuthMetadataWithProfile todavía).
+    let nivelAcceso = NIVEL_USUARIO;
+
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id_rol, roles ( id_rol, nombre_rol, nivel_acceso )")
+        .eq("id", user.id)
+        .single();
+
+      if (profileData) {
+        const rolesData = Array.isArray(profileData.roles)
+          ? profileData.roles[0]
+          : profileData.roles;
+        nivelAcceso =
+          (rolesData as { nivel_acceso?: number })?.nivel_acceso ??
+          NIVEL_USUARIO;
+      }
+    } catch (e) {
+      // Fallback a user_metadata si la consulta falla
+      console.error("[middleware] Error al consultar perfil:", e);
+      nivelAcceso =
+        (user.user_metadata?.nivel_acceso as number | undefined) ??
+        (() => {
+          const role = user.user_metadata?.role as string | undefined;
+          switch (role) {
+            case "admin":
+              return NIVEL_ADMIN;
+            case "encargado":
+              return NIVEL_ENCARGADO;
+            default:
+              return NIVEL_USUARIO;
+          }
+        })();
+    }
 
     const requiredLevel = getRequiredLevel(pathname);
 

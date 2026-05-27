@@ -6,21 +6,14 @@ import { redirect } from 'next/navigation';
 export type AuthResult = { error: string } | { success: true };
 
 /**
- * Jerarquía de niveles de acceso numéricos.
- */
-const NIVEL_ADMIN = 3;
-const NIVEL_ENCARGADO = 2;
-const NIVEL_USUARIO = 1;
-
-/**
  * Determina la ruta del dashboard según el nivel de acceso del usuario.
  * Soporta tanto 'nivel_acceso' numérico como 'role' string legacy.
  */
 function getDashboardPath(role?: string, nivelAcceso?: number): string {
   // Priorizar nivel_acceso numérico si existe
   if (nivelAcceso !== undefined && nivelAcceso !== null) {
-    if (nivelAcceso >= NIVEL_ADMIN) return '/dashboard/admin';
-    if (nivelAcceso === NIVEL_ENCARGADO) return '/dashboard/encargado';
+    if (nivelAcceso >= 3) return '/dashboard/admin';
+    if (nivelAcceso === 2) return '/dashboard/encargado';
     return '/dashboard/usuario';
   }
 
@@ -39,7 +32,10 @@ function getDashboardPath(role?: string, nivelAcceso?: number): string {
  * Inicio de sesión con correo y contraseña.
  * Usa el cliente de servidor de Supabase para que las cookies de sesión
  * se guarden correctamente. Si hay error, devuelve un mensaje claro.
- * Si es exitoso, redirige al dashboard según el rol del usuario.
+ * Si es exitoso:
+ *  1. Consulta el perfil REAL desde la base de datos (profiles + roles)
+ *  2. Sincroniza los metadatos de Auth con el valor real
+ *  3. Redirige al dashboard según el nivel de acceso REAL
  */
 export async function signInWithPassword(
   email: string,
@@ -58,10 +54,21 @@ export async function signInWithPassword(
     return { error: message };
   }
 
-  // Redirigir al dashboard según el nivel de acceso del usuario
-  const role = data.user?.user_metadata?.role as string | undefined;
-  const nivelAcceso = data.user?.user_metadata?.nivel_acceso as number | undefined;
-  redirect(getDashboardPath(role, nivelAcceso));
+  const userId = data.user?.id;
+  if (!userId) {
+    return { error: 'Error al obtener el usuario autenticado.' };
+  }
+
+  // --- CRÍTICO: Consultar perfil REAL desde la base de datos ---
+  // No confiar en user_metadata porque puede estar desactualizada
+  // cuando un administrador cambia el rol en la BD.
+  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/src/db/perfiles');
+  const profile = await getUserProfile(userId);
+
+  // Sincronizar metadata de Auth con el valor real de la BD
+  await syncAuthMetadataWithProfile(userId);
+
+  redirect(getDashboardPath(profile.nombre_rol, profile.nivel_acceso));
 }
 
 /**

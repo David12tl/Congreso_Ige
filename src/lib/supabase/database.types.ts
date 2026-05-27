@@ -16,7 +16,55 @@ export type JsonObject = { [key: string]: JsonValue | undefined };
 export type Database = {
   public: {
     Tables: {
-      // TODO: Define aquí los tipos de tus tablas una vez generados
+      profiles: {
+        Row: {
+          id: string;
+          id_rol: number;
+          email: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id: string;
+          id_rol: number;
+          email?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          id_rol?: number;
+          email?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_rol_fkey";
+            columns: ["id_rol"];
+            referencedRelation: "roles";
+            referencedColumns: ["id_rol"];
+          },
+        ];
+      };
+      roles: {
+        Row: {
+          id_rol: number;
+          nombre_rol: string;
+          descripcion: string | null;
+          nivel_acceso: number | null;
+        };
+        Insert: {
+          id_rol: number;
+          nombre_rol: string;
+          descripcion?: string | null;
+          nivel_acceso?: number | null;
+        };
+        Update: {
+          id_rol?: number;
+          nombre_rol?: string;
+          descripcion?: string | null;
+          nivel_acceso?: number | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

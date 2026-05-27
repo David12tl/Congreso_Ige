@@ -1,6 +1,7 @@
 import { createClient } from '@/src/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Sidebar } from './Sidebar'
+import { getUserProfile } from '@/src/db/perfiles'
 
 export default async function DashboardLayout({
   children,
@@ -14,10 +15,21 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const role = (user.user_metadata?.role as string) ?? 'user'
-  const nivelAcceso = (user.user_metadata?.nivel_acceso as number) ?? 1
+  // --- CONSULTAR PERFIL REAL DESDE LA BASE DE DATOS ---
+  // No confiar en user_metadata que puede estar desactualizada
+  const profile = await getUserProfile(user.id)
+
+  // Usar el nombre del perfil o metadata, lo que exista
   const userName = (user.user_metadata?.full_name as string) ?? user.email ?? ''
   const userEmail = user.email ?? ''
+
+  // Mapear nivel_acceso numérico a role string para el Sidebar
+  const roleMap: Record<number, 'admin' | 'encargado' | 'user'> = {
+    3: 'admin',
+    2: 'encargado',
+    1: 'user',
+  }
+  const sidebarRole = roleMap[profile.nivel_acceso] ?? 'user'
 
   return (
     <div className="flex min-h-screen bg-slate-950">
@@ -25,8 +37,8 @@ export default async function DashboardLayout({
         user={{
           name: userName,
           email: userEmail,
-          role: role as 'admin' | 'encargado' | 'user',
-          nivelAcceso,
+          role: sidebarRole,
+          nivelAcceso: profile.nivel_acceso,
         }}
       />
       <main className="flex-1 ml-64 p-8 animate-fadeIn">
