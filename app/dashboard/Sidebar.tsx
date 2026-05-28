@@ -6,16 +6,18 @@ import { usePathname } from 'next/navigation'
 import { signOut } from '@/app/auth/actions'
 import {
   HiOutlineViewGrid,
-  HiOutlineCalendar,
   HiOutlineTicket,
   HiOutlineMap,
   HiOutlineUserGroup,
-  HiOutlineCog,
   HiOutlineLogout,
   HiOutlineChevronLeft,
   HiOutlineChevronRight,
   HiOutlineUsers,
-  HiOutlineGlobe,
+  HiOutlineDocumentReport,
+  HiOutlineOfficeBuilding,
+  HiOutlineIdentification,
+  HiOutlinePlusCircle,
+  HiOutlineQrcode,
 } from 'react-icons/hi'
 
 type UserRole = 'admin' | 'encargado' | 'user'
@@ -35,66 +37,120 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  // ─── OPCIONES COMPARTIDAS / CONDICIONALES DE INICIO ─────────────────
   {
-    label: 'Panel General',
-    href: '/dashboard',
+    label: 'Dashboard',
+    href: '/dashboard/admin',
     icon: <HiOutlineViewGrid className="w-5 h-5" />,
-    roles: ['admin', 'encargado', 'user'],
+    roles: ['admin'], // Admin y Encargado tienen dashboards con métricas
   },
   {
-    label: 'Mi Agenda',
-    href: '/dashboard/agenda',
-    icon: <HiOutlineCalendar className="w-5 h-5" />,
-    roles: ['admin', 'encargado', 'user'],
+    label: 'Dashboard',
+    href: '/dashboard/encargados',
+    icon: <HiOutlineViewGrid className="w-5 h-5" />,
+    roles: ['encargado'], // Admin y Encargado tienen dashboards con métricas
   },
   {
-    label: 'Mis Tickets',
-    href: '/dashboard/tickets',
+    label: 'Perfil',
+    href: '/dashboard/perfil',
+    icon: <HiOutlineIdentification className="w-5 h-5" />,
+    roles: ['user'], // El usuario común aterriza directo en su perfil
+  },
+
+  // ─── OPCIONES EXCLUSIVAS DE ADMINISTRADOR ───────────────────────────
+  {
+    label: 'Listas por UA',
+    href: '/dashboard/listas-ua',
+    icon: <HiOutlineOfficeBuilding className="w-5 h-5" />,
+    roles: ['admin'],
+  },
+  {
+    label: 'Tickets Vendidos',
+    href: '/dashboard/tickets-vendidos',
     icon: <HiOutlineTicket className="w-5 h-5" />,
-    roles: ['admin', 'encargado', 'user'],
+    roles: ['admin'],
   },
   {
-    label: 'Mi Land',
-    href: '/dashboard/land',
-    icon: <HiOutlineGlobe className="w-5 h-5" />,
-    roles: ['encargado', 'admin'],
+    label: 'Encargados',
+    href: '/dashboard/encargados',
+    icon: <HiOutlineUserGroup className="w-5 h-5" />,
+    roles: ['admin'],
   },
+  {
+    label: 'Reportes',
+    href: '/dashboard/reportes',
+    icon: <HiOutlineDocumentReport className="w-5 h-5" />,
+    roles: ['admin'],
+  },
+
+  // ─── OPCIONES EXCLUSIVAS DE ENCARGADO ───────────────────────────────
+  {
+    label: 'Lista UA Encargada',
+    href: '/dashboard/mi-ua',
+    icon: <HiOutlineOfficeBuilding className="w-5 h-5" />,
+    roles: ['encargado'],
+  },
+  {
+    label: 'Usuarios por UA',
+    href: '/dashboard/usuarios-ua',
+    icon: <HiOutlineUsers className="w-5 h-5" />,
+    roles: ['encargado'],
+  },
+  {
+    label: 'Tickets',
+    href: '/dashboard/tickets-gestion',
+    icon: <HiOutlineTicket className="w-5 h-5" />,
+    roles: ['encargado'],
+  },
+  {
+    label: 'Generar Tokens',
+    href: '/dashboard/generar-tokens',
+    icon: <HiOutlinePlusCircle className="w-5 h-5" />,
+    roles: ['encargado'],
+  },
+
+  // ─── OPCIONES EXCLUSIVAS DE USUARIO ASISTENTE ────────────────────────
+  {
+    label: 'Ingresar Token',
+    href: '/dashboard/ingresar-token',
+    icon: <HiOutlinePlusCircle className="w-5 h-5" />,
+    roles: ['user'],
+  },
+  {
+    label: 'Generar QR',
+    href: '/dashboard/generar-qr',
+    icon: <HiOutlineQrcode className="w-5 h-5" />,
+    roles: ['user'],
+  },
+
+  // ─── GLOBAL (Todos ven el mapa del evento) ──────────────────────────
   {
     label: 'Mapa del Evento',
     href: '/dashboard/mapa',
     icon: <HiOutlineMap className="w-5 h-5" />,
     roles: ['admin', 'encargado', 'user'],
   },
-  {
-    label: 'Asistentes',
-    href: '/dashboard/asistentes',
-    icon: <HiOutlineUserGroup className="w-5 h-5" />,
-    roles: ['admin'],
-  },
+
+  // ─── USUARIOS GLOBAL (Acceso jerárquico según tu especificación) ───
   {
     label: 'Usuarios',
-    href: '/dashboard/usuarios',
+    href: '/dashboard/usuarios-list',
     icon: <HiOutlineUsers className="w-5 h-5" />,
-    roles: ['admin'],
-  },
-  {
-    label: 'Configuración',
-    href: '/dashboard/configuracion',
-    icon: <HiOutlineCog className="w-5 h-5" />,
     roles: ['admin'],
   },
 ]
 
 const roleLabels: Record<UserRole, string> = {
   admin: 'Administrador',
-  encargado: 'Encargado de Land',
-  user: 'Asistente',
+  encargado: 'Encargado',
+  user: 'Usuario',
 }
 
 export function Sidebar({ user }: { user: SidebarUser }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
+  // Filtra de forma estricta asegurando que solo se renderice lo que indica la imagen
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role),
   )

@@ -1,41 +1,35 @@
 import { createClient } from "@/src/lib/supabase/server";
 
-export interface UserProfile {
-  id_rol: number;
-  nombre_rol: string;
-  nivel_acceso: number;
-}
-
 /**
- * Consulta el perfil real del usuario desde la base de datos (tabla profiles + roles).
- * Si no existe el perfil, retorna nivel 1 (usuario) por defecto.
- * Esto EVITA usar user_metadata desactualizada para decisiones de ruteo.
+ * Consulta el id_rol real del usuario desde la tabla profiles en la base de datos.
+ * La tabla profiles solo contiene: id, id_rol, email, created_at.
+ * Si no existe el perfil, retorna id_rol = 3 (usuario) por defecto.
  */
-export async function getUserProfile(userId: string): Promise<UserProfile> {
+export async function getUserProfile(userId: string): Promise<{ id_rol: number }> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id_rol, roles ( id_rol, nombre_rol, nivel_acceso )")
+    .select("id_rol")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    // Perfil no existe aún → asignar nivel 1 (usuario) por defecto
-    console.warn(
-      `[getUserProfile] Perfil no encontrado para user ${userId}. Error:`,
-      error?.message ?? "sin datos",
+  if (error) {
+    console.error(
+      `[getUserProfile] Error al consultar perfil para user ${userId}:`,
+      error.message,
     );
-    return { id_rol: 1, nombre_rol: "user", nivel_acceso: 1 };
+    return { id_rol: 3 };
   }
 
-  const rolesData = Array.isArray(data.roles) ? data.roles[0] : data.roles;
+  if (!data) {
+    console.warn(
+      `[getUserProfile] Perfil no encontrado para user ${userId}. Asignando id_rol=3 por defecto.`,
+    );
+    return { id_rol: 3 };
+  }
 
-  return {
-    id_rol: data.id_rol,
-    nombre_rol: (rolesData as { nombre_rol: string })?.nombre_rol ?? "user",
-    nivel_acceso: (rolesData as { nivel_acceso: number })?.nivel_acceso ?? 1,
-  };
+  return { id_rol: data.id_rol };
 }
 
 /**
@@ -49,8 +43,7 @@ export async function syncAuthMetadataWithProfile(userId: string) {
 
   const { error } = await supabase.auth.updateUser({
     data: {
-      role: profile.nombre_rol,
-      nivel_acceso: profile.nivel_acceso,
+      id_rol: profile.id_rol,
     },
   });
 

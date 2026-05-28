@@ -3,25 +3,15 @@ import { createClient } from "@/src/lib/supabase/server";
 import { getUserProfile, syncAuthMetadataWithProfile } from "@/src/db/perfiles";
 
 /**
- * Determina la ruta del dashboard según el nivel de acceso del usuario.
+ * Mapea id_rol a la ruta del dashboard correspondiente.
+ *   1 → Administrador → /dashboard/admin
+ *   2 → Encargado    → /dashboard/encargado
+ *   3 → Usuario      → /dashboard/usuario
  */
-function getDashboardPath(role?: string, nivelAcceso?: number): string {
-  // Priorizar nivel_acceso numérico si existe
-  if (nivelAcceso !== undefined && nivelAcceso !== null) {
-    if (nivelAcceso >= 3) return "/dashboard/admin";
-    if (nivelAcceso === 2) return "/dashboard/encargado";
-    return "/dashboard/usuario";
-  }
-
-  // Fallback a role string legacy
-  switch (role) {
-    case "admin":
-      return "/dashboard/admin";
-    case "encargado":
-      return "/dashboard/encargado";
-    default:
-      return "/dashboard/usuario";
-  }
+function getDashboardPath(idRol: number): string {
+  if (idRol === 1) return "/dashboard/admin";
+  if (idRol === 2) return "/dashboard/encargado";
+  return "/dashboard/usuario";
 }
 
 export async function GET(request: Request) {
@@ -44,8 +34,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}/Login?error=auth-callback-failed`);
       }
 
-      // --- CONSULTAR PERFIL REAL DESDE LA BASE DE DATOS ---
-      // Esto es CRÍTICO: leemos el rol desde la tabla profiles + roles,
+      // --- CONSULTAR id_rol REAL DESDE LA BASE DE DATOS ---
+      // Esto es CRÍTICO: leemos el id_rol desde la tabla profiles,
       // NO desde user_metadata que puede estar desactualizada.
       const profile = await getUserProfile(user.id);
 
@@ -68,9 +58,9 @@ export async function GET(request: Request) {
         }
       }
 
-      // Redirigir al dashboard según el nivel de acceso REAL desde la BD
+      // Redirigir al dashboard según el id_rol REAL desde la BD
       return NextResponse.redirect(
-        `${origin}${getDashboardPath(profile.nombre_rol, profile.nivel_acceso)}`,
+        `${origin}${getDashboardPath(profile.id_rol)}`,
       );
     }
   }

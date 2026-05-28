@@ -2,66 +2,52 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/src/lib/supabase/middleware";
 
 /**
- * Jerarquía de niveles de acceso numéricos.
- * Coinciden con la tabla de roles de la base de datos.
+ * Mapeo de id_rol a rutas de dashboard.
+ *   1 → Administrador → /dashboard/admin
+ *   2 → Encargado    → /dashboard/encargado
+ *   3 → Usuario      → /dashboard/usuario
  */
-const NIVEL_ADMIN = 3;
-const NIVEL_ENCARGADO = 2;
-const NIVEL_USUARIO = 1;
 
 /**
- * Define el nivel mínimo requerido para acceder a una ruta del dashboard.
+ * Retorna la ruta del dashboard que le corresponde al usuario según su id_rol.
+ */
+function getDashboardPath(idRol: number): string {
+  if (idRol === 1) return "/dashboard/admin";
+  if (idRol === 2) return "/dashboard/encargado";
+  return "/dashboard/usuario";
+}
+
+/**
+ * Retorna el id_rol mínimo requerido para acceder a una ruta del dashboard.
  * Retorna null si la ruta no está dentro del dashboard protegido.
  */
-function getRequiredLevel(pathname: string): number | null {
+function getRequiredRole(pathname: string): number | null {
   if (
     pathname === "/dashboard/admin" ||
     pathname.startsWith("/dashboard/admin/")
   ) {
-    return NIVEL_ADMIN;
+    return 1; // Solo Admin (id_rol=1)
   }
   if (
     pathname === "/dashboard/encargado" ||
     pathname.startsWith("/dashboard/encargado/")
   ) {
-    return NIVEL_ENCARGADO;
+    return 2; // Admin (1) o Encargado (2)
   }
   if (
     pathname === "/dashboard/usuario" ||
     pathname.startsWith("/dashboard/usuario/")
   ) {
-    return NIVEL_USUARIO;
+    return 3; // Cualquier rol (1, 2 o 3)
   }
   return null;
 }
 
 /**
- * Retorna la ruta del dashboard que le corresponde al usuario
- * según su nivel de acceso numérico.
- */
-function getDashboardByLevel(nivel: number): string {
-  if (nivel >= NIVEL_ADMIN) return "/dashboard/admin";
-  if (nivel === NIVEL_ENCARGADO) return "/dashboard/encargado";
-  return "/dashboard/usuario";
-}
-
-/**
- * Rutas públicas que NO requieren autenticación ni pasan por el middleware.
- */
-const publicRoutes = [
-  "/login",
-  "/register",
-  "/auth",
-  "/faqs",
-  "/terminos",
-  "/privacidad",
-];
-
-/**
  * Middleware de Next.js: Guardaespaldas de URLs.
  * Intercepta cualquier intento de acceso a rutas protegidas y valida:
  * 1. Que el usuario esté autenticado (sesión activa en Supabase).
- * 2. Que el nivel de acceso del usuario sea suficiente para la ruta solicitada.
+ * 2. Que el id_rol del usuario sea suficiente para la ruta solicitada.
  * 3. Redirige según las reglas estrictas de jerarquía.
  */
 export async function middleware(request: NextRequest) {
@@ -78,67 +64,72 @@ export async function middleware(request: NextRequest) {
   const isDashboardRoute =
     pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
-  // --- REGLA 4: Usuario no autenticado → redirigir a /login ---
+  // --- REGLA: Usuario no autenticado → redirigir a /login ---
   if (isDashboardRoute && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl, 307);
   }
 
-  // --- Validación por nivel de acceso (solo aplica si hay sesión) ---
+  // --- Validación por id_rol (solo aplica si hay sesión) ---
   if (isDashboardRoute && user) {
-    // --- CONSULTAR NIVEL DE ACCESO REAL DESDE LA BASE DE DATOS ---
-    // Esto cubre el caso donde un admin cambió el rol en la BD
-    // y la sesión aún tiene metadata desactualizada (incluso si no se
-    // ha llamado a syncAuthMetadataWithProfile todavía).
-    let nivelAcceso = NIVEL_USUARIO;
+    // Consultar id_rol real desde la base de datos
+    let idRol = 3; // Default: Usuario
 
     try {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id_rol, roles ( id_rol, nombre_rol, nivel_acceso )")
+        .select("id_rol")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error(
+          "[middleware] Error al consultar perfil en BD:",
+          profileError.message,
+        );
+      }
 
       if (profileData) {
-        const rolesData = Array.isArray(profileData.roles)
-          ? profileData.roles[0]
-          : profileData.roles;
-        nivelAcceso =
-          (rolesData as { nivel_acceso?: number })?.nivel_acceso ??
-          NIVEL_USUARIO;
+        idRol = profileData.id_rol;
+      }
+
+      if (!profileData && !profileError) {
+        console.warn(
+          `[middleware] Perfil no encontrado para user ${user.id}. Usando id_rol=3 por defecto.`,
+        );
       }
     } catch (e) {
-      // Fallback a user_metadata si la consulta falla
-      console.error("[middleware] Error al consultar perfil:", e);
-      nivelAcceso =
-        (user.user_metadata?.nivel_acceso as number | undefined) ??
+      // Fallback a user_metadata si hay error inesperado
+      console.error("[middleware] Error inesperado al consultar perfil:", e);
+      idRol =
+        (user.user_metadata?.id_rol as number | undefined) ??
         (() => {
           const role = user.user_metadata?.role as string | undefined;
           switch (role) {
             case "admin":
-              return NIVEL_ADMIN;
+              return 1;
             case "encargado":
-              return NIVEL_ENCARGADO;
+              return 2;
             default:
-              return NIVEL_USUARIO;
+              return 3;
           }
         })();
     }
 
-    const requiredLevel = getRequiredLevel(pathname);
+    const requiredRole = getRequiredRole(pathname);
 
-    if (requiredLevel !== null) {
-      if (nivelAcceso < requiredLevel) {
-        // REGLA 1 y 2: Redirigir al dashboard que le corresponde
+    if (requiredRole !== null) {
+      // Si el id_rol del usuario es mayor (menos permisos) que el requerido, redirigir
+      // id_rol: 1=admin(más permisos), 2=encargado, 3=usuario(menos permisos)
+      // El acceso está permitido si id_rol <= requiredRole (número más bajo = más permisos)
+      if (idRol > requiredRole) {
+        // Redirigir al dashboard que le corresponde según su id_rol
         return NextResponse.redirect(
-          new URL(getDashboardByLevel(nivelAcceso), request.url),
+          new URL(getDashboardPath(idRol), request.url),
           307,
         );
       }
-
-      // REGLA 3: Nivel 3 (Admin) puede pasar a cualquier ruta del dashboard
-      // (la condición nivelAcceso >= requiredLevel ya lo permite)
     }
   }
 

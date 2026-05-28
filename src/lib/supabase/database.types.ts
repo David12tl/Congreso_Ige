@@ -65,6 +65,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      tickets: {
+        Row: {
+          id: string;
+          zone_id: string | null;
+          buyer_id: string | null;
+          nombre: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          zone_id?: string | null;
+          buyer_id?: string | null;
+          nombre?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          zone_id?: string | null;
+          buyer_id?: string | null;
+          nombre?: string | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tickets_zone_id_fkey";
+            columns: ["zone_id"];
+            referencedRelation: "zones";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "tickets_buyer_id_fkey";
+            columns: ["buyer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      zones: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

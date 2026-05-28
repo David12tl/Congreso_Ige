@@ -6,26 +6,15 @@ import { redirect } from 'next/navigation';
 export type AuthResult = { error: string } | { success: true };
 
 /**
- * Determina la ruta del dashboard según el nivel de acceso del usuario.
- * Soporta tanto 'nivel_acceso' numérico como 'role' string legacy.
+ * Mapea id_rol a la ruta del dashboard correspondiente.
+ *   1 → Administrador → /dashboard/admin
+ *   2 → Encargado    → /dashboard/encargado
+ *   3 → Usuario      → /dashboard/usuario
  */
-function getDashboardPath(role?: string, nivelAcceso?: number): string {
-  // Priorizar nivel_acceso numérico si existe
-  if (nivelAcceso !== undefined && nivelAcceso !== null) {
-    if (nivelAcceso >= 3) return '/dashboard/admin';
-    if (nivelAcceso === 2) return '/dashboard/encargado';
-    return '/dashboard/usuario';
-  }
-
-  // Fallback a role string legacy
-  switch (role) {
-    case 'admin':
-      return '/dashboard/admin';
-    case 'encargado':
-      return '/dashboard/encargado';
-    default:
-      return '/dashboard/usuario';
-  }
+function getDashboardPath(idRol: number): string {
+  if (idRol === 1) return '/dashboard/admin';
+  if (idRol === 2) return '/dashboard/encargado';
+  return '/dashboard/usuario';
 }
 
 /**
@@ -33,9 +22,9 @@ function getDashboardPath(role?: string, nivelAcceso?: number): string {
  * Usa el cliente de servidor de Supabase para que las cookies de sesión
  * se guarden correctamente. Si hay error, devuelve un mensaje claro.
  * Si es exitoso:
- *  1. Consulta el perfil REAL desde la base de datos (profiles + roles)
+ *  1. Consulta el id_rol REAL desde la base de datos (tabla profiles)
  *  2. Sincroniza los metadatos de Auth con el valor real
- *  3. Redirige al dashboard según el nivel de acceso REAL
+ *  3. Redirige al dashboard según el id_rol REAL
  */
 export async function signInWithPassword(
   email: string,
@@ -59,7 +48,7 @@ export async function signInWithPassword(
     return { error: 'Error al obtener el usuario autenticado.' };
   }
 
-  // --- CRÍTICO: Consultar perfil REAL desde la base de datos ---
+  // --- CRÍTICO: Consultar id_rol REAL desde la base de datos ---
   // No confiar en user_metadata porque puede estar desactualizada
   // cuando un administrador cambia el rol en la BD.
   const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/src/db/perfiles');
@@ -68,7 +57,7 @@ export async function signInWithPassword(
   // Sincronizar metadata de Auth con el valor real de la BD
   await syncAuthMetadataWithProfile(userId);
 
-  redirect(getDashboardPath(profile.nombre_rol, profile.nivel_acceso));
+  redirect(getDashboardPath(profile.id_rol));
 }
 
 /**
@@ -93,7 +82,7 @@ export async function signUp(data: {
         full_name: data.fullName,
         land_interest: data.landInterest,
         role: 'user',
-        nivel_acceso: 1, // Nivel 1 (Usuario) por defecto en el registro
+        id_rol: 3, // Nivel 3 (Usuario) por defecto en el registro
       },
     },
   });
@@ -103,10 +92,9 @@ export async function signUp(data: {
     return { error: message };
   }
 
-  // Redirigir al dashboard según el nivel de acceso del usuario
-  const role = signUpData.user?.user_metadata?.role as string | undefined;
-  const nivelAcceso = signUpData.user?.user_metadata?.nivel_acceso as number | undefined;
-  redirect(getDashboardPath(role, nivelAcceso));
+  // Redirigir al dashboard según el id_rol del usuario
+  const idRol = signUpData.user?.user_metadata?.id_rol as number | undefined;
+  redirect(getDashboardPath(idRol ?? 3));
 }
 
 /**
@@ -125,12 +113,13 @@ export async function signOut() {
  */
 export async function signInWithGoogle(): Promise<string> {
   const supabase = await createClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const redirectTo = `${siteUrl.replace(/\/$/, '')}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo,
     },
   });
 

@@ -23,13 +23,14 @@ export default async function DashboardLayout({
   const userName = (user.user_metadata?.full_name as string) ?? user.email ?? ''
   const userEmail = user.email ?? ''
 
-  // Mapear nivel_acceso numérico a role string para el Sidebar
+  // Mapear id_rol a role string para el Sidebar
+  // id_rol: 1=admin, 2=encargado, 3=user
   const roleMap: Record<number, 'admin' | 'encargado' | 'user'> = {
-    3: 'admin',
+    1: 'admin',
     2: 'encargado',
-    1: 'user',
+    3: 'user',
   }
-  const sidebarRole = roleMap[profile.nivel_acceso] ?? 'user'
+  const sidebarRole = roleMap[profile.id_rol] ?? 'user'
 
   return (
     <div className="flex min-h-screen bg-slate-950">
@@ -38,7 +39,7 @@ export default async function DashboardLayout({
           name: userName,
           email: userEmail,
           role: sidebarRole,
-          nivelAcceso: profile.nivel_acceso,
+          nivelAcceso: profile.id_rol,
         }}
       />
       <main className="flex-1 ml-64 p-8 animate-fadeIn">
