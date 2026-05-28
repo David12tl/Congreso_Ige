@@ -1,86 +1,136 @@
 'use client'
 
-import React from 'react'
-import { HiOutlinePlusCircle, HiOutlineKey, HiOutlineLogin } from 'react-icons/hi'
+import React, { useState } from 'react'
+import { HiOutlineTicket, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineShieldCheck } from 'react-icons/hi'
+import { activarTokenCompra } from './actions'
 
-function GlassCard({ children, className = '', glowColor = 'cyan' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
-    purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    cyan: 'border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]',
-    emerald: 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+export default function IngresarTokenPage() {
+  const [tokenInput, setTokenInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<{ tipo: 'success' | 'error'; msg: string } | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!tokenInput.trim()) return
+
+    setLoading(true)
+    setStatus(null)
+
+    try {
+      const res = await activarTokenCompra(tokenInput.trim())
+      
+      if (res.success) {
+        setStatus({ tipo: 'success', msg: res.message })
+        setTokenInput('')
+      } else {
+        setStatus({ tipo: 'error', msg: res.message })
+      }
+    } catch (err) {
+      setStatus({ 
+        tipo: 'error', 
+        msg: 'Ocurrió un fallo en la comunicación con el servidor de autenticación.' 
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      {children}
-    </div>
-  )
-}
+    <div className="min-h-[75vh] flex flex-col items-center justify-center p-4 relative overflow-hidden animate-fadeIn">
+      
+      {/* Fondo de Retícula Estilo Cyberpunk */}
+      <div 
+        className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" 
+      />
 
-export default function IngresarTokenPage() {
-  return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">
-            <HiOutlineKey className="inline-block w-8 h-8 mr-3 text-cyan-400" />
-            Ingresar{' '}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Token
-            </span>
+      {/* Contenedor Flotante de Vidrio (Glassmorphism) */}
+      <div className="relative z-10 w-full max-w-lg border border-purple-500/30 bg-slate-900/40 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_0_30px_rgba(168,85,247,0.15)] transition-all duration-300 hover:border-purple-500/50">
+        
+        {/* Encabezado del Módulo */}
+        <div className="text-center space-y-2 mb-8">
+          <div className="inline-flex p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400 mb-2">
+            <HiOutlineTicket className="w-8 h-8 animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tighter uppercase">
+            Activar Token de Acceso
           </h1>
-          <p className="text-gray-500 text-sm font-mono mt-1">USUARIO // CANJE_DE_TOKEN_DE_ACCESO</p>
+          <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">
+            GATEWAY // VINCULAR_COMPRA_STRIPE
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-          <span className="text-cyan-400 text-xs font-bold uppercase tracking-widest">Token válido</span>
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono text-gray-400 uppercase tracking-widest block">
+              Identificador de Sesión / Token ID
+            </label>
+            <input
+              type="text"
+              required
+              disabled={loading}
+              placeholder="cs_test_a1b2c3d4e5..."
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-gray-700 focus:outline-none focus:border-purple-500 disabled:opacity-50 transition-all shadow-inner"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !tokenInput.trim()}
+            className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-mono font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                Validando Registro...
+              </>
+            ) : (
+              'Reclamar Mi Pase Digital'
+            )}
+          </button>
+        </form>
+
+        {/* Consola de Respuestas de la Base de Datos */}
+        {status && (
+          <div className={`mt-6 p-4 rounded-xl border font-mono text-xs ${
+            status.tipo === 'success' 
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+              : 'bg-pink-500/10 border-pink-500/30 text-pink-400'
+          }`}>
+            <div className="flex gap-2 items-start">
+              {status.tipo === 'success' ? (
+                <HiOutlineCheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              ) : (
+                <HiOutlineExclamationCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              )}
+              <div>
+                <span className="font-bold uppercase tracking-wider block mb-0.5">
+                  {status.tipo === 'success' ? 'SYSTEM_OK // SUCCESS' : 'SYSTEM_ERR // DENIED'}
+                </span>
+                <p className="opacity-90">{status.msg}</p>
+                {status.tipo === 'success' && (
+                  <a 
+                    href="/dashboard/pase" 
+                    className="inline-block mt-2 text-white bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 rounded hover:bg-emerald-500/30 transition-all font-sans font-bold text-[11px] uppercase tracking-wider"
+                  >
+                    Ir a ver mi código QR →
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pie Informativo de Seguridad */}
+        <div className="mt-8 border-t border-white/5 pt-4 flex items-center justify-between text-[10px] font-mono text-gray-500">
+          <span className="flex items-center gap-1">
+            <HiOutlineShieldCheck className="text-purple-500 w-4 h-4" /> SECURE_SSL_ACTIVE
+          </span>
+          <span>CONGRESO_IGE_2026</span>
         </div>
-      </header>
 
-      <div className="max-w-2xl mx-auto">
-        <GlassCard className="p-8" glowColor="cyan">
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(34,211,238,0.15)]">
-              <HiOutlineKey className="w-10 h-10 text-cyan-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Ingresa tu Token</h2>
-            <p className="text-gray-400 text-sm max-w-md">
-              Introduce el token que te proporcionó el encargado de tu Unidad
-              Académica para registrarte en el evento.
-            </p>
-          </div>
-
-          {/* Token Input */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-2">
-                Código de Token
-              </label>
-              <input
-                type="text"
-                placeholder="Ej: TOKEN-XXXX-XXXX"
-                className="w-full bg-slate-950 border border-white/10 rounded-xl px-5 py-4 text-white font-mono text-lg tracking-widest text-center focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all placeholder:text-gray-600"
-              />
-            </div>
-            <button className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl uppercase tracking-widest flex items-center justify-center gap-2 hover:from-cyan-500 hover:to-blue-500 transition-all shadow-lg">
-              <HiOutlineLogin className="w-5 h-5" />
-              Canjear Token
-            </button>
-          </div>
-
-          <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10">
-            <p className="text-amber-400 text-xs font-mono text-center">
-              Próximamente — Validación de tokens contra la base de datos
-            </p>
-          </div>
-        </GlassCard>
       </div>
     </div>
   )

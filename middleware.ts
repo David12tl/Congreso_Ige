@@ -14,7 +14,7 @@ import { createClient } from "@/src/lib/supabase/middleware";
 function getDashboardPath(idRol: number): string {
   if (idRol === 1) return "/dashboard/admin";
   if (idRol === 2) return "/dashboard/encargado";
-  return "/dashboard/usuario";
+  return "/dashboard/perfil"; // Para id_rol=3 o cualquier otro valor, redirige a dashboard de usuario
 }
 
 /**
@@ -35,8 +35,8 @@ function getRequiredRole(pathname: string): number | null {
     return 2; // Admin (1) o Encargado (2)
   }
   if (
-    pathname === "/dashboard/usuario" ||
-    pathname.startsWith("/dashboard/usuario/")
+    pathname === "/dashboard/perfil" ||
+    pathname.startsWith("/dashboard/perfil/")
   ) {
     return 3; // Cualquier rol (1, 2 o 3)
   }
