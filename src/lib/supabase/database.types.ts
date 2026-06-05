@@ -216,33 +216,39 @@ export type Database = {
         Row: {
           creado_por: string
           created_at: string | null
+          estado_pago: Database["public"]["Enums"]["estado_pago_enum"] | null
           event_id: string
           id: string
           status: string
           token_code: string
-          utilizado_at: string | null
+          total_abonado: number | null
+          utilizado_el: string | null
           utilizado_por: string | null
           zone_id: string
         }
         Insert: {
           creado_por: string
           created_at?: string | null
+          estado_pago?: Database["public"]["Enums"]["estado_pago_enum"] | null
           event_id: string
           id?: string
           status?: string
           token_code: string
-          utilizado_at?: string | null
+          total_abonado?: number | null
+          utilizado_el?: string | null
           utilizado_por?: string | null
           zone_id: string
         }
         Update: {
           creado_por?: string
           created_at?: string | null
+          estado_pago?: Database["public"]["Enums"]["estado_pago_enum"] | null
           event_id?: string
           id?: string
           status?: string
           token_code?: string
-          utilizado_at?: string | null
+          total_abonado?: number | null
+          utilizado_el?: string | null
           utilizado_por?: string | null
           zone_id?: string
         }
@@ -352,7 +358,7 @@ export type Database = {
       get_user_role_name: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      estado_pago_enum: "sin_pago" | "faltante" | "completado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -479,6 +485,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      estado_pago_enum: ["sin_pago", "faltante", "completado"],
+    },
   },
 } as const

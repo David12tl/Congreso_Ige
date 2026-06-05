@@ -41,8 +41,12 @@ export async function activarTokenCompra(tokenSessionId: string): Promise<{
     return { success: false, message: 'El token ingresado no existe o es inválido.' }
   }
 
+  // 🌟 MODIFICADO: Mensaje mucho más claro y descriptivo para el cliente en puerta
   if (purchase.status !== 'completed') {
-    return { success: false, message: 'Esta credencial aún no ha sido aprobada por administración.' }
+    return { 
+      success: false, 
+      message: 'El token no puede ser canjeado hasta que liquides el total del boleto.' 
+    }
   }
 
   // 2. Comprobamos si el token ya fue reclamado previamente en tokens_canje
@@ -61,7 +65,7 @@ export async function activarTokenCompra(tokenSessionId: string): Promise<{
     .from('tokens_canje')
     .update({ 
       status: 'usado',
-      utilizado_por: user.id,                 // ID del usuario autenticado actual
+      utilizado_por: user.id,                  // ID del usuario autenticado actual
       utilizado_el: new Date().toISOString()   // Fecha y hora exacta en formato ISO
     })
     .eq('token_code', tokenSessionId)

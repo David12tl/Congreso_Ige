@@ -1,45 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
+import { obtenerAsientosOcupados, apartarAsientosEnBD } from './actions'; 
 
 interface TeatroMapProps {
   color: string;
   asientosSeleccionados: string[];
   setAsientosSeleccionados: React.Dispatch<React.SetStateAction<string[]>>;
+  eventId: string; // 🌟 Prop obligatoria para inyectar el evento desde el padre
 }
 
 interface Asiento {
   id: string;
   fila: string;
   numero: number;
-  estado: 'disponible' | 'ocupado' | 'seleccionado';
+  estado: 'disponible' | 'ocupado';
 }
 
-export default function TeatroMap({ color, asientosSeleccionados, setAsientosSeleccionados }: TeatroMapProps) {
+export default function TeatroMap({ color, asientosSeleccionados, setAsientosSeleccionados, eventId }: TeatroMapProps) {
   const [seccionSeleccionada, setSeccionSeleccionada] = useState<string | null>(null);
   const [asientosZona, setAsientosZona] = useState<Asiento[]>([]);
+  const [isPending, startTransition] = useTransition();
 
-  const generarAsientosSimulados = (seccion: string): Asiento[] => {
-    const filas = ['A', 'B', 'C', 'D', 'E'];
-    const asientos: Asiento[] = [];
-    
-    filas.forEach((fila) => {
-      for (let i = 1; i <= 14; i++) {
-        const aleatorio = Math.random() > 0.4 ? 'disponible' : 'ocupado';
-        asientos.push({
-          id: `${seccion}-${fila}-${i}`,
-          fila,
-          numero: i,
-          estado: aleatorio as 'disponible' | 'ocupado',
-        });
-      }
-    });
-    return asientos;
-  };
+  // Escucha cambios en la sección y jala datos reales en vivo
+  useEffect(() => {
+    if (!seccionSeleccionada) return;
+
+    async function cargarSeccion() {
+      // Usamos '!' para asegurarle a TS que el flujo ya validó que no es nulo
+      const asientosOcupadosEnBD = await obtenerAsientosOcupados(seccionSeleccionada!);
+
+      const filas = ['A', 'B', 'C', 'D', 'E'];
+      const asientosEstructurados: Asiento[] = [];
+      
+      filas.forEach((fila) => {
+        for (let i = 1; i <= 14; i++) {
+          const idAsiento = `${seccionSeleccionada}-${fila}-${i}`;
+          const yaEstaOcupado = asientosOcupadosEnBD.includes(idAsiento);
+
+          asientosEstructurados.push({
+            id: idAsiento,
+            fila,
+            numero: i,
+            estado: yaEstaOcupado ? 'ocupado' : 'disponible',
+          });
+        }
+      });
+
+      setAsientosZona(asientosEstructurados);
+    }
+
+    cargarSeccion();
+  }, [seccionSeleccionada, asientosSeleccionados]); 
 
   const manejarClickSeccion = (idSeccion: string) => {
     setSeccionSeleccionada(idSeccion);
-    setAsientosZona(generarAsientosSimulados(idSeccion));
   };
 
   const seleccionarAsiento = (asientoId: string, estado: string) => {
@@ -47,6 +62,25 @@ export default function TeatroMap({ color, asientosSeleccionados, setAsientosSel
     setAsientosSeleccionados((prev) =>
       prev.includes(asientoId) ? prev.filter((id) => id !== asientoId) : [...prev, asientoId]
     );
+  };
+
+  const finalizarReserva = () => {
+    if (asientosSeleccionados.length === 0) return;
+
+    startTransition(async () => {
+      // Enviamos la petición relacional con el ID dinámico
+      const res = await apartarAsientosEnBD(asientosSeleccionados, eventId);
+      
+      if (res.success) {
+        alert(res.message);
+        setAsientosSeleccionados([]); 
+        const seccionActual = seccionSeleccionada;
+        setSeccionSeleccionada(null);
+        setTimeout(() => setSeccionSeleccionada(seccionActual), 50);
+      } else {
+        alert(res.message);
+      }
+    });
   };
 
   return (
@@ -147,7 +181,7 @@ export default function TeatroMap({ color, asientosSeleccionados, setAsientosSel
                         style={estaSeleccionado ? { backgroundColor: color, color: '#000' } : {}}
                         title={`Fila ${asiento.fila} - Asiento ${asiento.numero}`}
                         className={`h-5 w-full rounded-t-sm text-[8px] font-medium flex items-center justify-center transition-all
-                          ${asiento.estado === 'ocupado' ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : ''}
+                          ${asiento.estado === 'ocupado' ? 'bg-gray-800/40 text-gray-500/70 cursor-not-allowed line-through' : ''}
                           ${asiento.estado === 'disponible' && !estaSeleccionado ? 'bg-emerald-600/80 hover:bg-emerald-500 text-white' : ''}
                           ${estaSeleccionado ? 'font-bold scale-110 ring-1 ring-white' : ''}
                         `}>
@@ -163,7 +197,6 @@ export default function TeatroMap({ color, asientosSeleccionados, setAsientosSel
           <div className="bg-[#14161d] p-5 rounded-xl border border-gray-800 flex flex-col justify-between h-auto">
             <div>
               <h3 className="text-base font-bold border-b border-gray-800 pb-2 mb-3">Reservación</h3>
-              {/* Agregamos ?.length y la validación para asegurar que no se rompa si viene undefined */}
               {(!asientosSeleccionados || asientosSeleccionados.length === 0) ? (
                 <p className="text-xs text-gray-500 italic">No hay asientos apartados.</p>
               ) : (
@@ -190,12 +223,22 @@ export default function TeatroMap({ color, asientosSeleccionados, setAsientosSel
               )}
             </div>
 
-            <div className="mt-6 border-t border-gray-800 pt-3">
+            <div className="mt-6 border-t border-gray-800 pt-3 space-y-4">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-gray-400">Lugares seleccionados:</span>
-                {/* Aquí también protegemos el contador inferior */}
                 <span className="font-bold text-sm text-white">{(asientosSeleccionados || []).length}</span>
               </div>
+
+              {asientosSeleccionados.length > 0 && (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={finalizarReserva}
+                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-gray-800 text-black font-black text-xs rounded-lg uppercase tracking-wider transition-all shadow-md"
+                >
+                  {isPending ? 'Guardando en Supabase...' : 'Confirmar y Apartar Lugares'}
+                </button>
+              )}
             </div>
           </div>
 
