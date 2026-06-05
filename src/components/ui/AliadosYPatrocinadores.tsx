@@ -25,8 +25,7 @@ export default function AliadosYPatrocinadores() {
   ];
 
   return (
-    /* Cambiado a bg-white y texto principal a gris oscuro para contraste perfecto */
-    <section className="w-full bg-white text-gray-900 py-20 px-4 md:px-8 relative border-t border-gray-200">
+    <section className="w-full py-20 px-4 md:px-8 relative bg-white dark:bg-slate-950" style={{ color: 'var(--text-principal)', borderTop: '1px solid var(--border-componentes)' }}>
       
       <div className="max-w-6xl mx-auto relative z-10">
         
@@ -35,11 +34,11 @@ export default function AliadosYPatrocinadores() {
           <span className="text-[11px] font-mono tracking-[0.4em] text-gray-400 uppercase block mb-2">
             Respaldando el Ecosistema
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: 'var(--text-principal)' }}>
             Alianzas Estratégicas
           </h2>
-          <div className="w-12 h-[1px] bg-gray-300 mx-auto mb-4" />
-          <p className="text-xs md:text-sm text-gray-500 leading-relaxed font-light">
+          <div className="w-12 h-[1px] mx-auto mb-4" style={{ backgroundColor: 'var(--border-componentes)' }} />
+          <p className="text-xs md:text-sm leading-relaxed font-light" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
             Gracias al compromiso mutuo con la innovación, la educación y el desarrollo tecnológico, 
             estas destacadas organizaciones hacen posible este magno encuentro de talento nacional.
           </p>
@@ -47,7 +46,7 @@ export default function AliadosYPatrocinadores() {
 
         {/* CONTENEDOR DE ALIADOS INSTITUCIONALES */}
         <div className="mb-16">
-          <h3 className="text-center text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase mb-8">
+          <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
             Aliados Institucionales
           </h3>
           
@@ -56,9 +55,10 @@ export default function AliadosYPatrocinadores() {
               <div
                 key={aliado.id}
                 /* Fondo gris ultra claro para los bloques sobre el fondo blanco */
-                className="h-24 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-4 transition-all duration-300 filter grayscale opacity-70 hover:grayscale-0 hover:opacity-100 hover:bg-gray-100 hover:border-gray-300 group cursor-pointer shadow-sm"
+                className="h-24 rounded-lg flex items-center justify-center p-4 transition-all duration-300 filter grayscale opacity-70 hover:grayscale-0 hover:opacity-100 group cursor-pointer"
+                style={{ backgroundColor: 'var(--bg-tarjetas)', border: '1px solid var(--border-componentes)' }}
               >
-                <span className="text-xs font-mono font-semibold tracking-wider text-gray-500 group-hover:text-gray-900 transition-colors text-center uppercase">
+                  <span className="text-xs font-mono font-semibold tracking-wider text-center uppercase transition-colors" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
                   {aliado.logoPlaceholder}
                 </span>
               </div>
@@ -68,7 +68,7 @@ export default function AliadosYPatrocinadores() {
 
         {/* CONTENEDOR DE PATROCINADORES PRINCIPALES (GOLD) */}
         <div>
-          <h3 className="text-center text-xs font-semibold tracking-[0.2em] text-gray-400 uppercase mb-8">
+          <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
             Sponsors Oficiales
           </h3>
           
@@ -77,15 +77,16 @@ export default function AliadosYPatrocinadores() {
               <div
                 key={spon.id}
                 /* Tarjetas blancas con una sombra suave para resaltar */
-                className="h-28 bg-white border border-gray-200 rounded-xl flex flex-col items-center justify-center p-6 transition-all duration-300 filter grayscale opacity-80 hover:grayscale-0 hover:opacity-100 hover:border-gray-400 hover:shadow-md group cursor-pointer relative overflow-hidden"
+                className="h-28 rounded-xl flex flex-col items-center justify-center p-6 transition-all duration-300 filter grayscale opacity-80 hover:grayscale-0 hover:opacity-100 group cursor-pointer relative overflow-hidden"
+                style={{ backgroundColor: 'var(--bg-tarjetas)', border: '1px solid var(--border-componentes)' }}
               >
                 {/* Línea decorativa que se ilumina en cian al pasar el cursor */}
                 <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#03B3C3] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
-                <span className="text-sm font-bold tracking-widest text-gray-700 group-hover:text-gray-900 transition-colors duration-300 text-center">
+                  <span className="text-sm font-bold tracking-widest transition-colors duration-300 text-center" style={{ color: 'var(--text-principal)' }}>
                   {spon.logoPlaceholder}
                 </span>
-                <span className="text-[9px] font-mono text-gray-400 mt-2 uppercase tracking-widest group-hover:text-[#03B3C3] transition-colors">
+                  <span className="text-[9px] font-mono mt-2 uppercase tracking-widest group-hover:text-[#03B3C3] transition-colors" style={{ color: 'var(--text-principal)', opacity: 0.5 }}>
                   [ GOLD PARTNER ]
                 </span>
               </div>
