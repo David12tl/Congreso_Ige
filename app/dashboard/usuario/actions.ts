@@ -94,29 +94,22 @@ export async function actualizarInformacionPerfil(formData: UpdateAsistenteData)
   if (!user) return { success: false, message: 'Sesión expirada o no válida.' }
 
   // Aseguramos mapeo idéntico a las columnas minúsculas de tu DB
-  const updatePayload = formData.tipo === 'alumno' 
-    ? {
-        buyer_id: user.id,
-        nombre: formData.nombre,
-        email: formData.email,
-        matricula: formData.matricula || null,
-        unidad_academica: formData.unidad_academica || null,
-        semestre: formData.semestre || null,
-        carrera: formData.carrera || null,
-        type: 'alumno'
-      }
-    : {
-        buyer_id: user.id,
-        nombre: formData.nombre,
-        email: formData.email,
-        telefono: formData.telefono || null,
-        type: 'empresa'
-      }
+  const updatePayload = {
+    buyer_id: user.id,
+    nombre: formData.nombre,
+    email: formData.email,
+    type: formData.tipo === 'alumno' ? 'alumno' : 'empresa',
+    matricula: formData.tipo === 'alumno' ? (formData.matricula ?? null) : null,
+    unidad_academica: formData.tipo === 'alumno' ? (formData.unidad_academica ?? null) : null,
+    semestre: formData.tipo === 'alumno' ? (formData.semestre ?? null) : null,
+    carrera: formData.tipo === 'alumno' ? (formData.carrera ?? null) : null,
+    telefono: formData.tipo === 'empresa' ? (formData.telefono ?? null) : null,
+  }
 
   const { error: updateError } = await supabase
     .from('tickets')
     .upsert(
-      updatePayload as unknown as Record<string, string | number | null | undefined>, 
+      updatePayload as never,
       { onConflict: 'buyer_id' }
     )
 
