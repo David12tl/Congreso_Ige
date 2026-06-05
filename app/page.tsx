@@ -52,6 +52,7 @@ const LANDS = [
 
 export default function TalentLandInspiredPage() {
   const [currentPreset, setCurrentPreset] = useState<Record<string, unknown>>(hyperspeedPresets.one);
+  const [asientosSeleccionados, setAsientosSeleccionados] = useState<string[]>([]);
   const pathname = usePathname(); // Detecta la ruta actual de forma reactiva
 
   return (
@@ -73,7 +74,10 @@ export default function TalentLandInspiredPage() {
           <TeatroMap 
             color={
               LANDS.find(l => l.preset === currentPreset)?.color || '#03B3C3'
-            } 
+            }
+            asientosSeleccionados={asientosSeleccionados}
+            setAsientosSeleccionados={setAsientosSeleccionados}
+            eventId="landing-preview"
           />
         </div>
         <SpeakersMagistrales />
