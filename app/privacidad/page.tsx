@@ -136,7 +136,7 @@ export default function PrivacidadPage() {
           {/* Footer de sección */}
           <div className="mt-20 text-center border-t border-white/5 pt-12">
             <p className="text-slate-500 text-xs font-mono tracking-widest uppercase">
-              // Protocolo de Privacidad Congreso IGE 2026 //
+              {/* Protocolo de Privacidad Congreso IGE 2026 */}
             </p>
           </div>
         </div>

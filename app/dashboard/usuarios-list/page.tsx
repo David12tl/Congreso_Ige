@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineBriefcase, HiOutlineGlobeAlt } from 'react-icons/hi'
+import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineGlobeAlt } from 'react-icons/hi'
 import { getTodosLosAsistentes, AsistenteGlobal } from './actions'
 
 function GlassCard({ children, className = '', glowColor = 'blue' }: {

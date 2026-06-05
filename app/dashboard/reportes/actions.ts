@@ -23,10 +23,6 @@ interface SupabaseTicketRaw {
   type: string
 }
 
-interface SupabaseGlobalRaw {
-  type: string
-}
-
 export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: ResumenGlobal }> {
   const supabase = await createClient()
   
