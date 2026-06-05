@@ -1,11 +1,11 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/src/lib/supabase/server'
 
 export interface TicketAsistente {
   id: string
   eventName: string
-  zoneName: string
+  zoneName: string  
   nombre: string | null
   email: string
   qrData: string
@@ -40,6 +40,11 @@ interface DBTicketRow {
   qr_data: string
 }
 
+export interface InfoAsientoCanjeado {
+  id: string
+  asientoReal: string | null
+}
+
 export async function activarTokenCompra(tokenSessionId: string): Promise<{ 
   success: boolean; 
   message: string; 
@@ -58,6 +63,7 @@ export async function activarTokenCompra(tokenSessionId: string): Promise<{
       select: (columns?: string) => {
         eq: (column: string, value: string) => {
           single: () => Promise<{ data: DBPurchaseRow | null; error: { message: string } | null }>
+          maybeSingle: () => Promise<{ data: DBPurchaseRow | null; error: { message: string } | null }>
         }
       }
       update: (values: Record<string, unknown>) => {
