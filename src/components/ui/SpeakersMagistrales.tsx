@@ -8,7 +8,6 @@ interface Speaker {
   puesto: string;
   compania: string;
   conferencia: string;
-  tag: string;
   colorTheme: string; // Color personalizado para bordes y brillos
   glowClass: string;  // Color para el blur de fondo reactivo
   avatarUrl?: string;
@@ -18,33 +17,33 @@ export default function SpeakersMagistrales() {
   const speakersDestacados: Speaker[] = [
     {
       id: 1,
-      nombre: "Dra. Elena Rostova",
-      puesto: "Director of AI & Robotics",
-      compania: "NeuralCore Global",
-      conferencia: "Sistemas Autónomos y el Futuro de la Consciencia Artificial",
-      tag: "Inteligencia Artificial",
-      colorTheme: "#D856BF", // Púrpura Neón
+      nombre: "Lic. Carlos Vidal Neri",
+      puesto: "Director de TVEO Canal",
+      compania: "TVEO Canal",
+      conferencia: "EL EMPRENDIMIENTO COMO DETONANTE DEL DESARROLLO DE LAS CIUDADES",
+      colorTheme: "#f13b3b",
       glowClass: "from-[#D856BF]/20 to-transparent",
+      avatarUrl: "/expocitor_1.png",
     },
     {
       id: 2,
-      nombre: "Marcus Vance",
-      puesto: "Core Blockchain Architect",
-      compania: "Decentral Labs",
+      nombre: "Jahasiel E. Sevilla Muños.",
+      puesto: "Gerente de Innovation & Digital Transformation ",
+      compania: "Google Cloud consulting",
       conferencia: "Web3 y la Reconfiguración de la Seguridad Digital Colectiva",
-      tag: "Cybersecurity",
       colorTheme: "#F59E0B", // Naranja / Ámbar eléctrico
       glowClass: "from-[#F59E0B]/15 to-transparent",
+      avatarUrl: "/expocitor_2.png",
     },
     {
       id: 3,
-      nombre: "Ing. Carlos Mendoza",
-      puesto: "Quantum Computing Lead",
-      compania: "NextGen Computing",
+      nombre: "MARCO ANTONIO ARROYO CARRANZA UBICACIÓN.",
+      puesto: "Maestría en Psicoterapia Ericksoniana",
+      compania: "Centro Ericksoniano de México",
       conferencia: "Computación Cuántica: Desafiando los Límites del Silicio",
-      tag: "Quantum Tech",
       colorTheme: "#10B981", // Verde Esmeralda / Cian Cuántico
       glowClass: "from-[#10B981]/20 to-transparent",
+      avatarUrl: "/expocitor_3.png",
     }
   ];
 
@@ -81,7 +80,6 @@ export default function SpeakersMagistrales() {
           {speakersDestacados.map((speaker) => (
             <div
               key={speaker.id}
-              /* Optimizado el fondo con cristal esmerilado translúcido mediante bg-black/25 y backdrop-blur-xl */
               className="group relative bg-black/25 backdrop-blur-xl border border-white/10 rounded-xl p-6 transition-all duration-500 hover:shadow-2xl flex flex-col justify-between overflow-hidden"
               style={{
                 '--hover-border': speaker.colorTheme,
@@ -96,7 +94,7 @@ export default function SpeakersMagistrales() {
                   className="inline-block text-[10px] font-bold tracking-wider uppercase bg-black/50 backdrop-blur-sm border px-3 py-1 rounded-sm mb-6 transition-colors duration-300"
                   style={{ borderColor: `${speaker.colorTheme}44`, color: speaker.colorTheme }}
                 >
-                  {speaker.tag}
+                
                 </span>
 
                 {/* Contenedor del Avatar Rectangular de Cristal */}
@@ -107,10 +105,18 @@ export default function SpeakersMagistrales() {
                   {/* Patrón de líneas estéticas de fondo */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100%_8px] pointer-events-none" />
                   
-                  {/* Iniciales gigantes */}
-                  <span className="text-4xl font-black text-gray-500/50 group-hover:text-white transition-colors duration-500 tracking-widest">
-                    {speaker.nombre.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 3).toUpperCase()}
-                  </span>
+                  {speaker.avatarUrl ? (
+                    <img
+                      src={speaker.avatarUrl}
+                      alt={speaker.nombre}
+                      className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    /* Iniciales gigantes como fallback si no hay imagen */
+                    <span className="text-4xl font-black text-gray-500/50 group-hover:text-white transition-colors duration-500 tracking-widest">
+                      {speaker.nombre.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 3).toUpperCase()}
+                    </span>
+                  )}
                   
                   {/* Detalles decorativos de interfaz */}
                   <div className="absolute bottom-2 left-3 text-[8px] font-mono text-gray-600 group-hover:text-gray-400 transition-colors">
