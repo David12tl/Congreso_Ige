@@ -105,12 +105,13 @@ export default function MiUAPage() {
 
         // 4. Mapear y limpiar los datos de la lista de forma segura
         if (isMounted) {
-          const listaMapeada: AsistenteTicket[] = (rawAsistentes || []).map((t: Record<string, unknown>) => ({
-            id: t.id,
-            nombre: t.nombre || null,
-            email: t.email || '',
-            carrera: t.carrera || null,
-            matricula: t.matricula || null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const listaMapeada: AsistenteTicket[] = (rawAsistentes || []).map((t: any) => ({
+            id: String(t.id || ''),
+            nombre: t.nombre ? String(t.nombre) : null,
+            email: t.email ? String(t.email) : '',
+            carrera: t.carrera ? String(t.carrera) : null,
+            matricula: t.matricula ? String(t.matricula) : null,
             type: t.type === 'empresa' ? 'empresa' : 'alumno'
           }))
 
