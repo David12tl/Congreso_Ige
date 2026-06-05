@@ -69,9 +69,17 @@ export default function TextPressure({
   const [fontSize, setFontSize] = useState<number>(minFontSize);
   const [scaleY, setScaleY] = useState<number>(1);
   const [lineHeight, setLineHeight] = useState<number>(1);
+  const [isTouchDevice, setIsTouchDevice] = useState<boolean>(
+    typeof window !== 'undefined' ? window.matchMedia('(pointer: coarse)').matches : false
+  );
   const chars = text.split('');
 
   useEffect(() => {
+    // Detectar si es dispositivo táctil
+    const touchQuery = window.matchMedia('(pointer: coarse)');
+    const handleTouchChange = (e: MediaQueryListEvent) => setIsTouchDevice(e.matches);
+    touchQuery.addEventListener('change', handleTouchChange);
+
     const handleMouseMove = (e: MouseEvent) => {
       cursorRef.current.x = e.clientX;
       cursorRef.current.y = e.clientY;
@@ -81,8 +89,17 @@ export default function TextPressure({
       cursorRef.current.x = t.clientX;
       cursorRef.current.y = t.clientY;
     };
+    const handleTouchEnd = () => {
+      // Al levantar el dedo, restaurar suavemente al centro del contenedor
+      if (containerRef.current) {
+        const { left, top, width: w, height: h } = containerRef.current.getBoundingClientRect();
+        cursorRef.current.x = left + w / 2;
+        cursorRef.current.y = top + h / 2;
+      }
+    };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     if (containerRef.current) {
       const { left, top, width: w, height: h } = containerRef.current.getBoundingClientRect();
@@ -92,8 +109,10 @@ export default function TextPressure({
       cursorRef.current.y = mouseRef.current.y;
     }
     return () => {
+      touchQuery.removeEventListener('change', handleTouchChange);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 
@@ -121,14 +140,23 @@ export default function TextPressure({
     const debouncedSetSize = debounce(setSize, 100);
     debouncedSetSize();
     window.addEventListener('resize', debouncedSetSize);
-    return () => window.removeEventListener('resize', debouncedSetSize);
+    // También recalcular en orientation change (móviles al girar)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(debouncedSetSize, 150);
+    });
+    return () => {
+      window.removeEventListener('resize', debouncedSetSize);
+      window.removeEventListener('orientationchange', debouncedSetSize);
+    };
   }, [setSize]);
 
   useEffect(() => {
     let rafId: number;
     const animate = () => {
-      mouseRef.current.x += (cursorRef.current.x - mouseRef.current.x) / 15;
-      mouseRef.current.y += (cursorRef.current.y - mouseRef.current.y) / 15;
+      // En dispositivos táctiles usar amortiguación más fuerte (divisor mayor)
+      const damping = isTouchDevice ? 25 : 15;
+      mouseRef.current.x += (cursorRef.current.x - mouseRef.current.x) / damping;
+      mouseRef.current.y += (cursorRef.current.y - mouseRef.current.y) / damping;
 
       if (titleRef.current) {
         const titleRect = titleRef.current.getBoundingClientRect();

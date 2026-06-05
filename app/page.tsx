@@ -110,19 +110,19 @@ function HyperspeedBackground({ preset }: { preset: Record<string, unknown> }) {
 }
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
-  return <div style={styles.content}>{children}</div>;
+  return <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>;
 }
 
 function HeroSection() {
   return (
     <section style={styles.hero} className="animate-fadeIn">
       <span style={styles.heroTagline}>1er Congreso Internacional en Gestión Empresarial 2026</span>
-      <div style={{ position: 'relative', height: '150px' }} className="w-full max-w-4xl mx-auto my-4">
+      <div style={{ position: 'relative' }} className="w-full max-w-4xl mx-auto h-[80px] sm:h-[120px] md:h-[160px] my-2 sm:my-6">
         <TextPressure 
           text="ELIGE 2026"
           flex={true}
           textColor="currentColor"
-          minFontSize={48}
+          minFontSize={24}
         />
       </div>
       <p style={styles.heroDesc}>
@@ -452,9 +452,9 @@ function TimelineItem({
       
       {/* Tarjeta de contenido */}
       <div className="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl ml-2">
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-6">
           {/* Badge de tiempo */}
-          <span className={`w-fit min-w-[80px] text-center text-white font-bold text-[11px] py-1.5 px-3 rounded-md shadow-md ${dotColor}`}>
+          <span className={`w-fit md:min-w-[80px] text-center text-white font-bold text-[11px] py-1.5 px-3 rounded-md shadow-md ${dotColor}`}>
             {time}
           </span>
           {/* Lista de actividades */}
