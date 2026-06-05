@@ -14,8 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "1er Congreso Internacional en Gestión Empresarial 2026 | ELIGE 2026",
-  description: "Tema: Emprendimiento Liderazgo e Innovación en la Gestión Empresarial - Zona Centro del Estado de Veracruz",
+  title: "ELIGE"
 };
 
 export default function RootLayout({
