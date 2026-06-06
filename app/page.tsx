@@ -116,13 +116,12 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 function HeroSection() {
   return (
     <section style={styles.hero} className="animate-fadeIn">
-      <span style={styles.heroTagline}>1er Congreso Internacional en Gestión Empresarial 2026</span>
       <div style={{ position: 'relative' }} className="w-full max-w-4xl mx-auto h-[80px] sm:h-[120px] md:h-[160px] my-2 sm:my-6">
         <TextPressure 
           text="ELIGE 2026"
           flex={true}
           textColor="currentColor"
-          minFontSize={24}
+          minFontSize={20}
         />
       </div>
       <p style={styles.heroDesc}>
