@@ -120,6 +120,9 @@ export async function signInWithGoogle(): Promise<string> {
     provider: 'google',
     options: {
       redirectTo,
+      queryParams: {
+        prompt: 'select_account',
+      },
     },
   });
 

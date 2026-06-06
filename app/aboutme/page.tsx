@@ -4,7 +4,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '../../src/components/ui/navbar';
 import Footer from '../../src/components/ui/Footer';
-import AuroraBackground from '../../src/components/ui/AuroraBackground';
+import dynamic from 'next/dynamic';
+
+const AuroraBackground = dynamic(
+  () => import('../../src/components/ui/AuroraBackground'),
+  { ssr: false }
+);
 
 /* ─── Iconos SVG minimalistas ─── */
 const TargetIcon = (
@@ -119,10 +124,11 @@ export default function AboutMePage() {
 
                 {/* Columna de imagen — ocupa 1 de 3 columnas */}
                 <div className="relative w-full h-[250px] md:h-[350px] rounded-2xl overflow-hidden border border-border-subtle shadow-inner scroll-reveal">
-                  <Image 
+                <Image 
                     src="/IGE.png"
                     alt="Ingeniería en Gestión Empresarial - IGE"
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover hover:scale-105 transition-transform duration-500"
                     priority
                   />

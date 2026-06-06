@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface Speaker {
   id: number;
@@ -49,10 +50,12 @@ function SpeakerCard({ speaker }: { speaker: Speaker }) {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100%_8px] pointer-events-none" />
           
           {speaker.avatarUrl ? (
-            <img
+            <Image
               src={speaker.avatarUrl}
               alt={speaker.nombre}
-              className="w-full h-full object-cover absolute inset-0 transition-transform duration-500 group-hover:scale-110"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
           ) : (
             /* Iniciales gigantes como fallback si no hay imagen */
@@ -197,10 +200,12 @@ export default function SpeakersMagistrales() {
               
               <div className="relative z-10 w-full md:w-48 h-48 flex-shrink-0">
                 <div className="w-full h-full backdrop-blur-md border rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-tarjetas)', borderColor: 'var(--border-componentes)' }}>
-                  <img
+                  <Image
                     src="/mesa_redonda.png"
                     alt="Participante Mesa Redonda"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
               </div>
@@ -227,10 +232,12 @@ export default function SpeakersMagistrales() {
               
               <div className="relative z-10 w-full md:w-48 h-48 flex-shrink-0">
                 <div className="w-full h-full backdrop-blur-md border rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-tarjetas)', borderColor: 'var(--border-componentes)' }}>
-                  <img
+                  <Image
                     src="/mesa_redonda_1.png"
                     alt="Participante Mesa Redonda"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
               </div>

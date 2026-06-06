@@ -63,6 +63,7 @@ export default function AnimatedBackground() {
   }, [getColors]);
 
   useEffect(() => {
+    let isMounted = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -105,6 +106,7 @@ export default function AnimatedBackground() {
     let time = 0;
 
     const animate = () => {
+      if (!isMounted) return;
       time += 0.005;
       const w = canvas.width;
       const h = canvas.height;
@@ -162,11 +164,13 @@ export default function AnimatedBackground() {
     animate();
 
     return () => {
+      isMounted = false;
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouse);
       window.removeEventListener('mouseleave', onLeave);
       observer.disconnect();
+      console.log("🧹 [MEMORIA]: AnimatedBackground — Canvas animation destruida y RAM liberada correctamente.");
     };
   }, [initOrbs]);
 

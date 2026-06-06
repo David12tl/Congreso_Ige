@@ -30,7 +30,6 @@ const debounce = <T extends (...args: unknown[]) => void>(func: T, delay: number
 interface TextPressureProps {
   text?: string;
   fontFamily?: string;
-  fontUrl?: string;
   width?: boolean;
   weight?: boolean;
   italic?: boolean;
@@ -47,7 +46,6 @@ interface TextPressureProps {
 export default function TextPressure({
   text = 'ELIGE 2026',
   fontFamily = 'Compressa VF',
-  fontUrl = 'https://res.cloudinary.com/dr6lvwubh/raw/upload/v1529908256/CompressaPRO-GX.woff2',
   width = true,
   weight = true,
   italic = true,
@@ -56,7 +54,6 @@ export default function TextPressure({
   stroke = false,
   scale = false,
   textColor = 'currentColor',
-  strokeColor = '#7c3aed',
   className = '',
   minFontSize = 24
 }: TextPressureProps) {
@@ -141,12 +138,13 @@ export default function TextPressure({
     debouncedSetSize();
     window.addEventListener('resize', debouncedSetSize);
     // También recalcular en orientation change (móviles al girar)
-    window.addEventListener('orientationchange', () => {
+    const handleOrientationChange = () => {
       setTimeout(debouncedSetSize, 150);
-    });
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
     return () => {
       window.removeEventListener('resize', debouncedSetSize);
-      window.removeEventListener('orientationchange', debouncedSetSize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, [setSize]);
 
@@ -165,13 +163,26 @@ export default function TextPressure({
     }
 
     let rafId: number;
+    // Umbral de píxeles: ignoramos movimientos menores a 4px para evitar recálculos innecesarios
+    const MOVEMENT_THRESHOLD = 4;
+    let lastProcessedX = mouseRef.current.x;
+    let lastProcessedY = mouseRef.current.y;
+
     const animate = () => {
       // En dispositivos táctiles usar amortiguación más fuerte (divisor mayor)
       const damping = isTouchDevice ? 25 : 15;
       mouseRef.current.x += (cursorRef.current.x - mouseRef.current.x) / damping;
       mouseRef.current.y += (cursorRef.current.y - mouseRef.current.y) / damping;
 
-      if (titleRef.current) {
+      // Saltar recálculo si el cambio de posición es insignificante (< umbral de píxeles)
+      const dx = mouseRef.current.x - lastProcessedX;
+      const dy = mouseRef.current.y - lastProcessedY;
+      const movedDistance = Math.sqrt(dx * dx + dy * dy);
+
+      if (movedDistance >= MOVEMENT_THRESHOLD && titleRef.current) {
+        lastProcessedX = mouseRef.current.x;
+        lastProcessedY = mouseRef.current.y;
+
         const titleRect = titleRef.current.getBoundingClientRect();
         const maxDist = titleRect.width / 2;
 
@@ -199,7 +210,7 @@ export default function TextPressure({
     };
     animate();
     return () => cancelAnimationFrame(rafId);
-  }, [width, weight, italic, alpha]);
+  }, [width, weight, italic, alpha, isTouchDevice]);
 
   // CSS movido a app/globals.css para evitar inyección de <style> tags inline
   // que causan errores de hidratación y scripts fantasmas en Next.js

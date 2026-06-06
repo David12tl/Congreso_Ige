@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { signOut } from '@/app/auth/actions'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/src/lib/supabase/client'
 import {
   HiOutlineViewGrid,
   HiOutlineTicket,
@@ -148,6 +148,8 @@ const roleLabels: Record<UserRole, string> = {
 
 export function Sidebar({ user }: { user: SidebarUser }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
   const [collapsed, setCollapsed] = useState(false)
 
   // Filtra de forma estricta asegurando que solo se renderice lo que indica la imagen
@@ -156,7 +158,30 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   )
 
   const handleSignOut = async () => {
-    await signOut()
+    console.log("🔄 [DEBUG LOGOUT 1/3]: Iniciando proceso de cierre de sesión...")
+
+    try {
+      // 1. Forzar a Supabase a destruir los tokens de sesión locales y del servidor
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error("❌ [ERROR SUPABASE LOGOUT]: Error devuelto por Supabase:", error.message)
+        alert(`No se pudo cerrar la sesión: ${error.message}`)
+        return
+      }
+
+      console.log("✅ [DEBUG LOGOUT 2/3]: Sesión destruida con éxito en Supabase.")
+
+      // 2. Limpiar la caché de rutas de Next.js para asegurar que los Server Components se enteren del cambio de auth
+      router.refresh()
+
+      console.log("🚀 [DEBUG LOGOUT 3/3]: Redirigiendo limpiamente a la raíz del sitio...")
+
+      // 3. Redirigir al inicio de forma inmediata
+      router.push('/')
+    } catch (catchError) {
+      console.error("💥 [CRASH CRÍTICO EN LOGOUT]: Ocurrió un error inesperado al cerrar sesión:", catchError)
+    }
   }
 
   return (
@@ -237,7 +262,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
       <div className="border-t border-white/5 p-3">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+          className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all duration-300 text-left cursor-pointer group"
         >
           <HiOutlineLogout className="w-5 h-5 shrink-0" />
           {!collapsed && (

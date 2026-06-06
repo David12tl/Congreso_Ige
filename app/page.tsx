@@ -1,17 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/src/lib/supabase/client';
 import Navbar from '../src/components/ui/navbar';
 import TeatroMap from '../src/components/ui/MapaTeatro';
 import AliadosYPatrocinadores from '../src/components/ui/AliadosYPatrocinadores';
 import MapboxMap from '../src/components/ui/MapboxMap';
-import AuroraBackground from '../src/components/ui/AuroraBackground';
 import dynamic from 'next/dynamic';
 import Footer from '../src/components/ui/Footer';
 import { hyperspeedPresets } from '../src/components/Backgrounds/Hyperspeed';
 import SpeakersMagistrales from '../src/components/ui/SpeakersMagistrales';
 import ThemeToggle from '../src/components/ui/ThemeToggle';
-import TextPressure from '../src/components/ui/TextPressure';
+
+const AuroraBackground = dynamic(
+  () => import('../src/components/ui/AuroraBackground'),
+  { ssr: false }
+);
+
+const TextPressure = dynamic(
+  () => import('../src/components/ui/TextPressure'),
+  { ssr: false }
+);
 
 interface HyperspeedProps {
   effectOptions?: Record<string, unknown>;
@@ -59,6 +68,54 @@ export default function TalentLandInspiredPage() {
   // NO usar usePathname: evitar que Three.js se remonte en cada ruta.
   // Usamos key constante para que React no desmonte el fondo 3D en re-renders.
   const HYPERSPEED_KEY = "hyperspeed-bg";
+
+  const [isValidating, setIsValidating] = useState(true);
+
+  // 🛡️ VALIDACIÓN DE INTEGRIDAD DE SESIÓN (Anti-Zombie Session)
+  useEffect(() => {
+    const checkRealSession = async () => {
+      try {
+        const supabase = createClient();
+        console.log("🔍 [DEBUG INTEGRIDAD]: Validando existencia real del usuario en la base de datos...");
+        
+        // getUser() valida contra el servidor de Supabase, no solo contra el almacenamiento local.
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        // Si hay un error o no hay usuario, pero el SDK cree que hay una sesión local activa
+        if (error || !user) {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            console.warn("⚠️ [ALERTA INTEGRIDAD]: Se detectó una sesión local activa, pero el usuario ya NO existe en Supabase. Limpiando rastro...");
+            
+            // Destruir rastro en Supabase, borrar cookies y LocalStorage de golpe
+            await supabase.auth.signOut();
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            console.log("🧹 [DEBUG INTEGRIDAD]: Navegador sanitizado. El usuario ahora puede iniciar sesión con una cuenta nueva de Google.");
+          }
+        }
+      } catch (err) {
+        console.error("❌ [ERROR INTEGRIDAD]: Fallo al validar sesión:", err);
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    checkRealSession();
+  }, []);
+
+  if (isValidating) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
+          <p className="font-mono text-xs text-purple-400 uppercase tracking-[0.3em] animate-pulse">Sincronizando sistema...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuroraBackground>
@@ -469,49 +526,6 @@ function TimelineItem({
             {activities.map((act, i) => (
               <p key={i} className="text-sm font-semibold text-text-main leading-snug flex items-start gap-2">
                 <span className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${dotColor}`} aria-hidden="true" />
-                {act}
-              </p>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Componente interno: Bloque de Tiempo ─── */
-function TimeBlock({
-  time,
-  activities,
-  color = 'purple',
-  className = '',
-}: {
-  time: string;
-  activities: string[];
-  color?: 'purple' | 'emerald';
-  className?: string;
-}) {
-  const isPurple = color === 'purple';
-  const timeBg = isPurple
-    ? 'bg-purple-600 shadow-purple-500/20'
-    : 'bg-emerald-600 shadow-emerald-500/20';
-  const hoverBorder = isPurple
-    ? 'hover:border-purple-500/40'
-    : 'hover:border-emerald-500/40';
-
-  return (
-    <div className={`scroll-reveal ${className}`}>
-      <div className={`bg-surface-card border border-border-subtle rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] ${hoverBorder} hover:shadow-xl`}>
-        <div className="flex flex-col gap-3">
-          {/* Badge de tiempo */}
-          <span className={`w-fit min-w-[80px] text-center text-white font-bold text-[11px] py-1.5 px-3 rounded-md shadow-md ${timeBg}`}>
-            {time}
-          </span>
-          {/* Lista de actividades */}
-          <div className="space-y-1.5">
-            {activities.map((act, i) => (
-              <p key={i} className="text-sm font-semibold text-text-main leading-snug flex items-start gap-2">
-                <span className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isPurple ? 'bg-purple-500' : 'bg-emerald-500'}`} aria-hidden="true" />
                 {act}
               </p>
             ))}

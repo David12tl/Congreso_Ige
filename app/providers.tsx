@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
+
+const AnimatedBackground = dynamic(
+  () => import('@/src/components/ui/AnimatedBackground'),
+  { ssr: false }
+);
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +17,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       enableSystem={false}
       disableTransitionOnChange
     >
+      <AnimatedBackground />
       {children}
     </ThemeProvider>
   );

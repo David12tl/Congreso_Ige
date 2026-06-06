@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-bg-base: var(--aurora-bg);
@@ -89,13 +89,8 @@ body {
   }
 }
 
-/* === LEGACY TOKENS: compatibilidad con componentes existentes === */
-@theme {
-  --color-fondo-base: var(--aurora-bg);
-  --color-superficie-card: var(--aurora-surface);
-  --color-texto-base: var(--aurora-text);
-  --color-borde-sutil: var(--aurora-border);
-}
+/* === LEGACY TOKENS (mantenido para compatibilidad) === */
+/* Nota: Las variables --color-fondo-base y similares están migradas al @theme superior */
 
 @keyframes fadeIn {
   from {
