@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/src/lib/supabase/client';
 import Navbar from '../src/components/ui/navbar';
 import TeatroMap from '../src/components/ui/MapaTeatro';
@@ -69,49 +69,95 @@ export default function TalentLandInspiredPage() {
   // Usamos key constante para que React no desmonte el fondo 3D en re-renders.
   const HYPERSPEED_KEY = "hyperspeed-bg";
 
-  const [isValidating, setIsValidating] = useState(true);
+  type AuthStatus = 'loading' | 'error' | 'success';
+  const [status, setStatus] = useState<AuthStatus>('loading');
 
-  // 🛡️ VALIDACIÓN DE INTEGRIDAD DE SESIÓN (Anti-Zombie Session)
+  // 🛡️ Mecanismo para evitar fugas de memoria y actualizaciones en componentes desmontados
+  const isMounted = useRef(true);
+
   useEffect(() => {
-    const checkRealSession = async () => {
-      try {
-        const supabase = createClient();
-        console.log("🔍 [DEBUG INTEGRIDAD]: Validando existencia real del usuario en la base de datos...");
-        
-        // getUser() valida contra el servidor de Supabase, no solo contra el almacenamiento local.
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        // Si hay un error o no hay usuario, pero el SDK cree que hay una sesión local activa
-        if (error || !user) {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session) {
-            console.warn("⚠️ [ALERTA INTEGRIDAD]: Se detectó una sesión local activa, pero el usuario ya NO existe en Supabase. Limpiando rastro...");
-            
-            // Destruir rastro en Supabase, borrar cookies y LocalStorage de golpe
-            await supabase.auth.signOut();
-            localStorage.clear();
-            sessionStorage.clear();
-            
-            console.log("🧹 [DEBUG INTEGRIDAD]: Navegador sanitizado. El usuario ahora puede iniciar sesión con una cuenta nueva de Google.");
-          }
-        }
-      } catch (err) {
-        console.error("❌ [ERROR INTEGRIDAD]: Fallo al validar sesión:", err);
-      } finally {
-        setIsValidating(false);
-      }
-    };
-
-    checkRealSession();
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
   }, []);
 
-  if (isValidating) {
+  // 🛡️ VALIDACIÓN DE INTEGRIDAD DE SESIÓN (Anti-Zombie Session)
+  const checkRealSession = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      console.log("🔍 [DEBUG INTEGRIDAD]: Validando existencia real del usuario en la base de datos...");
+      
+      // getUser() valida contra el servidor de Supabase, no solo contra el almacenamiento local.
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      // Si hay un error de lógica de negocio (el usuario no existe)
+      if (error || !user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.warn("⚠️ [ALERTA INTEGRIDAD]: Se detectó una sesión local activa, pero el usuario ya NO existe en Supabase. Limpiando rastro...");
+          
+          await supabase.auth.signOut();
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          console.log("🧹 [DEBUG INTEGRIDAD]: Navegador sanitizado.");
+        }
+      }
+      if (isMounted.current) {
+        setStatus('success');
+      }
+    } catch (err) {
+      console.error("❌ [ERROR INTEGRIDAD]: Fallo de red al validar sesión:", err);
+      if (isMounted.current) {
+        setStatus('error');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const runValidation = async () => {
+      await checkRealSession();
+    };
+    if (isMounted.current) {
+      runValidation();
+    }
+  }, [checkRealSession]);
+
+  if (status === 'loading') {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
-          <p className="font-mono text-xs text-purple-400 uppercase tracking-[0.3em] animate-pulse">Sincronizando sistema...</p>
+          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(147,51,234,0.4)]"></div>
+          <p className="font-mono text-xs text-purple-400 uppercase tracking-[0.3em] animate-pulse">Validando credenciales...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-6 max-w-sm text-center px-6">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-white font-bold text-lg tracking-tight uppercase">Error de Sincronización</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              No pudimos establecer conexión con el sistema de seguridad. Por favor, verifica tu conexión a internet.
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              setStatus('loading');
+              checkRealSession();
+            }}
+            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)]"
+          >
+            Reintentar Conexión
+          </button>
         </div>
       </div>
     );
