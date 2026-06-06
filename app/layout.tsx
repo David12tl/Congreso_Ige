@@ -15,7 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ELIGE"
+  title: "ELIGE",
+  icons: {
+       icon: "/favicon.ico", // O '/icon.png'
+       shortcut: "/favicon.ico",
+       apple: "/apple-touch-icon.png", // Opcional, para dispositivos iOS
+     }
 };
 
 export default function RootLayout({
