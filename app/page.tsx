@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
 import Navbar from '../src/components/ui/navbar';
 import TeatroMap from '../src/components/ui/MapaTeatro';
 import AliadosYPatrocinadores from '../src/components/ui/AliadosYPatrocinadores';
@@ -57,12 +56,14 @@ const LANDS = [
 export default function TalentLandInspiredPage() {
   const [currentPreset, setCurrentPreset] = useState<Record<string, unknown>>(hyperspeedPresets.one);
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<string[]>([]);
-  const pathname = usePathname();
+  // NO usar usePathname: evitar que Three.js se remonte en cada ruta.
+  // Usamos key constante para que React no desmonte el fondo 3D en re-renders.
+  const HYPERSPEED_KEY = "hyperspeed-bg";
 
   return (
     <AuroraBackground>
     <main style={styles.main}>
-      <HyperspeedBackground key={pathname} preset={currentPreset} />
+      <HyperspeedBackground key={HYPERSPEED_KEY} preset={currentPreset} />
       
       <ContentWrapper>
         <Navbar />

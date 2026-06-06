@@ -22,17 +22,10 @@ export async function GET(request: Request) {
     const supabase = await createClient();
 
     // Intercambia el código temporal por una sesión real y guarda las cookies
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
-      // Obtener el usuario ya autenticado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        return NextResponse.redirect(`${origin}/Login?error=auth-callback-failed`);
-      }
+    if (!error && data?.user) {
+      const user = data.user;
 
       // --- CONSULTAR id_rol REAL DESDE LA BASE DE DATOS ---
       // Esto es CRÍTICO: leemos el id_rol desde la tabla profiles,
@@ -43,24 +36,11 @@ export async function GET(request: Request) {
       // para que futuras lecturas de user_metadata también estén correctas
       await syncAuthMetadataWithProfile(user.id);
 
-      // Asignar land_interest por defecto si no existe (primera vez con Google)
-      const metadata = user?.user_metadata ?? {};
-      if (!metadata.land_interest) {
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { land_interest: "Developer Land" },
-        });
-
-        if (updateError) {
-          console.error(
-            "Error al asignar land_interest por defecto:",
-            updateError.message,
-          );
-        }
-      }
-
       // Redirigir al dashboard según el id_rol REAL desde la BD
+      // Usamos 307 para preservar el método HTTP y evitar bucles
       return NextResponse.redirect(
         `${origin}${getDashboardPath(profile.id_rol)}`,
+        { status: 307 },
       );
     }
   }

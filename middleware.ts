@@ -142,10 +142,11 @@ export const config = {
      * Coincide con todas las rutas excepto:
      * - API routes
      * - Archivos estáticos de Next.js (_next/static, _next/image)
-     * - favicon.ico
-     * - Archivos de imagen/estáticos (.svg, .png, .jpg, .jpeg, .gif, .webp)
+     * - favicon.ico, archivos de imagen/estáticos
      * - Páginas públicas explícitas (para evitar bucles de redirección)
+     * - La raíz / y /aboutme, /about-ige son públicas
+     * - /auth/callback debe pasar sin ser interceptado
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|login|register|auth|faqs|terminos|privacidad|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register|auth|faqs|terminos|privacidad|aboutme|about-ige|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
