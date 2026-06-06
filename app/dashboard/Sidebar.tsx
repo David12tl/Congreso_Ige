@@ -108,6 +108,12 @@ const navItems: NavItem[] = [
     icon: <HiOutlinePlusCircle className="w-5 h-5" />,
     roles: ['encargado'],
   },
+  {
+    label: 'Asignar Asientos',
+    href: '/dashboard/asignacion-asientos',
+    icon: <HiOutlineMap className="w-5 h-5" />,
+    roles: ['admin', 'encargado'],
+  },
 
   // ─── OPCIONES EXCLUSIVAS DE USUARIO ASISTENTE ────────────────────────
   {

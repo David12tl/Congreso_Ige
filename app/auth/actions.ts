@@ -2,6 +2,7 @@
 
 import { createClient } from '@/src/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { generateAndSendCredential } from '@/src/app/auth/actions-credentials';
 
 export type AuthResult = { error: string } | { success: true };
 
@@ -62,9 +63,10 @@ export async function signInWithPassword(
 
 /**
  * Registro de nuevo usuario con correo, contraseña, nombre completo y land de interés.
- * Usa user_metadata para guardar full_name y land_interest.
- * Si hay error, devuelve un mensaje claro.
- * Si es exitoso, redirige al dashboard según el rol del usuario.
+ * TAMBIÉN:
+ * 1. Crea un ticket para el usuario
+ * 2. Asigna un asiento automáticamente
+ * 3. Genera y envía la credencial en PDF
  */
 export async function signUp(data: {
   email: string;
@@ -90,6 +92,54 @@ export async function signUp(data: {
   if (error) {
     const message = mapSupabaseError(error.message);
     return { error: message };
+  }
+
+  const userId = signUpData.user?.id;
+  if (!userId) {
+    return { error: 'Error al obtener el ID del usuario.' };
+  }
+
+  // ========== CREAR TICKET EN LA BASE DE DATOS ==========
+  // Generar un UUID para el QR
+  const { v4: uuidv4 } = await import('uuid');
+  const qrData = uuidv4();
+
+  const { data: ticketData, error: ticketError } = await supabase
+    .from('tickets')
+    .insert({
+      id: uuidv4(),
+      buyer_id: userId,
+      email: data.email,
+      nombre: data.fullName,
+      type: 'student', // Tipo por defecto
+      qr_data: qrData,
+      purchased_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (ticketError || !ticketData) {
+    console.error('Error creando ticket:', ticketError);
+    // No retornar error, el usuario se registró correctamente
+    // Pero sin ticket, no tendrá credencial
+  }
+
+  // ========== GENERAR Y ENVIAR CREDENCIAL ==========
+  if (ticketData?.id) {
+    try {
+      const credentialResult = await generateAndSendCredential(
+        ticketData.id,
+        userId
+      );
+
+      if (!credentialResult.success) {
+        console.warn('Advertencia: Credencial no generada:', credentialResult.error);
+        // No bloqueamos el registro si la credencial falla
+      }
+    } catch (credentialError) {
+      console.error('Error generando credencial:', credentialError);
+      // Continuamos con el registro
+    }
   }
 
   // Redirigir al dashboard según el id_rol del usuario
