@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/src/lib/supabase/client';
 import Navbar from '../src/components/ui/navbar';
 import TeatroMap from '../src/components/ui/MapaTeatro';
@@ -65,6 +66,7 @@ const LANDS = [
 export default function TalentLandInspiredPage() {
   const [currentPreset, setCurrentPreset] = useState<Record<string, unknown>>(hyperspeedPresets.one);
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<string[]>([]);
+  const router = useRouter();
   // NO usar usePathname: evitar que Three.js se remonte en cada ruta.
   // Usamos key constante para que React no desmonte el fondo 3D en re-renders.
   const HYPERSPEED_KEY = "hyperspeed-bg";
@@ -84,27 +86,27 @@ export default function TalentLandInspiredPage() {
   const checkRealSession = useCallback(async () => {
     try {
       const supabase = createClient();
-      console.log("🔍 [DEBUG INTEGRIDAD]: Validando existencia real del usuario en la base de datos...");
-      
-      // getUser() valida contra el servidor de Supabase, no solo contra el almacenamiento local.
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
-      // Si hay un error de lógica de negocio (el usuario no existe)
-      if (error || !user) {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          console.warn("⚠️ [ALERTA INTEGRIDAD]: Se detectó una sesión local activa, pero el usuario ya NO existe en Supabase. Limpiando rastro...");
-          
-          await supabase.auth.signOut();
-          localStorage.clear();
-          sessionStorage.clear();
-          
-          console.log("🧹 [DEBUG INTEGRIDAD]: Navegador sanitizado.");
-        }
+      console.log("🔍 [DEBUG REDIRECCIÓN]: Revisando tokens locales...");
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        console.log("ℹ️ [DEBUG REDIRECCIÓN]: No hay sesión local previa. Flujo limpio.");
+        if (isMounted.current) setStatus('success');
+        return;
       }
-      if (isMounted.current) {
-        setStatus('success');
+
+      console.log("🔍 [DEBUG REDIRECCIÓN]: Sesión local detectada. Validando con el servidor...");
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        console.warn("⚠️ [ZOMBIE DETECTADO]: Tokens corruptos o cuenta eliminada en el backend. Purgando...");
+        await supabase.auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        if (isMounted.current) setStatus('success');
+      } else {
+        console.log("✅ [DEBUG REDIRECCIÓN]: Usuario real confirmado. Redirigiendo a /dashboard...");
+        router.push('/dashboard/perfil');
       }
     } catch (err) {
       console.error("❌ [ERROR INTEGRIDAD]: Fallo de red al validar sesión:", err);
@@ -112,7 +114,7 @@ export default function TalentLandInspiredPage() {
         setStatus('error');
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const runValidation = async () => {
