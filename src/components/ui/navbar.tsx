@@ -4,12 +4,12 @@ import CardNav from './Card_nav'
 export default function Navbar() {
   const items = [
     {
-      label: "About",
+      label: "CONÓCENOS",
       bgColor: "#1B1722",
       textColor: "#fff",
       links: [
-        { label: "Company", ariaLabel: "About Company", href: "#" },
-        { label: "Careers", ariaLabel: "About Careers", href: "#" }
+        { label: "QUIENES SOMOS", ariaLabel: "About Company", href: "/aboutme" },
+        { label: "IGE", ariaLabel: "About Careers", href: "/about-ige" }
       ]
     },
     {

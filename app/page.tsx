@@ -115,14 +115,21 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 
 function HeroSection() {
   return (
-    <section style={styles.hero} className="animate-fadeIn">
-      <div style={{ position: 'relative' }} className="w-full max-w-4xl mx-auto h-[80px] sm:h-[120px] md:h-[160px] my-2 sm:my-6">
-        <TextPressure 
-          text="ELIGE 2026"
-          flex={true}
-          textColor="currentColor"
-          minFontSize={20}
-        />
+    <section className="animate-fadeIn mb-[14vh]">
+      <div className="mt-12 md:mt-24 flex flex-col items-center justify-center text-center w-full">
+        <div className="w-full max-w-5xl mx-auto mt-[40px] sm:mt-[70px] md:mt-[90px] mb-8 h-[80px] sm:h-[130px] md:h-[180px] flex items-center justify-center overflow-hidden">
+          <TextPressure 
+            text="ELIGE 2026"
+            flex={true}
+            alpha={false}
+            stroke={false}
+            width={true}
+            weight={true}
+            italic={true}
+            textColor="currentColor"
+            minFontSize={20}
+          />
+        </div>
       </div>
       <p style={styles.heroDesc}>
         Emprendimiento Liderazgo e Innovación en la Gestión Empresarial

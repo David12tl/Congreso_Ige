@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface Point {
   x: number;
@@ -151,6 +151,19 @@ export default function TextPressure({
   }, [setSize]);
 
   useEffect(() => {
+    // ─── BLOQUEO PARA MÓVILES (<768px) ──────────────────────────
+    // En pantallas pequeñas la animación cinética se desactiva por completo:
+    // todas las letras se fijan a valores base (peso normal, ancho normal, sin inclinación, opacidad 1)
+    // para evitar procesamiento extra y que el botón Login no se rompa.
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      spansRef.current.forEach(span => {
+        if (!span) return;
+        span.style.fontVariationSettings = `'wght' 400, 'wdth' 100, 'ital' 0`;
+        span.style.opacity = '1';
+      });
+      return; // Salimos del efecto sin lanzar el requestAnimationFrame
+    }
+
     let rafId: number;
     const animate = () => {
       // En dispositivos táctiles usar amortiguación más fuerte (divisor mayor)
@@ -188,31 +201,12 @@ export default function TextPressure({
     return () => cancelAnimationFrame(rafId);
   }, [width, weight, italic, alpha]);
 
-  const styleElement = useMemo(() => {
-    return (
-      <style>{`
-        @font-face {
-          font-family: '${fontFamily}';
-          src: url('${fontUrl}');
-          font-style: normal;
-        }
-        .flex-pressure { display: flex; justify-content: space-between; }
-        .stroke-pressure span { position: relative; color: ${textColor}; }
-        .stroke-pressure span::after {
-          content: attr(data-char);
-          position: absolute;
-          left: 0; top: 0; color: transparent; z-index: -1;
-          -webkit-text-stroke-width: 3px; -webkit-text-stroke-color: ${strokeColor};
-        }
-      `}</style>
-    );
-  }, [fontFamily, fontUrl, textColor, strokeColor]);
-
+  // CSS movido a app/globals.css para evitar inyección de <style> tags inline
+  // que causan errores de hidratación y scripts fantasmas en Next.js
   const dynamicClassName = [className, flex ? 'flex-pressure' : '', stroke ? 'stroke-pressure' : ''].filter(Boolean).join(' ');
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%', background: 'transparent' }}>
-      {styleElement}
       <h1
         ref={titleRef}
         className={dynamicClassName}

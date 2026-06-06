@@ -184,6 +184,7 @@ const CardNav: React.FC<CardNavProps> = ({
           </div>
 
           <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
+            <span className="text-base md:text-lg font-black tracking-tight select-none" style={{ color: menuColor || '#000' }}>IGE</span>
           </div>
 
           <a

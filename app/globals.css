@@ -111,3 +111,31 @@ body {
 @utility animate-fadeIn {
   animation: fadeIn 0.5s ease-out forwards;
 }
+
+/* ─── TextPressure: Font-face y estilos de soporte ─── */
+@font-face {
+  font-family: 'Compressa VF';
+  src: url('https://res.cloudinary.com/dr6lvwubh/raw/upload/v1529908256/CompressaPRO-GX.woff2');
+  font-style: normal;
+}
+
+.flex-pressure {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stroke-pressure span {
+  position: relative;
+  color: inherit;
+}
+
+.stroke-pressure span::after {
+  content: attr(data-char);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: transparent;
+  z-index: -1;
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: #7c3aed;
+}

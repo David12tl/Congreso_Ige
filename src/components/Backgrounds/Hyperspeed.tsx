@@ -1339,33 +1339,28 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = DEFAULT_EFFECT_OPTION
 
     let initCancelled = false;
     myApp.loadAssets().then(() => {
-      if (!initCancelled) {
+      if (!initCancelled && !myApp.disposed) {
         myApp.init();
-        // Sincronizar el ID de la clase con el ref del componente
-        const syncFrame = () => {
-          if (!myApp.disposed) {
-            animId.current = myApp.animationFrameId;
-            requestAnimationFrame(syncFrame);
-          }
-        };
-        syncFrame();
       }
     });
 
     return () => {
       initCancelled = true;
-      
-      // Tarea 3: Cleanup estricto
-      if (animId.current) {
-        cancelAnimationFrame(animId.current);
-      }
-      
+
+      // Cancelar TODOS los animation frames pendientes antes de dispose()
       if (appRef.current) {
         if (appRef.current.animationFrameId) {
           cancelAnimationFrame(appRef.current.animationFrameId);
+          appRef.current.animationFrameId = 0;
         }
         appRef.current.dispose();
         appRef.current = null;
+      }
+
+      // Respaldo extra por si quedó algún frame huérfano
+      if (animId.current) {
+        cancelAnimationFrame(animId.current);
+        animId.current = null;
       }
 
       // Limpiar físicamente el contenedor para que la nueva instancia
