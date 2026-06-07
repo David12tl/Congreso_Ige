@@ -1,7 +1,9 @@
 import { createClient } from "@/src/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
-import React from "react";
+import React, { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
 
 // Mapeo de colores basado en la Land de Interés
 const THEME_MAP: Record<string, { color: string; label: string; shadow: string }> = {
@@ -31,6 +33,7 @@ export default async function DashboardPage() {
   const theme = THEME_MAP[landKey] || THEME_MAP['dev'];
 
   return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Cargando...</div>}>
     <div className="flex min-h-screen bg-[#000] text-white font-sans selection:bg-white/20">
       {/* Sidebar Minimalista (Google Clean Style) */}
       <aside className="w-72 border-r border-white/10 bg-[#0d0e12] flex flex-col hidden md:flex">
@@ -161,6 +164,7 @@ export default async function DashboardPage() {
         </footer>
       </main>
     </div>
+    </Suspense>
   );
 }
 
