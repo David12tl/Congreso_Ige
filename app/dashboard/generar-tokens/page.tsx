@@ -1,9 +1,14 @@
 'use client'
 
-import React, { useState, useEffect, useTransition, useCallback } from 'react'
+import React, { useState, useEffect, useTransition, useCallback, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/src/lib/supabase/client' 
 import { HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
-import TeatroMap from '../../../src/components/ui/MapaTeatro'
+
+const TeatroMap = dynamic(() => import('../../../src/components/ui/MapaTeatro'), { 
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-slate-900 animate-pulse rounded-xl" />
+})
 
 interface PurchaseInsert {
   stripe_session_id: string;
@@ -23,8 +28,14 @@ interface TokenInsert {
   created_at?: string;
 }
 
+interface TicketRecord {
+  zone_id?: string;
+  event_id?: string;
+  name?: string;
+}
+
 export default function GeneradorTokensPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [isPending, startTransition] = useTransition()
 
   // Estado compartido con el mapa interactivo
@@ -70,7 +81,10 @@ export default function GeneradorTokensPage() {
   }, [supabase])
 
   useEffect(() => {
-    cargarEstadisticas()
+    const initFetch = async () => {
+      await cargarEstadisticas()
+    }
+    initFetch()
   }, [cargarEstadisticas])
 
   // FUNCIÓN PRINCIPAL CORREGIDA
@@ -108,7 +122,7 @@ export default function GeneradorTokensPage() {
         // 3. Consulta defensiva a la tabla de tickets
         const { data: dataTickets, error: errorTickets } = await supabase
           .from('tickets')
-          .select('*')
+          .select('zone_id, event_id, name')
           .limit(1)
 
         if (errorTickets) {
@@ -120,7 +134,7 @@ export default function GeneradorTokensPage() {
         const nuevosCodigos: string[] = []
 
         // 4. Mapeo seguro utilizando los IDs existentes de tu Postgres
-        const ticketsConsultados = (dataTickets || []) as Record<string, any>[]
+        const ticketsConsultados = (dataTickets || []) as TicketRecord[]
         
         const registrosAProcesar = ticketsConsultados.length > 0 
           ? ticketsConsultados 
