@@ -321,6 +321,7 @@ export default function GeneradorTokensPage() {
           <span className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full border ${badgeVisual.clase}`}>
             {badgeVisual.texto}
           </span>
+          
         </div>
 
         {errorMsg && (
