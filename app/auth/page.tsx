@@ -1,9 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from "@/src/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import React, { Suspense } from "react";
-
-export const dynamic = 'force-dynamic';
 
 // Mapeo de colores basado en la Land de Interés
 const THEME_MAP: Record<string, { color: string; label: string; shadow: string }> = {
@@ -18,7 +18,7 @@ const THEME_MAP: Record<string, { color: string; label: string; shadow: string }
   'Business Land': { color: "#f1eece", label: "Business Land", shadow: "rgba(241,238,206,0.3)" },
 };
 
-export default async function DashboardPage() {
+export default async function AuthPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
