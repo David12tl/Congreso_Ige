@@ -1,117 +1,209 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/src/lib/supabase/server'
+import type { ActionResult } from '@/src/components/asientos/types'
 
-export interface TicketAsistente {
-  id: string
-  eventName: string
-  zoneName: string  
+export interface DatosTicketCanjeado {
+  ticketId: string
   nombre: string | null
   email: string
-  qrData: string
-  type: 'alumno' | 'empresa'
+  matricula: string | null
+  carrera: string | null
+  semestre: string | null
+  telefono: string | null
+  unidadAcademica: string | null
+  asientoZona: string | null
+  asientoBloque: string | null
+  asientoFila: string | null
+  asientoNumero: number | null
+  tipo: string
 }
 
-// Interfaces estrictas para evitar que TypeScript infiera "never"
-interface DBProfileRow {
-  id: string
-  id_rol: number
-  email: string | null
-  created_at: string | null
-}
-
-interface DBPurchaseRow {
-  id: string
-  stripe_session_id: string
-  total: number
-  status: string
-  created_at: string | null
-}
-
-interface DBTicketRow {
-  id: string
-  event_id: string
-  zone_id: string
-  purchase_id: string | null
-  buyer_id: string
-  type: string
-  nombre: string | null
-  email: string
-  qr_data: string
-}
-
-export interface InfoAsientoCanjeado {
-  id: string
-  asientoReal: string | null
-}
-
-export async function activarTokenCompra(tokenSessionId: string): Promise<{ 
-  success: boolean; 
-  message: string; 
-  asientos?: InfoAsientoCanjeado[] 
-}> {
+/**
+ * Canjea un token de 8 dígitos:
+ * 1. Busca el token en tokens_canje por token_code
+ * 2. Verifica que esté 'disponible'
+ * 3. Cambia status a 'usado', guarda el UUID del alumno y la fecha
+ * 4. Asocia el ticket del asiento al buyer_id del alumno
+ * 5. Retorna los datos del ticket para generar QR y PDF
+ */
+export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionResult & { ticket?: DatosTicketCanjeado }> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    return { success: false, message: 'Sesión expirada o no válida.' }
+    return { success: false, message: 'Debes iniciar sesión para canjear un token.' }
   }
 
-  // FORCE-CAST: Forzamos un cliente genérico temporal para que acepte la tabla 'purchases' y sus columnas
-  const typedClient = supabase as unknown as {
-    from: (table: string) => {
-      select: (columns?: string) => {
-        eq: (column: string, value: string) => {
-          single: () => Promise<{ data: DBPurchaseRow | null; error: { message: string } | null }>
-          maybeSingle: () => Promise<{ data: DBPurchaseRow | null; error: { message: string } | null }>
-        }
-      }
-      update: (values: Record<string, unknown>) => {
-        eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>
-      }
-    }
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = supabase as any
 
-  // 1. Buscamos la compra en public.purchases usando el cliente forzado
-  const { data: purchase, error: pError } = await typedClient
-    .from('purchases')
-    .select('id, status')
-    .eq('stripe_session_id', tokenSessionId)
-    .maybeSingle()
-
-  if (pError || !purchase) {
-    return { success: false, message: 'El token ingresado no existe o es inválido.' }
-  }
-
-  // 🌟 MODIFICADO: Mensaje mucho más claro y descriptivo para el cliente en puerta
-  if (purchase.status !== 'completed') {
-    return { 
-      success: false, 
-      message: 'El token no puede ser canjeado hasta que liquides el total del boleto.' 
-    }
-  }
-
-  // 2. Comprobamos si el token ya fue reclamado previamente en tokens_canje
-  const { data: tokenCanje } = await typedClient
+  // 1. Buscar el token en tokens_canje
+  const { data: token, error: tokenError } = await client
     .from('tokens_canje')
-    .select('status, zone_id')
-    .eq('token_code', tokenSessionId)
+    .select('id, status, event_id, zone_id, creado_por')
+    .eq('token_code', tokenCode)
     .maybeSingle()
 
-  if (tokenCanje && tokenCanje.status === 'usado') {
-    return { success: false, message: 'Este token ya fue utilizado y no puede ser canjeado de nuevo.' }
+  if (tokenError || !token) {
+    return { success: false, message: 'Token inválido o no existe.' }
   }
 
-  // 2. Vinculamos los tickets que tengan este purchase_id al ID del usuario logueado
-  // Usamos el cliente dinámico para evitar errores de mapeo en columnas de 'tickets'
-  const { error: updateError } = await typedClient
+  const t = token as { id: string; status: string; event_id: string; zone_id: string; creado_por: string }
+
+  // 2. Verificar que esté disponible
+  if (t.status !== 'disponible') {
+    return { success: false, message: 'Token inválido o ya canjeado.' }
+  }
+
+  // 3. Actualizar el token a 'usado'
+  const { error: updateTokenError } = await client
+    .from('tokens_canje')
+    .update({
+      status: 'usado',
+      utilizado_por: user.id,
+      utilizado_el: new Date().toISOString(),
+    })
+    .eq('id', t.id)
+
+  if (updateTokenError) {
+    console.error('[canjearTokenPorCodigo] Error al actualizar token:', updateTokenError.message)
+    return { success: false, message: 'Error al canjear el token. Intenta de nuevo.' }
+  }
+
+  // 4. Buscar el ticket asociado a este token (por event_id y zone_id)
+  // Primero intentamos buscar un ticket del usuario creador (el encargado)
+  const { data: ticketData, error: ticketError } = await client
     .from('tickets')
-    .update({ buyer_id: user.id })
-    .eq('purchase_id', purchase.id)
+    .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type')
+    .eq('event_id', t.event_id)
+    .eq('zone_id', t.zone_id)
+    .eq('buyer_id', t.creado_por)
+    .maybeSingle()
 
-  if (updateError) {
-    return { success: false, message: 'Error al asociar los pases a tu cuenta.' }
+  // Si encontramos un ticket del encargado, lo transferimos al alumno
+  if (!ticketError && ticketData) {
+    const ticketRow = ticketData as {
+      id: string
+      nombre: string | null
+      email: string
+      matricula: string | null
+      carrera: string | null
+      semestre: string | null
+      telefono: string | null
+      unidad_academica: string | null
+      asiento_zona: string | null
+      asiento_bloque: string | null
+      asiento_fila: string | null
+      asiento_numero: number | null
+      type: string
+    }
+
+    // Actualizar el buyer_id al usuario actual
+    const { error: updateTicketError } = await client
+      .from('tickets')
+      .update({
+        buyer_id: user.id,
+        estatus_pago: 'pagado',
+        purchased_at: new Date().toISOString(),
+      })
+      .eq('id', ticketRow.id)
+
+    if (updateTicketError) {
+      console.error('[canjearTokenPorCodigo] Error al transferir ticket:', updateTicketError.message)
+      return { success: false, message: 'Error al vincular el pase a tu cuenta.' }
+    }
+
+    revalidatePath('/dashboard/ingresar-token')
+    revalidatePath('/dashboard/mis-asientos')
+
+    return {
+      success: true,
+      message: '¡Token canjeado exitosamente! Tu pase está activo.',
+      ticket: {
+        ticketId: ticketRow.id,
+        nombre: ticketRow.nombre,
+        email: ticketRow.email,
+        matricula: ticketRow.matricula,
+        carrera: ticketRow.carrera,
+        semestre: ticketRow.semestre,
+        telefono: ticketRow.telefono,
+        unidadAcademica: ticketRow.unidad_academica,
+        asientoZona: ticketRow.asiento_zona,
+        asientoBloque: ticketRow.asiento_bloque,
+        asientoFila: ticketRow.asiento_fila,
+        asientoNumero: ticketRow.asiento_numero,
+        tipo: ticketRow.type,
+      },
+    }
   }
 
-  return { success: true, message: '¡Pase reclamado y vinculado exitosamente!' }
+  // Si no hay ticket del encargado, buscar cualquier ticket en la zona/evento (pre-registro)
+  const { data: fallbackTicket } = await client
+    .from('tickets')
+    .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type')
+    .eq('event_id', t.event_id)
+    .eq('zone_id', t.zone_id)
+    .eq('estatus_pago', 'pre-registro')
+    .maybeSingle()
+
+  if (fallbackTicket) {
+    const fbTicket = fallbackTicket as {
+      id: string
+      nombre: string | null
+      email: string
+      matricula: string | null
+      carrera: string | null
+      semestre: string | null
+      telefono: string | null
+      unidad_academica: string | null
+      asiento_zona: string | null
+      asiento_bloque: string | null
+      asiento_fila: string | null
+      asiento_numero: number | null
+      type: string
+    }
+
+    const { error: updateFbError } = await client
+      .from('tickets')
+      .update({
+        buyer_id: user.id,
+        estatus_pago: 'pagado',
+        purchased_at: new Date().toISOString(),
+      })
+      .eq('id', fbTicket.id)
+
+    if (!updateFbError) {
+      revalidatePath('/dashboard/ingresar-token')
+      revalidatePath('/dashboard/mis-asientos')
+
+      return {
+        success: true,
+        message: '¡Token canjeado exitosamente! Tu pase está activo.',
+        ticket: {
+          ticketId: fbTicket.id,
+          nombre: fbTicket.nombre,
+          email: fbTicket.email,
+          matricula: fbTicket.matricula,
+          carrera: fbTicket.carrera,
+          semestre: fbTicket.semestre,
+          telefono: fbTicket.telefono,
+          unidadAcademica: fbTicket.unidad_academica,
+          asientoZona: fbTicket.asiento_zona,
+          asientoBloque: fbTicket.asiento_bloque,
+          asientoFila: fbTicket.asiento_fila,
+          asientoNumero: fbTicket.asiento_numero,
+          tipo: fbTicket.type,
+        },
+      }
+    }
+  }
+
+  // Token canjeado pero no pudimos vincular un ticket específico
+  revalidatePath('/dashboard/ingresar-token')
+  return {
+    success: true,
+    message: 'Token canjeado. Tu pase está activo. Revisa la sección de Mis Asientos.',
+  }
 }

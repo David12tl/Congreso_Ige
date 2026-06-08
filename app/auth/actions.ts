@@ -4,7 +4,7 @@ import { createClient } from '@/src/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { generateAndSendCredential } from '@/src/app/auth/actions-credentials';
 
-export type AuthResult = { error: string } | { success: true };
+export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.
@@ -58,7 +58,11 @@ export async function signInWithPassword(
   // Sincronizar metadata de Auth con el valor real de la BD
   await syncAuthMetadataWithProfile(userId);
 
-  redirect(getDashboardPath(profile.id_rol));
+  // NOTA: No usar redirect() aquí porque lanza una excepción (NEXT_REDIRECT)
+  // que causa Error 500 cuando la Server Action es invocada manualmente
+  // desde el cliente. En su lugar, devolvemos la ruta para que el cliente
+  // haga la navegación con router.push().
+  return { success: true, redirectTo: getDashboardPath(profile.id_rol) };
 }
 
 /**

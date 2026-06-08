@@ -17,46 +17,35 @@ export interface ResumenGlobal {
   porcentajeEmpresas: number
 }
 
-// Interfaces de mapeo para Supabase (Evitando usar any)
-interface SupabaseTicketRaw {
-  unidad_academica: string | null
-  type: string
-}
-
 export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: ResumenGlobal }> {
   const supabase = await createClient()
-  
-  // Forzamos el tipado intermedio seguro
-  const client = supabase as unknown as {
-    from: (table: string) => {
-      select: (columns?: string) => Promise<{ data: unknown[] | null; error: { message: string } | null }>
-    }
-  }
 
-  // 1. Consultar todos los tickets para calcular métricas por UA
-  const { data: ticketsData, error: err1 } = await client
+  // Consultar todos los tickets con el join a unidades_academicas para obtener el nombre real
+  const { data: ticketsData, error: err1 } = await supabase
     .from('tickets')
-    .select('unidad_academica, type')
+    .select('type, unidades_academicas!tickets_unidad_academica_id_fkey(nombre)')
 
   if (err1) {
     console.error('Error al consultar tickets para UA:', err1)
     return { uas: [], global: { totalTickets: 0, totalAlumnos: 0, totalEmpresas: 0, porcentajeAlumnos: 0, porcentajeEmpresas: 0 } }
   }
 
-  const rawTickets = (ticketsData || []) as SupabaseTicketRaw[]
+  const rawTickets = (ticketsData || []) as Array<{
+    type: string
+    unidades_academicas: { nombre: string } | null
+  }>
+
   const totalTicketsGeneral = rawTickets.length
 
-  // Agrupación manual libre de arrays dinámicos/any
+  // Agrupación manual por nombre de UA (usando el nombre real desde la relación FK)
   const conteoUA: Record<string, number> = {}
   let totalAlumnos = 0
   let totalEmpresas = 0
 
   rawTickets.forEach((ticket) => {
-    // Agrupar por Unidad Académica
-    const uaNombre = ticket.unidad_academica || 'No Especificada'
+    const uaNombre = ticket.unidades_academicas?.nombre || 'No Especificada'
     conteoUA[uaNombre] = (conteoUA[uaNombre] || 0) + 1
 
-    // Contar por tipo de ticket
     if (ticket.type === 'alumno') {
       totalAlumnos++
     } else if (ticket.type === 'empresa') {
@@ -65,15 +54,17 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
   })
 
   // Formatear el arreglo de UAs calculando su porcentaje de contribución
-  const uasFormateadas: UAMetrica[] = Object.keys(conteoUA).map((nombre) => {
-    const cantidad = conteoUA[nombre] || 0
-    const porcentaje = totalTicketsGeneral > 0 ? Math.round((cantidad / totalTicketsGeneral) * 100) : 0
-    return {
-      nombre,
-      totalTickets: cantidad,
-      porcentaje,
-    }
-  }).sort((a, b) => b.totalTickets - a.totalTickets) // Ordenar de mayor a menor ventas
+  const uasFormateadas: UAMetrica[] = Object.keys(conteoUA)
+    .map((nombre) => {
+      const cantidad = conteoUA[nombre] || 0
+      const porcentaje = totalTicketsGeneral > 0 ? Math.round((cantidad / totalTicketsGeneral) * 100) : 0
+      return {
+        nombre,
+        totalTickets: cantidad,
+        porcentaje,
+      }
+    })
+    .sort((a, b) => b.totalTickets - a.totalTickets) // Ordenar de mayor a menor ventas
 
   // Calcular porcentajes globales de segmentación
   const porcentajeAlumnos = totalTicketsGeneral > 0 ? Math.round((totalAlumnos / totalTicketsGeneral) * 100) : 0
@@ -87,6 +78,6 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
       totalEmpresas,
       porcentajeAlumnos,
       porcentajeEmpresas,
-    }
+    },
   }
 }

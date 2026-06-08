@@ -16,7 +16,8 @@ export default function Footer() {
         {/* COLUMNA 1: LOGO Y DESCRIPCIÓN */}
         <div className="md:col-span-2">
           <h3 className="text-lg font-black tracking-widest uppercase mb-4" style={{ color: 'var(--text-principal)' }}>
-            CONGRESO <span className="text-[#03B3C3]">IGE</span>
+            ELIGE <span className="text-[#03B3C3]">2030</span>
+            <br className="hidden md:block" /><p>Ingenieria en Gestion Empresarial</p>
           </h3>
           <p className="text-xs leading-relaxed max-w-sm" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
             El epicentro de la ingeniería, la tecnología y el desarrollo estratégico. 

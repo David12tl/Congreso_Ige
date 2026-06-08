@@ -4,8 +4,8 @@ import { createClient } from "@/src/lib/supabase/middleware";
 /**
  * Mapeo de id_rol a rutas de dashboard.
  *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargado
- *   3 → Usuario      → /dashboard/usuario
+ *   2 → Encargado    → /dashboard/encargados
+ *   3 → Usuario      → /dashboard/perfil
  */
 
 /**
@@ -13,7 +13,7 @@ import { createClient } from "@/src/lib/supabase/middleware";
  */
 function getDashboardPath(idRol: number): string {
   if (idRol === 1) return "/dashboard/admin";
-  if (idRol === 2) return "/dashboard/encargado";
+  if (idRol === 2) return "/dashboard/encargados";
   return "/dashboard/perfil"; // Para id_rol=3 o cualquier otro valor, redirige a dashboard de usuario
 }
 
@@ -29,10 +29,25 @@ function getRequiredRole(pathname: string): number | null {
     return 1; // Solo Admin (id_rol=1)
   }
   if (
-    pathname === "/dashboard/encargado" ||
-    pathname.startsWith("/dashboard/encargado/")
+    pathname === "/dashboard/encargados" ||
+    pathname.startsWith("/dashboard/encargados/")
   ) {
     return 2; // Admin (1) o Encargado (2)
+  }
+  // Rutas compartidas entre Admin y Encargado (unificación de roles)
+  if (
+    pathname === "/dashboard/mi-ua" ||
+    pathname.startsWith("/dashboard/mi-ua/") ||
+    pathname === "/dashboard/usuarios-ua" ||
+    pathname.startsWith("/dashboard/usuarios-ua/") ||
+    pathname === "/dashboard/tickets-gestion" ||
+    pathname.startsWith("/dashboard/tickets-gestion/") ||
+    pathname === "/dashboard/generar-tokens" ||
+    pathname.startsWith("/dashboard/generar-tokens/") ||
+    pathname === "/dashboard/mapa" ||
+    pathname.startsWith("/dashboard/mapa/")
+  ) {
+    return 2; // Admin (1) o Encargado (2) pueden acceder
   }
   if (
     pathname === "/dashboard/perfil" ||

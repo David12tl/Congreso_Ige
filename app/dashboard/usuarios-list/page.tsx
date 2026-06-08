@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineGlobeAlt } from 'react-icons/hi'
+import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineGlobeAlt, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { getTodosLosAsistentes, AsistenteGlobal } from './actions'
 
 function GlassCard({ children, className = '', glowColor = 'blue' }: {
@@ -22,6 +22,24 @@ function GlassCard({ children, className = '', glowColor = 'blue' }: {
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       {children}
     </div>
+  )
+}
+
+const STATUS_BADGES: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  completado: { bg: 'bg-gray-500/10', text: 'text-gray-400', border: 'border-gray-500/20', label: 'Completado' },
+  'pre-registro': { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20', label: 'Pre-registro' },
+  pendiente: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', label: 'Pendiente de pago' },
+  pagado: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Pagado' },
+}
+
+function getStatusBadge(estatus: string | null) {
+  const info = STATUS_BADGES[estatus ?? ''] ?? STATUS_BADGES['completado']
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${info.bg} ${info.text} ${info.border}`}>
+      {estatus === 'pagado' && <HiOutlineCheckCircle className="w-3 h-3" />}
+      {(estatus === 'pre-registro' || estatus === 'pendiente') && <HiOutlineExclamationCircle className="w-3 h-3" />}
+      {info.label}
+    </span>
   )
 }
 
@@ -168,13 +186,14 @@ export default function UsuariosListPage() {
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contacto</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Identificador / UA</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Detalles de Estudio</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">Estatus</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">Clasificación</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {asistentesFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500 font-mono">
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500 font-mono">
                     No se encontraron asistentes con los filtros seleccionados.
                   </td>
                 </tr>
@@ -207,6 +226,10 @@ export default function UsuariosListPage() {
                       ) : (
                         <span className="text-gray-500 italic">Acceso Corporativo / Empresa</span>
                       )}
+                    </td>
+                    {/* Columna de Estatus de pago */}
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(asistente.estatus_pago)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       {asistente.type === 'alumno' ? (

@@ -56,48 +56,48 @@ export default function MiUAPage() {
           return
         }
 
-        // Valor por defecto por si no tiene ticket registrado
-        let miUnidadAcademica = 'Instituto Tecnológico de Tijuana'
+        // 2. Obtener la unidad_academica_id del perfil del encargado (no de su ticket)
+        // La relación real en profiles es unidad_academica_id (bigint FK -> unidades_academicas.id)
+        let miUnidadAcademicaId: number | null = null
+        let nombreUA = 'No asignada'
 
-        // 2. Buscamos el ticket del encargado usando tipado específico para evitar errores del linter
         try {
-          const { data: ticketEncargado } = await (supabase as unknown as { 
-            from: (table: string) => { 
-              select: (fields: string) => {
-                eq: (field: string, value: string) => {
-                  maybeSingle: () => Promise<{ data: { unidad_academica: string } | null; error: unknown }>
-                }
-              }
-            }
-          })
-            .from('tickets')
-            .select('unidad_academica')
-            .eq('buyer_id', user.id)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: perfil } = await (supabase as any)
+            .from('profiles')
+            .select('unidad_academica_id, unidades_academicas!profiles_unidad_academica_id_fkey(nombre)')
+            .eq('id', user.id)
             .maybeSingle()
 
-          if (ticketEncargado?.unidad_academica) {
-            miUnidadAcademica = ticketEncargado.unidad_academica
+          if (perfil) {
+            miUnidadAcademicaId = perfil.unidad_academica_id as number | null
+            const uaRel = perfil.unidades_academicas as { nombre: string } | null
+            nombreUA = uaRel?.nombre ?? 'No asignada'
           }
         } catch (e) {
-          console.error('Error al mapear la UA del encargado, usando por defecto.', e)
+          console.error('Error al obtener la UA del perfil del encargado:', e)
         }
 
-        // 3. Traer los asistentes que pertenecen a esa misma unidad académica
-        const { data: rawAsistentes, error: asistentesError } = await (supabase as unknown as { 
-          from: (table: string) => { 
-            select: (fields: string) => {
-              eq: (field: string, value: string) => Promise<{ data: Array<{ id: string; nombre: string | null; email: string; carrera: string | null; matricula: string | null; type: string }> | null; error: unknown }>
-            }
+        if (miUnidadAcademicaId === null) {
+          console.error('[mi-ua] El encargado no tiene unidad_academica_id asignada en su perfil.')
+          if (isMounted) {
+            setNombreUA(nombreUA)
+            setLoading(false)
           }
-        })
+          return
+        }
+
+        // 3. Traer los asistentes que pertenecen a esa misma unidad académica por la FK real
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: rawAsistentes, error: asistentesError } = await (supabase as any)
           .from('tickets')
           .select('id, nombre, email, carrera, matricula, type')
-          .eq('unidad_academica', miUnidadAcademica)
+          .eq('unidad_academica_id', miUnidadAcademicaId)
 
         if (asistentesError) {
-          console.error('Error al cargar asistentes por UA:', asistentesError)
+          console.error('Error al cargar asistentes por UA:', JSON.stringify(asistentesError))
           if (isMounted) {
-            setNombreUA(miUnidadAcademica)
+            setNombreUA(nombreUA)
             setLoading(false)
           }
           return
@@ -118,7 +118,7 @@ export default function MiUAPage() {
           // Filtrar para que el encargado no se liste a sí mismo
           const asistentesFiltrados = listaMapeada.filter(asistente => asistente.email !== user.email)
 
-          setNombreUA(miUnidadAcademica)
+          setNombreUA(nombreUA)
           setAsistentes(asistentesFiltrados)
           setLoading(false)
         }

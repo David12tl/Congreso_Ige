@@ -26,9 +26,15 @@ export default function AuthForm() {
       return;
     }
 
-    // Success: the server action already called redirect() según el rol,
-    // but as a fallback we use router.push
-    router.push('/dashboard/usuario');
+    // Éxito: la Server Action devuelve la ruta de redirección según el id_rol.
+    // NO usa redirect() internamente porque eso lanza una excepción (NEXT_REDIRECT)
+    // que causa Error 500 cuando la Server Action es invocada manualmente.
+    // En su lugar, navegamos desde el cliente con router.push().
+    if (result.redirectTo) {
+      router.push(result.redirectTo);
+    } else {
+      router.push('/dashboard/usuario');
+    }
   };
 
   const handleGoogleSignIn = async () => {

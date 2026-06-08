@@ -3,41 +3,75 @@
 import { createClient } from '@/src/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export interface DashboardData {
+export interface AdminDashboardData {
   totalUsuarios: number
-  encargadosActivos: number
+  totalEncargados: number
+  totalUnidadesAcademicas: number
+  totalTickets: number
+  totalAlumnos: number
+  totalEmpresas: number
   topZone: string
   topZoneTickets: number
-  usuarios: Array<{
+  usuariosRecientes: Array<{
     id: string
-    email: string
+    email: string | null
     id_rol: number
-    nombre_ticket: string | null
+    created_at: string | null
+  }>
+  ticketsRecientes: Array<{
+    id: string
+    nombre: string | null
+    email: string
+    type: string
+    purchased_at: string | null
+    unidad_academica: string | null
   }>
 }
 
-export async function getAdminDashboardData(): Promise<DashboardData> {
+export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   const supabase = await createClient()
 
-  // 1. Obtener conteos globales de perfiles
+  // 1. Conteo global de perfiles
   const { count: totalUsuarios } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
 
-  const { count: encargadosActivos } = await supabase
+  // 2. Conteo de encargados (id_rol = 2)
+  const { count: totalEncargados } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('id_rol', 2)
 
-  // 2. Obtener la Zona con más tickets vendidos
-  const { data: ticketsData } = await supabase
+  // 3. Conteo de unidades académicas
+  const { count: totalUnidadesAcademicas } = await supabase
+    .from('unidades_academicas')
+    .select('*', { count: 'exact', head: true })
+
+  // 4. Conteo total de tickets
+  const { count: totalTickets } = await supabase
+    .from('tickets')
+    .select('*', { count: 'exact', head: true })
+
+  // 5. Conteo de tickets por tipo
+  const { count: totalAlumnos } = await supabase
+    .from('tickets')
+    .select('*', { count: 'exact', head: true })
+    .eq('type', 'alumno')
+
+  const { count: totalEmpresas } = await supabase
+    .from('tickets')
+    .select('*', { count: 'exact', head: true })
+    .eq('type', 'empresa')
+
+  // 6. Obtener la Zona con más tickets vendidos
+  const { data: ticketsZones } = await supabase
     .from('tickets')
     .select('zone_id, zones(name)')
 
   const zoneCounts: Record<string, { name: string; count: number }> = {}
 
-  if (ticketsData) {
-    for (const t of ticketsData) {
+  if (ticketsZones) {
+    for (const t of ticketsZones) {
       if (!t.zone_id) continue
       const zoneInfo = t.zones as { name: string } | null
       const name = zoneInfo?.name || 'Zona General'
@@ -57,36 +91,52 @@ export async function getAdminDashboardData(): Promise<DashboardData> {
     }
   }
 
-  // 3. Obtener lista de usuarios cruzando perfiles con su nombre en tickets
-  const { data: profiles } = await supabase
+  // 7. Últimos 5 usuarios registrados (actividad reciente)
+  const { data: profilesRecientes } = await supabase
     .from('profiles')
-    .select('id, email, id_rol')
+    .select('id, email, id_rol, created_at')
     .order('created_at', { ascending: false })
+    .limit(5)
 
-  const { data: tickets } = await supabase
+  // 8. Últimos 5 tickets comprados (actividad reciente)
+  const { data: ticketsRecientesRaw } = await supabase
     .from('tickets')
-    .select('buyer_id, nombre')
+    .select('id, nombre, email, type, purchased_at, unidades_academicas!tickets_unidad_academica_id_fkey(nombre)')
+    .order('purchased_at', { ascending: false, nullsFirst: false })
+    .limit(5)
 
-  const typedProfiles = profiles ?? []
-  const typedUserTickets = tickets ?? []
-
-  // Mapeamos asociando el nombre real si el usuario compró un ticket
-  const usuariosMapped = typedProfiles.map((profile) => {
-    const ticketAsociado = typedUserTickets.find((t) => t.buyer_id === profile.id)
-    return {
-      id: profile.id,
-      email: profile.email ?? 'Sin correo',
-      id_rol: profile.id_rol,
-      nombre_ticket: ticketAsociado?.nombre ?? 'Usuario Registrado',
-    }
-  })
+  const typedTicketsRecientes = (ticketsRecientesRaw || []) as Array<{
+    id: string
+    nombre: string | null
+    email: string
+    type: string
+    purchased_at: string | null
+    unidades_academicas: { nombre: string } | null
+  }>
 
   return {
     totalUsuarios: totalUsuarios || 0,
-    encargadosActivos: encargadosActivos || 0,
+    totalEncargados: totalEncargados || 0,
+    totalUnidadesAcademicas: totalUnidadesAcademicas || 0,
+    totalTickets: totalTickets || 0,
+    totalAlumnos: totalAlumnos || 0,
+    totalEmpresas: totalEmpresas || 0,
     topZone,
     topZoneTickets,
-    usuarios: usuariosMapped,
+    usuariosRecientes: (profilesRecientes || []).map((p) => ({
+      id: p.id,
+      email: p.email,
+      id_rol: p.id_rol,
+      created_at: p.created_at,
+    })),
+    ticketsRecientes: typedTicketsRecientes.map((t) => ({
+      id: t.id,
+      nombre: t.nombre,
+      email: t.email,
+      type: t.type,
+      purchased_at: t.purchased_at,
+      unidad_academica: t.unidades_academicas?.nombre ?? null,
+    })),
   }
 }
 

@@ -4,8 +4,6 @@ import { createClient } from '@/src/lib/supabase/server';
 import { generateCredentialPDF, CredentialData } from '@/src/lib/credentials/pdf-generator';
 import { assignSeatToUser } from '@/src/lib/credentials/seat-assignment';
 import { uploadCredentialPDF } from '@/src/lib/credentials/storage';
-import { sendCredentialEmail } from '@/src/lib/email/resend-client';
-
 export interface GenerateCredentialResult {
   success: boolean;
   message: string;
@@ -14,13 +12,12 @@ export interface GenerateCredentialResult {
 }
 
 /**
- * Genera y envía la credencial del alumno automáticamente después del registro.
+ * Genera y guarda la credencial del alumno automáticamente después del registro.
  * Pasos:
  * 1. Asignar un asiento automáticamente
  * 2. Generar PDF de credencial
  * 3. Subir PDF a Supabase Storage
- * 4. Enviar PDF por email
- * 5. Actualizar el ticket con la URL del PDF
+ * 4. Actualizar el ticket con la URL del PDF
  */
 export async function generateAndSendCredential(
   ticketId: string,
@@ -138,20 +135,7 @@ export async function generateAndSendCredential(
       };
     }
 
-    // ========== 6. ENVIAR EMAIL CON PDF ==========
-    const emailResult = await sendCredentialEmail({
-      email: ticket.email,
-      nombre: ticket.nombre || 'Alumno',
-      pdfBuffer,
-      ticketId,
-    });
-
-    if (!emailResult.success) {
-      console.warn('Advertencia: Email no se envió pero el PDF se generó:', emailResult.error);
-      // No retornar error, ya que el PDF está guardado
-    }
-
-    // ========== 7. ACTUALIZAR TICKET CON URL DEL PDF ==========
+    // ========== 6. ACTUALIZAR TICKET CON URL DEL PDF ==========
     const { error: pdfUrlError } = await supabase
       .from('tickets')
       .update({
@@ -167,7 +151,7 @@ export async function generateAndSendCredential(
     // ========== ÉXITO ==========
     return {
       success: true,
-      message: `✓ Credencial generada y enviada a ${ticket.email}`,
+      message: `✓ Credencial generada para ${ticket.email}`,
       pdfUrl: uploadResult.url,
     };
   } catch (error) {

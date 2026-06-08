@@ -18,6 +18,7 @@ import {
   HiOutlineIdentification,
   HiOutlinePlusCircle,
   HiOutlineQrcode,
+  HiOutlineCash,
 } from 'react-icons/hi'
 
 type UserRole = 'admin' | 'encargado' | 'user'
@@ -88,34 +89,34 @@ const navItems: NavItem[] = [
     label: 'Lista UA Encargada',
     href: '/dashboard/mi-ua',
     icon: <HiOutlineOfficeBuilding className="w-5 h-5" />,
-    roles: ['encargado'],
+    roles: ['admin', 'encargado'],
   },
   {
     label: 'Usuarios por UA',
     href: '/dashboard/usuarios-ua',
     icon: <HiOutlineUsers className="w-5 h-5" />,
-    roles: ['encargado'],
+    roles: ['admin', 'encargado'],
   },
   {
     label: 'Tickets',
     href: '/dashboard/tickets-gestion',
     icon: <HiOutlineTicket className="w-5 h-5" />,
-    roles: ['encargado'],
+    roles: ['admin', 'encargado'],
   },
   {
-    label: 'Generar Tokens',
+    label: 'Taquilla y Tokens',
     href: '/dashboard/generar-tokens',
-    icon: <HiOutlinePlusCircle className="w-5 h-5" />,
-    roles: ['encargado'],
-  },
-  {
-    label: 'Asignar Asientos',
-    href: '/dashboard/asignacion-asientos',
-    icon: <HiOutlineMap className="w-5 h-5" />,
+    icon: <HiOutlineCash className="w-5 h-5" />,
     roles: ['admin', 'encargado'],
   },
 
   // ─── OPCIONES EXCLUSIVAS DE USUARIO ASISTENTE ────────────────────────
+  {
+    label: 'Mis Asientos',
+    href: '/dashboard/mis-asientos',
+    icon: <HiOutlineTicket className="w-5 h-5" />,
+    roles: ['user'],
+  },
   {
     label: 'Ingresar Token',
     href: '/dashboard/ingresar-token',

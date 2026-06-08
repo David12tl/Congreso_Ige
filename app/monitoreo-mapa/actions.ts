@@ -11,6 +11,8 @@ interface TicketSeatRow {
   asiento_bloque: string | null
   asiento_fila: string | null
   asiento_numero: number | null
+  purchase_id: string | null
+  buyer_id: string | null
 }
 
 interface TicketsSeatClient {
@@ -30,7 +32,7 @@ export async function getOccupiedSeats(): Promise<OccupiedSeat[]> {
 
   const { data, error } = await client
     .from('tickets')
-    .select('id, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
+    .select('id, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, purchase_id, buyer_id')
     .eq('event_id', CONGRESO_IGE_EVENT_ID)
 
   if (error) {
@@ -52,16 +54,34 @@ export async function getOccupiedSeats(): Promise<OccupiedSeat[]> {
       ticket.asiento_fila &&
       ticket.asiento_numero,
     ))
-    .map((ticket) => ({
-      ticketId: ticket.id,
-      zoneCode: ticket.asiento_zona,
-      zoneId: ticket.zone_id,
-      bloque: ticket.asiento_bloque,
-      fila: ticket.asiento_fila,
-      numero: ticket.asiento_numero,
-    }))
+    .map((ticket) => {
+      // Derive payment status from purchase_id: if it has one, treat as 'pagado'
+      // Otherwise, since it has a buyer (exists in DB), treat as 'pre-registro'
+      const estatusPago: OccupiedSeat['estatusPago'] = ticket.purchase_id ? 'pagado' : 'pre-registro'
+      return {
+        ticketId: ticket.id,
+        zoneCode: ticket.asiento_zona,
+        zoneId: ticket.zone_id,
+        bloque: ticket.asiento_bloque,
+        fila: ticket.asiento_fila,
+        numero: ticket.asiento_numero,
+        estatusPago,
+        buyerId: ticket.buyer_id ?? undefined,
+      }
+    })
 }
 
 export async function getOccupiedSeatKeys(): Promise<string[]> {
   return (await getOccupiedSeats()).map(getSeatKey)
+}
+
+export async function getSeatStatusMap(): Promise<Record<string, string>> {
+  const seats = await getOccupiedSeats()
+  const map: Record<string, string> = {}
+  for (const seat of seats) {
+    if (seat.estatusPago) {
+      map[getSeatKey(seat)] = seat.estatusPago
+    }
+  }
+  return map
 }
