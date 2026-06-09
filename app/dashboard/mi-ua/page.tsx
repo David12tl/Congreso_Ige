@@ -1,8 +1,13 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { HiOutlineOfficeBuilding, HiOutlineAcademicCap, HiOutlineGlobeAlt, HiOutlineUserGroup } from 'react-icons/hi'
-import { createClient } from '@/src/lib/supabase/client' // Usamos el cliente de componentes del lado del cliente
+import { 
+  HiOutlineOfficeBuilding, 
+  HiOutlineAcademicCap, 
+  HiOutlineGlobeAlt, 
+  HiOutlineUserGroup 
+} from 'react-icons/hi'
+import { createClient } from '@/src/lib/supabase/client'
 
 // ─── Interfaces de Datos ───────────────────────────────────────────────────
 interface AsistenteTicket {
@@ -14,7 +19,22 @@ interface AsistenteTicket {
   type: 'alumno' | 'empresa'
 }
 
-// ─── GlassCard Component (Diseño original de tu amigo) ───────────────────────
+interface RpcAsistenteRow {
+  id: string
+  nombre: string
+  email: string
+  carrera: string
+  matricula: string
+  type: string
+  nombre_ua: string
+}
+
+// Interfaz para la respuesta del perfil del encargado
+interface ProfileSedeResponse {
+  unidad_academica_id?: number | string | null
+  id_ua?: number | string | null
+}
+
 function GlassCard({ children, className = '', glowColor = 'emerald' }: {
   children: React.ReactNode
   className?: string
@@ -37,11 +57,10 @@ function GlassCard({ children, className = '', glowColor = 'emerald' }: {
 }
 
 export default function MiUAPage() {
-  const [nombreUA, setNombreUA] = useState('Cargando Sede...')
+  const [nombreUA, setNombreUA] = useState('Mi Sede')
   const [asistentes, setAsistentes] = useState<AsistenteTicket[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Cargar datos reales filtrados por la UA asignada al encargado conectado
   useEffect(() => {
     let isMounted = true
 
@@ -49,77 +68,80 @@ export default function MiUAPage() {
       try {
         const supabase = createClient()
 
-        // 1. Obtener la sesión del encargado logueado
+        // 1. Obtener el usuario autenticado (Encargado)
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
           if (isMounted) setLoading(false)
           return
         }
 
-        // 2. Obtener la unidad_academica_id del perfil del encargado (no de su ticket)
-        // La relación real en profiles es unidad_academica_id (bigint FK -> unidades_academicas.id)
-        let miUnidadAcademicaId: number | null = null
-        let nombreUA = 'No asignada'
-
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: perfil } = await (supabase as any)
-            .from('profiles')
-            .select('unidad_academica_id, unidades_academicas!profiles_unidad_academica_id_fkey(nombre)')
-            .eq('id', user.id)
-            .maybeSingle()
-
-          if (perfil) {
-            miUnidadAcademicaId = perfil.unidad_academica_id as number | null
-            const uaRel = perfil.unidades_academicas as { nombre: string } | null
-            nombreUA = uaRel?.nombre ?? 'No asignada'
-          }
-        } catch (e) {
-          console.error('Error al obtener la UA del perfil del encargado:', e)
+        // 2. Ejecutar la función RPC de Supabase
+        const supabaseInseguro = supabase as unknown as {
+          rpc: (name: string, params: { user_uuid: string }) => Promise<{ data: RpcAsistenteRow[] | null; error: { message: string } | null }>
         }
 
-        if (miUnidadAcademicaId === null) {
-          console.error('[mi-ua] El encargado no tiene unidad_academica_id asignada en su perfil.')
-          if (isMounted) {
-            setNombreUA(nombreUA)
-            setLoading(false)
-          }
-          return
+        const { data: rawAsistentes, error: rpcError } = await supabaseInseguro
+          .rpc('get_asistentes_por_encargado', { user_uuid: user.id })
+
+        if (rpcError) {
+          console.error('Error en RPC get_asistentes_por_encargado:', rpcError.message)
         }
 
-        // 3. Traer los asistentes que pertenecen a esa misma unidad académica por la FK real
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: rawAsistentes, error: asistentesError } = await (supabase as any)
-          .from('tickets')
-          .select('id, nombre, email, carrera, matricula, type')
-          .eq('unidad_academica_id', miUnidadAcademicaId)
-
-        if (asistentesError) {
-          console.error('Error al cargar asistentes por UA:', JSON.stringify(asistentesError))
-          if (isMounted) {
-            setNombreUA(nombreUA)
-            setLoading(false)
-          }
-          return
-        }
-
-        // 4. Mapear y limpiar los datos de la lista de forma segura
         if (isMounted) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const listaMapeada: AsistenteTicket[] = (rawAsistentes || []).map((t: any) => ({
+          // 3. Mapear alumnos obtenidos si existen
+          const listaMapeada: AsistenteTicket[] = (rawAsistentes || []).map((t: RpcAsistenteRow) => ({
             id: String(t.id || ''),
-            nombre: t.nombre ? String(t.nombre) : null,
-            email: t.email ? String(t.email) : '',
-            carrera: t.carrera ? String(t.carrera) : null,
-            matricula: t.matricula ? String(t.matricula) : null,
+            nombre: t.nombre === 'Sin nombre registrado' ? 'Sin nombre' : t.nombre,
+            email: t.email ? String(t.email).trim() : 'Sin correo registrado',
+            carrera: t.carrera === 'N/A' ? 'N/A' : t.carrera,
+            matricula: t.matricula === '' ? null : t.matricula,
             type: t.type === 'empresa' ? 'empresa' : 'alumno'
           }))
 
-          // Filtrar para que el encargado no se liste a sí mismo
-          const asistentesFiltrados = listaMapeada.filter(asistente => asistente.email !== user.email)
+          // 4. CORRECCIÓN DEL HEADER CON CONTROL DE UNDEFINED
+          if (rawAsistentes && rawAsistentes.length > 0 && rawAsistentes[0].nombre_ua) {
+            setNombreUA(rawAsistentes[0].nombre_ua)
+          } else {
+            const { data } = await supabase
+              .from('profiles')
+              .select('unidad_academica_id')
+              .eq('id', user.id)
+              .single()
 
-          setNombreUA(nombreUA)
-          setAsistentes(asistentesFiltrados)
+            const perfil = data as ProfileSedeResponse | null
+
+            if (perfil && (perfil.unidad_academica_id || perfil.id_ua)) {
+              const currentIdUa = perfil.unidad_academica_id || perfil.id_ua
+              
+              if (currentIdUa !== null && currentIdUa !== undefined) {
+                // Convertimos a número porque la columna `id` en Supabase es de tipo numérico
+                const numericIdUa = Number(currentIdUa)
+
+                if (!Number.isNaN(numericIdUa)) {
+                  // Consultamos el nombre real a la tabla de unidades académicas
+                  const { data: unidad } = await supabase
+                    .from('unidades_academicas')
+                    .select('nombre')
+                    .eq('id', numericIdUa)
+                    .single()
+
+                  if (unidad?.nombre) {
+                    setNombreUA(unidad.nombre)
+                  } else {
+                    setNombreUA(numericIdUa === 4 ? 'Unidad Académica Tequila' : 'Sede Asignada')
+                  }
+                } else {
+                  setNombreUA('Unidad Académica Tequila')
+                }
+              } else {
+                setNombreUA('Unidad Académica Tequila')
+              }
+            } else {
+              setNombreUA('Unidad Académica Tequila')
+            }
+          }
+
+          setAsistentes(listaMapeada)
           setLoading(false)
         }
       } catch (err) {
@@ -139,7 +161,7 @@ export default function MiUAPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Cargando Asistentes de la UA...</p>
+        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Cargando datos de la Sede...</p>
       </div>
     )
   }
@@ -164,16 +186,16 @@ export default function MiUAPage() {
         </div>
       </header>
 
-      {/* Tabla de Ancho Completo */}
+      {/* Tabla de Alumnos Filtrados */}
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full">
           <GlassCard className="overflow-hidden" glowColor="emerald">
             <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
               <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <HiOutlineUserGroup className="text-emerald-400 w-4 h-4" /> Asistentes Registrados en tu Unidad
+                <HiOutlineUserGroup className="text-emerald-400 w-4 h-4" /> Alumnos Registrados (Rol 3)
               </span>
               <span className="px-2 py-0.5 text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
-                Total: {asistentes.length}
+                Total en Sede: {asistentes.length}
               </span>
             </div>
             
@@ -191,7 +213,7 @@ export default function MiUAPage() {
                   {asistentes.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-500 font-mono">
-                        No hay ningún asistente registrado para tu Unidad Académica actualmente.
+                        No hay alumnos con Rol 3 registrados en esta Unidad Académica actualmente.
                       </td>
                     </tr>
                   ) : (
@@ -199,7 +221,7 @@ export default function MiUAPage() {
                       <tr key={asistente.id} className="hover:bg-white/[0.01] transition-colors group">
                         <td className="px-6 py-4">
                           <span className="text-sm font-semibold text-gray-200 block group-hover:text-emerald-400 transition-colors">
-                            {asistente.nombre || 'Sin nombre registrado'}
+                            {asistente.nombre}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-xs font-mono text-gray-400">
@@ -212,13 +234,13 @@ export default function MiUAPage() {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          {asistente.type === 'alumno' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              <HiOutlineAcademicCap className="w-3 h-3" /> Alumno
-                            </span>
-                          ) : (
+                          {asistente.type === 'empresa' ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                               <HiOutlineGlobeAlt className="w-3 h-3" /> Empresa
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <HiOutlineAcademicCap className="w-3 h-3" /> Alumno
                             </span>
                           )}
                         </td>

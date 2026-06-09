@@ -3,21 +3,28 @@
 import React, { useState, useTransition, useMemo, useCallback, useEffect } from 'react'
 import { createClient } from '@/src/lib/supabase/client'
 import { AuditorioSeatMap, type SeatStatus } from '@/src/components/asientos/AuditorioSeatMap'
-import { auditorioConfig, getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/src/config/auditorioConfig'
-import { createManualSeatTicket, confirmarPagoTicket, generarTokensMultiples } from './actions'
-import type { AssignmentContext, UnidadAcademicaOption } from '@/src/components/asientos/types'
+import { getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/src/config/auditorioConfig'
 import {
-  HiCheckCircle,
+  cobrarAsientoYGenerarToken,
+  liquidarRestoAsiento,
+  getApartadoInfo,
+} from './tokenActions'
+import type { AssignmentContext } from '@/src/components/asientos/types'
+import {
   HiExclamationCircle,
-  HiOutlineCash,
   HiOutlineCheckCircle,
+  HiInformationCircle,
+  HiClock,
+  HiSearch,
+  HiUser,
+  HiTrash,
+  HiClipboardList,
+  HiX,
+  HiCurrencyDollar,
+  HiRefresh,
 } from 'react-icons/hi'
 
-// ─── Tipos ────────────────────────────────────────────────────────────
-
-type MultiSelectionMap = Record<string, SeatIdentity>
-
-type ViewMode = 'asignacion' | 'taquilla'
+// ─── Interfaces de Datos Estrictas ────────────────────────────────────
 
 interface TicketInsertPayload {
   event_id?: string | null
@@ -26,6 +33,20 @@ interface TicketInsertPayload {
   asiento_bloque?: string | null
   asiento_fila?: string | null
   asiento_numero?: number | null
+  purchase_id?: string | null
+  estatus_pago?: string | null
+}
+
+interface ApartadoInfoLocal {
+  ticketId: string
+  purchaseId: string | null
+  totalAbonado: number
+  montoRestante: number
+  status: string
+  total: number
+  tokenCode: string | null
+  nombre: string | null
+  email: string | null
 }
 
 interface TaquillaTokensViewProps {
@@ -35,24 +56,39 @@ interface TaquillaTokensViewProps {
   initialStats: { total: number; disponibles: number; usados: number }
 }
 
-interface FormState {
-  nombre: string
-  email: string
-  matricula: string
-  carrera: string
-  semestre: string
-  telefono: string
-  unidadAcademicaId: string
+interface TicketSelectResponse {
+  id: string
+  nombre: string | null
+  email: string | null
+  buyer_id?: string | null
+  type?: string | null
 }
 
-const emptyForm: FormState = {
-  nombre: '',
-  email: '',
-  matricula: '',
-  carrera: '',
-  semestre: '',
-  telefono: '',
-  unidadAcademicaId: '',
+// Interfaz para los registros de Apartados Pendientes (tabla de la nueva pestaña)
+interface ApartadoPendienteRow {
+  ticketId: string
+  purchaseId: string | null
+  zoneId: string | null
+  zoneCode: ZoneCode | null
+  bloque: string | null
+  fila: string | null
+  numero: number | null
+  nombre: string | null
+  email: string | null
+  totalAbonado: number
+  montoRestante: number
+  total: number
+  estatusPago: string
+  purchasedAt: string | null
+}
+
+// Interfaz para extender las propiedades esperadas en el objeto de configuración de zonas
+interface ExtendedZoneConfig {
+  id: string
+  code: ZoneCode
+  name?: string
+  price?: number
+  [key: string]: unknown
 }
 
 function parseInsertedSeat(row: TicketInsertPayload): SeatIdentity | null {
@@ -90,750 +126,967 @@ export function TaquillaTokensView({
   const [occupiedSeatKeys, setOccupiedSeatKeys] = useState(() => new Set(initialOccupiedSeatKeys))
   const [seatStatusMap, setSeatStatusMap] = useState<Record<string, SeatStatus>>(initialSeatStatusMap as Record<string, SeatStatus>)
 
-  // Selección múltiple (taquilla)
-  const [multiSelected, setMultiSelected] = useState<MultiSelectionMap>({})
-  const multiSelectedCount = Object.keys(multiSelected).length
-
-  // Selección simple (asignación manual)
+  // Asiento seleccionado para cobro
   const [selectedSeat, setSelectedSeat] = useState<SeatIdentity | null>(null)
-  const [selectedTicketInfo, setSelectedTicketInfo] = useState<{
-    ticketId: string
-    nombre: string
-    estatusPago: string
-  } | null>(null)
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
+  const [modalMode, setModalMode] = useState<'nuevo' | 'liquidar' | null>(null)
 
-  // Formulario de asignación
-  const [form, setForm] = useState<FormState>(() => ({
-    ...emptyForm,
-    unidadAcademicaId: assignmentContext.unidadAcademicaId?.toString() ?? '',
-  }))
+  // Estados del Buscador de Pre-Registros
+  const [busqueda, setBusqueda] = useState('')
+  const [usuariosPendientes, setUsuariosPendientes] = useState<TicketSelectResponse[]>([])
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<TicketSelectResponse | null>(null)
 
-  // Caja y tokens
-  const [montoAbonoGlobal, setMontoAbonoGlobal] = useState<number>(0)
+  // Formulario para Nuevo Asiento (Venta Directa o Apartado Inicial)
+  const [nombreAlumno, setNombreAlumno] = useState('')
+  const [emailAlumno, setEmailAlumno] = useState('')
+  const [tipoPago, setTipoPago] = useState<'efectivo' | 'transferencia'>('efectivo')
+  const [metodoRegistro, setMetodoRegistro] = useState<'pago' | 'apartado'>('pago')
+  const [montoApartado, setMontoApartado] = useState<number>(350)
+
+  // Estado de Información de un Asiento ya Apartado (Para liquidación)
+  const [infoApartado, setInfoApartado] = useState<ApartadoInfoLocal | null>(null)
+  const [loadingApartado, setLoadingApartado] = useState(false)
+  const [tipoPagoLiquidacion, setTipoPagoLiquidacion] = useState<'efectivo' | 'transferencia'>('efectivo')
+
+  // ─── Estados para la sección "Lista de Apartados Pendientes" ─────────
+  const [apartadosPendientes, setApartadosPendientes] = useState<ApartadoPendienteRow[]>([])
+  const [loadingApartados, setLoadingApartados] = useState(false)
+  const [errorApartados, setErrorApartados] = useState<string | null>(null)
+  // (El panel siempre es visible en la columna izquierda, no se requiere un toggle)
+  const [filtroNombre, setFiltroNombre] = useState('')
+
+  // Estados de Transición y Feedback
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [successMsg, setSuccessMsg] = useState<string | null>(null)
-  const [tokensGenerados, setTokensGenerados] = useState<string[]>([])
-  const [mostrarModalTokens, setMostrarModalTokens] = useState(false)
-  const [isPaymentMode, setIsPaymentMode] = useState(false)
   const [tokenGenerado, setTokenGenerado] = useState<string | null>(null)
-  const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
 
   // Estadísticas
-  const [stats, setStats] = useState(initialStats)
+  const [, setStats] = useState(initialStats)
 
-  // Vista activa
-  const [viewMode, setViewMode] = useState<ViewMode>('taquilla')
+  // Zona del Asiento Actual
+  const selectedZone = useMemo(() => {
+    if (!selectedSeat) return null
+    return getZoneByCode(selectedSeat.zoneCode) as ExtendedZoneConfig | undefined
+  }, [selectedSeat])
 
-  const PRECIO_POR_BOLETO = 650
-  const costoTotalTeorico = multiSelectedCount * PRECIO_POR_BOLETO
-  const lockedUnidad = assignmentContext.role === 'encargado'
+  // ─── Cargar lista de Apartados Pendientes desde Supabase ────────────
+  const cargarApartadosPendientes = useCallback(async () => {
+    setLoadingApartados(true)
+    setErrorApartados(null)
+    try {
+      const { data, error } = await (supabase
+        .from('tickets')
+        .select('id, nombre, email, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, purchase_id, estatus_pago, purchased_at, purchases(amount_paid, total, status)')
+        .in('estatus_pago', ['apartado', 'pendiente'])
+        .order('purchased_at', { ascending: false }) as unknown as Promise<{
+          data: Record<string, unknown>[] | null
+          error: { message: string } | null
+        }>)
 
-  // ─── Realtime subscriptions ──────────────────────────────────────────
-  useEffect(() => {
-    const channel = supabase
-      .channel('taquilla-tokens-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'tickets' },
-        (payload) => {
-          const seat = parseInsertedSeat(payload.new as TicketInsertPayload)
-          if (!seat) return
+      if (error) {
+        console.error('[cargarApartadosPendientes] Error:', error.message)
+        setErrorApartados('No se pudieron cargar los apartados pendientes.')
+        setApartadosPendientes([])
+        return
+      }
 
-          setOccupiedSeatKeys((current) => {
-            const next = new Set(current)
-            next.add(getSeatKey(seat))
-            return next
-          })
-        },
-      )
-      .subscribe((status, error) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || error) {
-          console.error('[TaquillaTokensView] Realtime error:', status, error)
-        }
-      })
+      const rows = (data ?? []) as Array<{
+        id: string
+        nombre: string | null
+        email: string | null
+        zone_id: string | null
+        asiento_zona: string | null
+        asiento_bloque: string | null
+        asiento_fila: string | null
+        asiento_numero: number | null
+        purchase_id: string | null
+        estatus_pago: string | null
+        purchased_at: string | null
+        purchases: { amount_paid: number; total: number; status: string } | null
+      }>
 
-    return () => {
-      void supabase.removeChannel(channel)
+      const lista: ApartadoPendienteRow[] = rows
+        .filter((r) => r.asiento_zona && r.asiento_bloque && r.asiento_fila && r.asiento_numero !== null)
+        .map((r) => {
+          const totalAbonado = r.purchases?.amount_paid ?? 0
+          const total = r.purchases?.total ?? 650
+          return {
+            ticketId: r.id,
+            purchaseId: r.purchase_id,
+            zoneId: r.zone_id,
+            zoneCode: r.asiento_zona as ZoneCode,
+            bloque: r.asiento_bloque,
+            fila: r.asiento_fila,
+            numero: r.asiento_numero,
+            nombre: r.nombre,
+            email: r.email,
+            totalAbonado,
+            montoRestante: Math.max(0, total - totalAbonado),
+            total,
+            estatusPago: r.estatus_pago ?? 'pendiente',
+            purchasedAt: r.purchased_at,
+          }
+        })
+
+      setApartadosPendientes(lista)
+    } catch (err) {
+      console.error('[cargarApartadosPendientes] Error general:', err)
+      setErrorApartados('Error de red al consultar los apartados pendientes.')
+    } finally {
+      setLoadingApartados(false)
     }
   }, [supabase])
 
-  // ─── Manejador de clic en asiento ────────────────────────────────────
+  // Carga automática al montar el componente
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void cargarApartadosPendientes()
+  }, [cargarApartadosPendientes])
+
+  // Cargar información si el asiento está apartado
+  const cargarInfoApartado = useCallback(async (ticketId: string, ticketRow: TicketSelectResponse | null) => {
+    setLoadingApartado(true)
+    setErrorMsg(null)
+    try {
+      const res = await getApartadoInfo(ticketId)
+      if (res.success && res.info) {
+        setInfoApartado(res.info)
+        setMontoApartado(res.info.montoRestante)
+      } else {
+        const defaultPrice = selectedZone?.price ?? 650
+        setInfoApartado({
+          ticketId,
+          purchaseId: null,
+          totalAbonado: 0,
+          montoRestante: defaultPrice,
+          status: 'pendiente',
+          total: defaultPrice,
+          tokenCode: null,
+          nombre: ticketRow?.nombre ?? null,
+          email: ticketRow?.email ?? null,
+        })
+        setMontoApartado(defaultPrice)
+      }
+    } catch {
+      setErrorMsg('Error de red al consultar el apartado.')
+    } finally {
+      setLoadingApartado(false)
+    }
+  }, [selectedZone])
+
+  // Handler para abrir el panel de liquidación desde la tabla de pendientes
+  const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) => {
+    setErrorMsg(null)
+    setTokenGenerado(null)
+
+    if (!row.zoneCode || !row.bloque || !row.fila || row.numero === null || !row.zoneId) {
+      setErrorMsg('No se pudo reconstruir la información del asiento para liquidar.')
+      return
+    }
+
+    const seat: SeatIdentity = {
+      zoneCode: row.zoneCode,
+      zoneId: row.zoneId,
+      bloque: row.bloque,
+      fila: row.fila,
+      numero: row.numero,
+    }
+
+    setSelectedSeat(seat)
+    setSelectedTicketId(row.ticketId)
+    setNombreAlumno(row.nombre ?? '')
+    setEmailAlumno(row.email ?? '')
+
+    await cargarInfoApartado(row.ticketId, {
+      id: row.ticketId,
+      nombre: row.nombre,
+      email: row.email,
+    })
+
+    setModalMode('liquidar')
+  }, [cargarInfoApartado])
+
+  // Handler al dar click en cualquier asiento del mapa
   const handleSeatClick = useCallback(async (seat: SeatIdentity) => {
+    setErrorMsg(null)
+    setTokenGenerado(null)
+    setBusqueda('')
+    setUsuariosPendientes([])
+    setUsuarioSeleccionado(null)
+
     const key = getSeatKey(seat)
-    const status = seatStatusMap[key]
     const occupied = occupiedSeatKeys.has(key)
+    const status = seatStatusMap[key]
 
-    // Si NO estamos en modo taquilla, manejar como asignación simple
-    if (viewMode === 'asignacion') {
-      if (occupied) {
-        // Si está ocupado con estatus especial, mostrar modal de pago
-        if (status === 'pre-registro' || status === 'pendiente') {
-          setIsPaymentMode(true)
-          setMessage(null)
+    if (status === 'pagado' || status === 'completo') {
+      setErrorMsg('Este asiento ya está completamente liquidado.')
+      return
+    }
 
-          try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const query = (supabase.from('tickets') as any)
-              .select('id, nombre, estatus_pago')
-              .eq('asiento_zona', seat.zoneCode)
-              .eq('asiento_bloque', seat.bloque)
-              .eq('asiento_fila', seat.fila)
-              .eq('asiento_numero', seat.numero)
+    if (!occupied) {
+      setSelectedSeat(seat)
+      setSelectedTicketId(null)
+      setModalMode('nuevo')
+      setNombreAlumno('')
+      setEmailAlumno('')
+      setMetodoRegistro('pago')
+      return
+    }
 
-            const { data } = await query.maybeSingle()
+    if (status === 'apartado' || status === 'pendiente') {
+      setSelectedSeat(seat)
+      setLoadingApartado(true)
+      setModalMode('liquidar')
 
-            if (data) {
-              const ticketData = data as { id: string; nombre: string | null; estatus_pago: string | null }
-              setSelectedTicketInfo({
-                ticketId: ticketData.id,
-                nombre: ticketData.nombre || 'Usuario',
-                estatusPago: ticketData.estatus_pago || 'pre-registro',
-              })
-            }
-          } catch (err) {
-            console.error('Error al buscar info del ticket:', err)
-          }
+      try {
+        const { data, error } = await supabase
+          .from('tickets')
+          .select('id, nombre, email, buyer_id')
+          .eq('asiento_zona' as 'id', seat.zoneCode)
+          .eq('asiento_bloque' as 'id', seat.bloque)
+          .eq('asiento_fila' as 'id', seat.fila)
+          .eq('asiento_numero' as 'id', String(seat.numero))
+          .order('purchased_at' as 'id', { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
-          setSelectedSeat(seat)
+        if (error || !data) {
+          setErrorMsg('No se encontró el ticket asociado al asiento apartado.')
+          setLoadingApartado(false)
           return
         }
 
-        // Si está pagado, no hacer nada
-        if (status === 'pagado') return
+        const ticketRow = data as TicketSelectResponse
+        setSelectedTicketId(ticketRow.id)
+        setNombreAlumno(ticketRow.nombre ?? '')
+        setEmailAlumno(ticketRow.email ?? '')
 
-        // Si está ocupado sin estatus especial, no hacer nada
-        if (occupied) return
+        await cargarInfoApartado(ticketRow.id, ticketRow)
+      } catch {
+        setErrorMsg('Error al consultar datos en tiempo real.')
+        setLoadingApartado(false)
       }
-
-      // Libre: mostrar formulario
-      setIsPaymentMode(false)
-      setSelectedSeat(seat)
-      setSelectedTicketInfo(null)
-      setMessage(null)
-      setForm((current) => ({
-        ...emptyForm,
-        unidadAcademicaId: current.unidadAcademicaId || assignmentContext.unidadAcademicaId?.toString() || '',
-      }))
-      return
     }
+  }, [occupiedSeatKeys, seatStatusMap, supabase, cargarInfoApartado])
 
-    // Modo taquilla: toggle multi-selección
-    setMultiSelected((prev) => {
-      const next = { ...prev }
-      if (next[key]) {
-        delete next[key]
-      } else {
-        if (!occupied) {
-          next[key] = seat
+  // Realtime Subscriptions
+  useEffect(() => {
+    let activeChannel: ReturnType<typeof supabase.channel> | null = null
+    let isUnmounted = false
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let reconnectAttempts = 0
+
+    const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
+      if (isUnmounted) return
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        if (activeChannel && reconnectAttempts === 0) return
+        scheduleReconnect()
+      } else if (event === 'SIGNED_OUT') {
+        if (activeChannel) {
+          void supabase.removeChannel(activeChannel)
+          activeChannel = null
         }
       }
-      return next
     })
-  }, [viewMode, occupiedSeatKeys, seatStatusMap, supabase, assignmentContext.unidadAcademicaId])
 
-  // ─── Confirmar pago de ticket (pre-registro) ─────────────────────────
-  const handleConfirmPayment = useCallback(() => {
-    if (!selectedSeat || !selectedTicketInfo) return
-
-    startTransition(async () => {
-      const result = await confirmarPagoTicket(selectedTicketInfo.ticketId)
-
-      if (!result.success) {
-        setMessage({ kind: 'error', text: result.message })
-        return
-      }
-
-      const key = getSeatKey(selectedSeat)
-      setSeatStatusMap((prev) => ({ ...prev, [key]: 'pagado' }))
-
-      if (result.tokenCode) {
-        setTokenGenerado(result.tokenCode)
-      }
-
-      setMessage({ kind: 'success', text: result.message })
-      setSelectedSeat(null)
-      setSelectedTicketInfo(null)
-      setIsPaymentMode(false)
-    })
-  }, [selectedSeat, selectedTicketInfo])
-
-  // ─── Envío de formulario de asignación ───────────────────────────────
-  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!selectedSeat) return
-
-    startTransition(async () => {
-      const result = await createManualSeatTicket({
-        ...selectedSeat,
-        nombre: form.nombre,
-        email: form.email,
-        matricula: form.matricula,
-        carrera: form.carrera,
-        semestre: form.semestre,
-        telefono: form.telefono,
-        unidadAcademicaId: form.unidadAcademicaId ? Number(form.unidadAcademicaId) : null,
-      })
-
-      if (!result.success) {
-        setMessage({ kind: 'error', text: result.message })
-        window.alert(result.message)
-        return
-      }
-
-      setOccupiedSeatKeys((current) => {
-        const next = new Set(current)
-        next.add(getSeatKey(selectedSeat))
-        return next
-      })
-      setSelectedSeat(null)
-      setForm({
-        ...emptyForm,
-        unidadAcademicaId: assignmentContext.unidadAcademicaId?.toString() ?? '',
-      })
-      setMessage({ kind: 'success', text: result.message })
-    })
-  }, [selectedSeat, form, assignmentContext.unidadAcademicaId])
-
-  // ─── Generar tokens y cobro ──────────────────────────────────────────
-  const handleGenerarTokens = useCallback(() => {
-    if (multiSelectedCount === 0) {
-      setErrorMsg('Por favor, selecciona al menos un asiento en el mapa.')
-      return
+    const scheduleReconnect = () => {
+      if (isUnmounted) return
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      const delay = Math.min(8000, 1000 * Math.pow(2, reconnectAttempts))
+      reconnectAttempts += 1
+      reconnectTimer = setTimeout(() => {
+        if (isUnmounted) return
+        if (activeChannel) {
+          void supabase.removeChannel(activeChannel)
+          activeChannel = null
+        }
+        subscribeChannel()
+      }, delay)
     }
 
-    if (montoAbonoGlobal < costoTotalTeorico) {
-      setErrorMsg(`El monto recibido ($${montoAbonoGlobal.toFixed(2)}) es insuficiente. Se requieren $${costoTotalTeorico.toFixed(2)} MXN.`)
+    const subscribeChannel = () => {
+      if (isUnmounted) return
+      void supabase.auth.getSession().catch(() => {})
+
+      const channel = supabase
+        .channel('taquilla-tokens-realtime')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'tickets' },
+          (payload) => {
+            const row = payload.new as TicketInsertPayload
+            const seat = parseInsertedSeat(row)
+            if (!seat) return
+
+            const key = getSeatKey(seat)
+            setOccupiedSeatKeys((current) => {
+              const next = new Set(current)
+              next.add(key)
+              return next
+            })
+            setSeatStatusMap((prev) => ({ ...prev, [key]: (prev[key] ?? 'apartado') as SeatStatus }))
+
+            void cargarApartadosPendientes()
+          },
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'tickets' },
+          (payload) => {
+            const row = payload.new as TicketInsertPayload & { estatus_pago?: string | null }
+            if (row.estatus_pago === 'pagado') {
+              void cargarApartadosPendientes()
+            }
+          },
+        )
+        .subscribe((status, error) => {
+          if (isUnmounted) return
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts = 0
+            return
+          }
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || error) {
+            scheduleReconnect()
+          }
+        })
+
+      activeChannel = channel
+    }
+
+    subscribeChannel()
+
+    return () => {
+      isUnmounted = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      authSub?.subscription?.unsubscribe()
+      if (activeChannel) {
+        void supabase.removeChannel(activeChannel)
+      }
+    }
+  }, [supabase, cargarApartadosPendientes])
+
+  // Buscar Pre-Registros en la Base de Datos
+  const handleBuscarPreRegistro = async () => {
+    if (!busqueda.trim()) return
+    setErrorMsg(null)
+
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('id, nombre, email, buyer_id')
+        .is('asiento_numero', null)
+        .or(`email.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`)
+        .limit(5)
+
+      if (error) throw error
+      setUsuariosPendientes((data as TicketSelectResponse[]) || [])
+      if (!data || data.length === 0) {
+        setErrorMsg('No se encontraron usuarios pre-registrados con esos criterios.')
+      }
+    } catch {
+      setErrorMsg('Error al buscar en la base de datos de pre-registros.')
+    }
+  }
+
+  // Confirmar Acción de Venta Directa o Apartado Inicial
+  const handleConfirmarNuevoCobro = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedSeat || !selectedZone) return
+    setErrorMsg(null)
+
+    if (!nombreAlumno.trim() || !emailAlumno.trim()) {
+      setErrorMsg('El nombre y el correo electrónico son obligatorios.')
       return
     }
 
     startTransition(async () => {
       try {
-        setErrorMsg(null)
-        setSuccessMsg(null)
+        const totalAPagar = selectedZone.price ?? 650
+        const cobroMonto = metodoRegistro === 'pago' ? totalAPagar : montoApartado
 
-        const asientosArray = Object.values(multiSelected)
-        const asientosPayload = asientosArray.map((seat) => ({
-          zoneId: seat.zoneId,
-          zoneCode: seat.zoneCode,
-          bloque: seat.bloque,
-          fila: seat.fila,
-          numero: seat.numero,
-        }))
+        const res = await cobrarAsientoYGenerarToken(
+          {
+            zoneId: selectedSeat.zoneId,
+            zoneCode: selectedSeat.zoneCode,
+            bloque: selectedSeat.bloque,
+            fila: selectedSeat.fila,
+            numero: selectedSeat.numero,
+          },
+          cobroMonto,
+          nombreAlumno.trim(),
+          emailAlumno.trim().toLowerCase(),
+          usuarioSeleccionado?.id,
+          metodoRegistro,
+        )
 
-        const result = await generarTokensMultiples(asientosPayload, montoAbonoGlobal)
-
-        if (!result.success) {
-          setErrorMsg(result.message)
-          return
-        }
-
-        if (result.tokens && result.tokens.length > 0) {
-          setTokensGenerados(result.tokens)
-          setMostrarModalTokens(true)
-        }
-
-        setMultiSelected({})
-        setMontoAbonoGlobal(0)
-        setSuccessMsg(result.message)
-
-        // Recargar estadísticas
-        const { data } = await supabase.from('tokens_canje').select('status')
-        if (data) {
-          const tokens = data as { status: string }[]
-          setStats({
-            total: tokens.length,
-            disponibles: tokens.filter((t) => t.status === 'disponible').length,
-            usados: tokens.length - tokens.filter((t) => t.status === 'disponible').length,
+        if (res.success) {
+          setTokenGenerado(res.token ?? 'TOKEN-OK')
+          const seatKey = getSeatKey(selectedSeat)
+          setOccupiedSeatKeys((current) => {
+            const next = new Set(current)
+            next.add(seatKey)
+            return next
           })
+          setSeatStatusMap((prev) => ({
+            ...prev,
+            [seatKey]: (metodoRegistro === 'apartado' ? 'apartado' : 'completo') as SeatStatus,
+          }))
+
+          // Refrescar lista de pendientes
+          void cargarApartadosPendientes()
+
+          const { data: tokenStats } = await supabase.from('tokens_canje').select('status')
+          if (tokenStats) {
+            const tokens = tokenStats as { status: string }[]
+            setStats({
+              total: tokens.length,
+              disponibles: tokens.filter((t) => t.status === 'disponible').length,
+              usados: tokens.length - tokens.filter((t) => t.status === 'disponible').length,
+            })
+          }
+        } else {
+          setErrorMsg(res.message || 'Ocurrió un error al procesar el asiento.')
         }
-      } catch (err) {
-        console.error('Error general:', err)
-        setErrorMsg('Ocurrió un error inesperado al procesar la solicitud.')
+      } catch {
+        setErrorMsg('Error de red al procesar el cobro.')
       }
     })
-  }, [multiSelectedCount, multiSelected, montoAbonoGlobal, costoTotalTeorico, supabase])
+  }
 
-  // ─── Badge de estatus ────────────────────────────────────────────────
-  const badgeVisual = useMemo(() => {
-    if (multiSelectedCount === 0) return { texto: 'ESPERANDO LUGARES', clase: 'bg-slate-800 text-slate-400 border-slate-700/50' }
-    if (montoAbonoGlobal <= 0) return { texto: 'SIN PAGO', clase: 'bg-red-500/10 text-red-400 border-red-500/20' }
-    if (montoAbonoGlobal >= costoTotalTeorico) return { texto: 'COMPLETADO', clase: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' }
-    return { texto: 'PAGO FALTANTE', clase: 'bg-amber-500/10 text-amber-400 border-amber-500/20' }
-  }, [multiSelectedCount, montoAbonoGlobal, costoTotalTeorico])
+  // Confirmar Liquidación de un Asiento Reservado/Apartado
+  const handleConfirmarLiquidacion = () => {
+    if (!selectedTicketId || !selectedSeat || !infoApartado) return
+    setErrorMsg(null)
 
-  const selectedUnidadLabel = useMemo(() => {
-    if (lockedUnidad) {
-      return assignmentContext.unidadAcademicaNombre ?? 'Unidad no asignada'
-    }
-    const selectedId = Number(form.unidadAcademicaId)
-    return assignmentContext.unidades.find((unidad) => unidad.id === selectedId)?.nombre ?? 'Selecciona una UA'
-  }, [assignmentContext, form.unidadAcademicaId, lockedUnidad])
+    startTransition(async () => {
+      try {
+        const res = await liquidarRestoAsiento(
+          selectedTicketId,
+          infoApartado.montoRestante
+        )
 
-  const multiSeatsList = useMemo(() => {
-    return Object.entries(multiSelected).map(([key, seat]) => {
-      const zone = getZoneByCode(seat.zoneCode)
-      return `${zone?.nombre || seat.zoneCode}-${seat.fila}${seat.numero}`
-    }).sort()
-  }, [multiSelected])
+        if (res.success) {
+          setTokenGenerado(res.token ?? 'TOKEN-LIQ')
+          const seatKey = getSeatKey(selectedSeat)
+          setSeatStatusMap((prev) => ({
+            ...prev,
+            [seatKey]: 'completo' as SeatStatus,
+          }))
 
-  const selectedZone = selectedSeat ? getZoneByCode(selectedSeat.zoneCode) : null
+          // Refrescar lista de pendientes: remueve automáticamente al alumno liquidado
+          void cargarApartadosPendientes()
+
+          const { data: tokenStats } = await supabase.from('tokens_canje').select('status')
+          if (tokenStats) {
+            const tokens = tokenStats as { status: string }[]
+            setStats({
+              total: tokens.length,
+              disponibles: tokens.filter((t) => t.status === 'disponible').length,
+              usados: tokens.length - tokens.filter((t) => t.status === 'disponible').length,
+            })
+          }
+
+          setModalMode(null)
+          setSelectedSeat(null)
+        } else {
+          setErrorMsg(res.message || 'Error al liquidar el apartado.')
+        }
+      } catch {
+        setErrorMsg('Error de comunicación con el servidor al liquidar.')
+      }
+    })
+  }
+
+  // Lista filtrada por nombre o email
+  const apartadosFiltrados = useMemo(() => {
+    if (!filtroNombre.trim()) return apartadosPendientes
+    const f = filtroNombre.toLowerCase()
+    return apartadosPendientes.filter(
+      (r) => r.nombre?.toLowerCase().includes(f) || r.email?.toLowerCase().includes(f),
+    )
+  }, [apartadosPendientes, filtroNombre])
+
+  const totalPendientes = apartadosPendientes.length
+  const totalAdeudo = apartadosPendientes.reduce((acc, r) => acc + r.montoRestante, 0)
 
   return (
-    <div className="min-h-screen text-white">
-      {/* Encabezado */}
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-black uppercase tracking-wider text-emerald-400">
-            Taquilla y Tokens
-          </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Cobro de asientos, asignación manual y generación de tokens
-          </p>
+    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen text-white p-4">
+      {/* Columna Izquierda: Mapa del Auditorio */}
+      <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-6 backdrop-blur-xl xl:col-span-2">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-wider text-emerald-400">Taquilla Física y Control de Asientos</h2>
+            <p className="text-xs text-slate-400">Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.</p>
+            <span className="mt-2 inline-block rounded-md bg-white/[0.03] border border-white/10 px-3 py-1.5 text-xs text-slate-300">
+              Rol: <strong>{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
+            </span>
+          </div>
         </div>
 
-        {/* Selector de modo */}
-        <div className="flex rounded-lg border border-white/10 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => { setViewMode('taquilla'); setSelectedSeat(null); setMultiSelected({}) }}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
-              viewMode === 'taquilla'
-                ? 'bg-emerald-500/20 text-emerald-300 border-r border-white/10'
-                : 'bg-transparent text-slate-400 hover:text-white border-r border-white/10'
-            }`}
-          >
-            🎟️ Taquilla
-          </button>
-          <button
-            type="button"
-            onClick={() => { setViewMode('asignacion'); setMultiSelected({}) }}
-            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
-              viewMode === 'asignacion'
-                ? 'bg-cyan-500/20 text-cyan-300'
-                : 'bg-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            ✏️ Asignar
-          </button>
-        </div>
-
-        {/* Badge de permiso */}
-        <div className="rounded-md border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-          <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Permiso</span>
-          <span className="font-bold uppercase text-white">{assignmentContext.role}</span>
-          {selectedUnidadLabel && (
-            <span className="ml-2 text-slate-400">{selectedUnidadLabel}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Mensajes globales */}
-      {errorMsg && (
-        <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3">
-          <HiExclamationCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-          <p className="text-xs text-red-400 font-medium">{errorMsg}</p>
-        </div>
-      )}
-      {successMsg && (
-        <div className="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3">
-          <HiCheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <p className="text-xs text-emerald-400 font-medium">{successMsg}</p>
-        </div>
-      )}
-
-      {/* LAYOUT PRINCIPAL: DOS COLUMNAS */}
-      <div className="flex flex-col xl:flex-row gap-6">
-        {/* ─── COLUMNA IZQUIERDA: MAPA ────────────────────────────────── */}
-        <div className="flex-1 min-w-0">
+        <div className="overflow-x-auto rounded-2xl bg-slate-950/50 p-4 border border-white/5">
           <AuditorioSeatMap
-            mode={viewMode === 'asignacion' ? 'assign' : 'assign'}
+            mode="assign"
             occupiedSeatKeys={occupiedSeatKeys}
-            selectedSeatKey={viewMode === 'asignacion' && selectedSeat ? getSeatKey(selectedSeat) : null}
+            selectedSeatKey={selectedSeat ? getSeatKey(selectedSeat) : null}
             onSeatClick={handleSeatClick}
             seatStatusMap={seatStatusMap}
           />
-
-          {viewMode === 'taquilla' && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-              <span className="inline-block h-3 w-3 rounded-sm bg-emerald-500/30 border border-emerald-400/50" />
-              <span>Modo taquilla: haz clic en asientos libres para seleccionarlos</span>
-            </div>
-          )}
         </div>
 
-        {/* ─── COLUMNA DERECHA: PANEL DE CONTROL ────────────────────────── */}
-        <div className="w-full xl:w-[420px] shrink-0 space-y-4">
-
-          {/* ESTADÍSTICAS */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-slate-900 border border-white/5 rounded-xl p-3 text-center">
-              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Totales</p>
-              <p className="text-lg font-black mt-1 text-white">{stats.total}</p>
+        {/* ─── Panel inferior: Lista de Apartados Pendientes ─── */}
+        <div className="mt-6 rounded-2xl border border-amber-500/20 bg-slate-950/50 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+                <HiClipboardList className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">Apartados Pendientes</h3>
+                <p className="text-[10px] text-slate-400">Personas que aún deben liquidar el resto de su asiento.</p>
+              </div>
             </div>
-            <div className="bg-slate-900 border border-emerald-500/20 rounded-xl p-3 text-center">
-              <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider">Disponibles</p>
-              <p className="text-lg font-black mt-1 text-emerald-400">{stats.disponibles}</p>
-            </div>
-            <div className="bg-slate-900 border border-white/5 rounded-xl p-3 text-center">
-              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Usados</p>
-              <p className="text-lg font-black mt-1 text-cyan-400">{stats.usados}</p>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Pendientes</p>
+                <p className="text-lg font-black text-amber-400 leading-none">{totalPendientes}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Adeudo Total</p>
+                <p className="text-lg font-black text-rose-400 leading-none">${totalAdeudo.toLocaleString('es-MX')} MXN</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void cargarApartadosPendientes()}
+                className="bg-slate-800 hover:bg-slate-700 text-white rounded-lg p-2 transition"
+                title="Refrescar lista"
+              >
+                <HiRefresh className={`h-4 w-4 ${loadingApartados ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
 
-          {/* MODO TAQUILLA: Panel de caja y tokens */}
-          {viewMode === 'taquilla' && (
-            <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="text-center space-y-1 border-b border-white/5 pb-3">
-                <h2 className="text-xs font-black uppercase tracking-widest text-gray-300">
-                  Confirmación de Registro y Caja
-                </h2>
-                <p className="text-[10px] text-gray-500">
-                  Cada boleto: <span className="text-white font-bold">$650.00 MXN</span>
+          {errorApartados && (
+            <div className="m-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-400">
+              <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{errorApartados}</span>
+            </div>
+          )}
+
+          <div className="p-4">
+            <div className="mb-3 flex items-center gap-2 bg-slate-900/50 border border-white/5 rounded-xl px-3 py-2">
+              <HiSearch className="w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                value={filtroNombre}
+                onChange={(e) => setFiltroNombre(e.target.value)}
+                placeholder="Filtrar por nombre o correo..."
+                className="flex-1 bg-transparent text-xs text-white focus:outline-none placeholder:text-slate-600"
+              />
+              {filtroNombre && (
+                <button
+                  type="button"
+                  onClick={() => setFiltroNombre('')}
+                  className="text-slate-500 hover:text-slate-300"
+                >
+                  <HiX className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {loadingApartados && apartadosPendientes.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
+                <p className="text-xs text-slate-400 font-mono">Cargando lista de apartados pendientes...</p>
+              </div>
+            ) : apartadosFiltrados.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-white/5 rounded-xl">
+                <HiOutlineCheckCircle className="mx-auto h-8 w-8 text-emerald-500/40 mb-2" />
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {totalPendientes === 0 ? '¡No hay apartados pendientes!' : 'Sin coincidencias para el filtro.'}
                 </p>
-              </div>
-
-              {/* Contador y total */}
-              <div className="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-white/5 text-xs">
-                <div>
-                  <span className="text-gray-400 block">Asientos marcados:</span>
-                  <span className="text-sm font-black text-white">{multiSelectedCount} u.</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-gray-400 block">Total a liquidar:</span>
-                  <span className="text-sm font-black text-emerald-400">
-                    ${costoTotalTeorico.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN
-                  </span>
-                </div>
-              </div>
-
-              {/* Input de efectivo */}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="monto_abonado" className="text-xs font-bold text-gray-300 tracking-wide">
-                  Monto total recibido en caja para esta operación ($):
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-3 text-gray-500 font-bold text-sm">$</span>
-                  <input
-                    id="monto_abonado"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    disabled={multiSelectedCount === 0}
-                    value={montoAbonoGlobal === 0 ? '' : montoAbonoGlobal}
-                    onChange={(e) => setMontoAbonoGlobal(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    placeholder="Ingresa la cantidad que abona el cliente..."
-                  />
-                </div>
-              </div>
-
-              {/* Badge de estatus */}
-              <div className="flex justify-between items-center bg-slate-950/40 p-3 rounded-xl border border-white/5">
-                <div className="flex flex-col text-xs">
-                  <span className="text-gray-400 font-medium">Estatus de emisión</span>
-                  {montoAbonoGlobal > 0 && montoAbonoGlobal < costoTotalTeorico && (
-                    <span className="text-[10px] text-amber-400/90 mt-0.5 font-mono">
-                      Deuda: ${(costoTotalTeorico - montoAbonoGlobal).toFixed(2)} MXN
-                    </span>
-                  )}
-                </div>
-                <span className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full border ${badgeVisual.clase}`}>
-                  {badgeVisual.texto}
-                </span>
-              </div>
-
-              {/* Resumen de asientos seleccionados */}
-              <div className="bg-slate-950 rounded-xl border border-white/5 p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
-                  Lugares seleccionados:
-                </p>
-                {multiSeatsList.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {multiSeatsList.map((seatLabel) => (
-                      <span key={seatLabel} className="text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">
-                        {seatLabel}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic">No hay asientos apartados.</p>
+                {totalPendientes === 0 && (
+                  <p className="mt-1 text-[11px] text-slate-500">Todos los asientos apartados han sido liquidados.</p>
                 )}
               </div>
-
-              {/* Botón de generación */}
-              <button
-                type="button"
-                disabled={isPending || multiSelectedCount === 0}
-                onClick={handleGenerarTokens}
-                className="w-full py-4 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 disabled:from-slate-800 disabled:to-slate-800 text-black disabled:text-gray-500 font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                {isPending
-                  ? 'Generando tokens...'
-                  : `Generar Cobro y ${multiSelectedCount} Token(s)`}
-              </button>
-            </div>
-          )}
-
-          {/* MODO ASIGNACIÓN: consola de asignación (compacta) */}
-          {viewMode === 'asignacion' && (
-            <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4 shadow-xl">
-              <div className="text-center border-b border-white/5 pb-3">
-                <h2 className="text-xs font-black uppercase tracking-widest text-cyan-300">
-                  Asignación Manual de Asientos
-                </h2>
-                <p className="text-[10px] text-gray-500 mt-1">
-                  Selecciona un asiento libre en el mapa para registrar a un alumno
-                </p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-white/5">
+                <table className="w-full text-[11px]">
+                  <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[9px]">
+                    <tr>
+                      <th className="px-3 py-2.5 text-left font-black">Alumno</th>
+                      <th className="px-3 py-2.5 text-left font-black">Correo</th>
+                      <th className="px-3 py-2.5 text-left font-black">Asiento</th>
+                      <th className="px-3 py-2.5 text-right font-black">Abonado</th>
+                      <th className="px-3 py-2.5 text-right font-black">Restante</th>
+                      <th className="px-3 py-2.5 text-center font-black">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {apartadosFiltrados.map((row) => (
+                      <tr key={row.ticketId} className="hover:bg-white/[0.02] transition">
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-black text-[10px] shrink-0">
+                              {row.nombre?.charAt(0).toUpperCase() || '?'}
+                            </div>
+                            <span className="font-bold text-white truncate max-w-[140px]" title={row.nombre ?? ''}>
+                              {row.nombre || '—'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-300 font-mono text-[10px] truncate max-w-[180px]" title={row.email ?? ''}>
+                          {row.email || '—'}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex flex-col">
+                            <span className="text-white font-black">
+                              {row.zoneCode} · {row.bloque}{row.fila}{row.numero}
+                            </span>
+                            <span className="text-slate-500 text-[9px]">
+                              Bloque {row.bloque} · Fila {row.fila} · Num {row.numero}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className="text-emerald-400 font-black">${row.totalAbonado.toLocaleString('es-MX')}</span>
+                          <span className="text-slate-500 text-[9px] block">de ${row.total.toLocaleString('es-MX')}</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className="text-rose-400 font-black">${row.montoRestante.toLocaleString('es-MX')}</span>
+                          <span className="text-slate-500 text-[9px] block">MXN</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => void handleLiquidarDesdeTabla(row)}
+                            disabled={isPending}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-black font-black uppercase tracking-wider text-[10px] px-3 py-1.5 hover:opacity-90 disabled:opacity-50 transition shadow-md"
+                          >
+                            <HiCurrencyDollar className="w-3 h-3" />
+                            Liquidar Saldo
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              {lockedUnidad && !assignmentContext.unidadAcademicaId && (
-                <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
-                  Tu usuario de encargado no tiene unidad académica asociada.
-                </div>
-              )}
-
-              {message && (
-                <div className={`rounded-md border px-3 py-2 text-xs ${
-                  message.kind === 'success'
-                    ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200'
-                    : 'border-red-400/30 bg-red-400/10 text-red-200'
-                }`}>
-                  {message.text}
-                </div>
-              )}
-
-              {!selectedSeat && (
-                <div className="text-center py-6 text-slate-500 text-sm">
-                  Haz clic en un asiento libre del mapa para comenzar el registro.
-                </div>
-              )}
-
-              {selectedSeat && selectedZone && !isPaymentMode && (
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <div className="bg-slate-950 rounded-lg border border-white/5 p-3 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-cyan-300">Asiento seleccionado</p>
-                    <p className="text-lg font-black text-white mt-1">
-                      {selectedZone.nombre} / {selectedSeat.bloque}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      Fila {selectedSeat.fila}, Asiento {selectedSeat.numero}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      required
-                      placeholder="Nombre"
-                      value={form.nombre}
-                      onChange={(e) => setForm((c) => ({ ...c, nombre: e.target.value }))}
-                      className="col-span-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                    <input
-                      required
-                      type="email"
-                      placeholder="Email"
-                      value={form.email}
-                      onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))}
-                      className="col-span-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                    <input
-                      placeholder="Matrícula"
-                      value={form.matricula}
-                      onChange={(e) => setForm((c) => ({ ...c, matricula: e.target.value }))}
-                      className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                    <input
-                      placeholder="Carrera"
-                      value={form.carrera}
-                      onChange={(e) => setForm((c) => ({ ...c, carrera: e.target.value }))}
-                      className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                    <input
-                      placeholder="Semestre"
-                      value={form.semestre}
-                      onChange={(e) => setForm((c) => ({ ...c, semestre: e.target.value }))}
-                      className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                    <input
-                      placeholder="Teléfono"
-                      value={form.telefono}
-                      onChange={(e) => setForm((c) => ({ ...c, telefono: e.target.value }))}
-                      className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    />
-                  </div>
-
-                  {!lockedUnidad && (
-                    <select
-                      required
-                      value={form.unidadAcademicaId}
-                      onChange={(e) => setForm((c) => ({ ...c, unidadAcademicaId: e.target.value }))}
-                      className="w-full rounded-md border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300"
-                    >
-                      <option value="">Selecciona una UA</option>
-                      {assignmentContext.unidades.map((unidad) => (
-                        <option key={unidad.id} value={unidad.id}>{unidad.nombre}</option>
-                      ))}
-                    </select>
-                  )}
-
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedSeat(null); setMessage(null) }}
-                      className="flex-1 rounded-md border border-white/10 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isPending || (lockedUnidad && !assignmentContext.unidadAcademicaId)}
-                      className="flex-1 rounded-md bg-cyan-300 px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-950 hover:bg-cyan-200 disabled:bg-slate-700 disabled:text-slate-400 transition"
-                    >
-                      {isPending ? 'Guardando...' : 'Guardar ticket'}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ─── MODAL DE PAGO (pre-registro) ───────────────────────────── */}
-      {selectedSeat && selectedZone && isPaymentMode && selectedTicketInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-white/10 bg-slate-950 p-6 text-white shadow-2xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-300">
-                  {selectedTicketInfo.estatusPago === 'pre-registro' ? 'Pre-registro' : 'Pendiente de pago'}
-                </p>
-                <h2 className="mt-1 text-xl font-black uppercase">
-                  {selectedZone.nombre} / {selectedSeat.bloque}
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Fila {selectedSeat.fila}, asiento {selectedSeat.numero}
-                </p>
-                <p className="mt-3 text-sm text-slate-300">
-                  <strong>Registrado por:</strong> {selectedTicketInfo.nombre}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setSelectedSeat(null); setIsPaymentMode(false) }}
-                className="rounded-md border border-white/10 px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10"
-              >
-                Cerrar
-              </button>
+      {/* Columna Derecha: Panel de Control Dinámico */}
+      <div className="space-y-6">
+        {tokenGenerado ? (
+          /* PANTALLA DE ÉXITO */
+          <div className="rounded-3xl border border-emerald-500/30 bg-slate-900/80 p-6 text-center backdrop-blur-xl animate-fadeIn">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+              <HiOutlineCheckCircle className="h-6 w-6" />
             </div>
+            <h3 className="mt-4 text-sm font-black uppercase tracking-wider text-emerald-400">
+              {metodoRegistro === 'apartado' && modalMode === 'nuevo' ? '¡Apartado Registrado!' : '¡Pago Procesado Exitosamente!'}
+            </h3>
+            <p className="mt-1 text-xs text-slate-400">Proporciona este código de acceso al alumno:</p>
 
-            <div className="space-y-4">
-              <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-4 text-center">
-                <HiOutlineCash className="mx-auto h-10 w-10 text-amber-400" />
-                <p className="mt-2 text-lg font-black text-amber-300">$650.00 MXN</p>
-                <p className="text-xs text-amber-200/70">Monto a cobrar por el asiento</p>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedSeat(null); setIsPaymentMode(false) }}
-                  className="rounded-md border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmPayment}
-                  disabled={isPending}
-                  className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-black uppercase tracking-widest text-white transition hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400"
-                >
-                  <HiOutlineCheckCircle className="h-4 w-4" />
-                  {isPending ? 'Procesando...' : 'Confirmar pago ($650)'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL DE TOKEN GENERADO (individual) ────────────────────────── */}
-      {tokenGenerado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-lg rounded-2xl border border-emerald-500/40 bg-slate-950 p-8 text-center shadow-2xl shadow-emerald-500/10">
-            <div className="mb-4">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                <HiOutlineCheckCircle className="h-10 w-10 text-emerald-400" />
-              </div>
-              <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white">Pago confirmado</h2>
-              <p className="mt-1 text-sm text-slate-400">Dicta este código al alumno:</p>
-            </div>
-
-            <div className="mx-auto my-6 inline-block rounded-xl border border-cyan-500/30 bg-cyan-500/5 px-8 py-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-400 mb-2">Token de acceso</p>
-              <p className="text-5xl font-black tracking-[0.15em] text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+            <div className="mx-auto my-5 inline-block rounded-xl border border-cyan-500/30 bg-cyan-500/5 px-6 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 mb-1">Token de Inscripción</p>
+              <p className="text-4xl font-black tracking-wider text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]">
                 {tokenGenerado}
               </p>
             </div>
 
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-300">
-              <p className="font-mono text-xs">
-                El alumno debe ingresar este código en{' '}
-                <span className="font-bold text-cyan-300">/dashboard/ingresar-token</span> para canjear su pase.
-              </p>
-            </div>
-
             <button
               type="button"
-              onClick={() => setTokenGenerado(null)}
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition hover:from-emerald-500 hover:to-emerald-600"
+              onClick={() => {
+                setTokenGenerado(null)
+                setSelectedSeat(null)
+                setSelectedTicketId(null)
+                setModalMode(null)
+              }}
+              className="mt-5 w-full rounded-xl bg-slate-800 py-3 text-xs font-bold text-white hover:bg-slate-700 transition"
             >
-              Cerrar y continuar
+              Cerrar Ventana
             </button>
           </div>
-        </div>
-      )}
+        ) : modalMode === 'nuevo' && selectedSeat && selectedZone ? (
+          /* REGISTRAR UN NUEVO ASIENTO */
+          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl animate-fadeIn">
+            <div className="mb-4 border-b border-white/5 pb-3">
+              <span className="inline-block rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                Selección Activa
+              </span>
+              <h3 className="mt-1 text-sm font-black uppercase text-white">
+                Zona {selectedZone.name} — Bloque {selectedSeat.bloque} Fila {selectedSeat.fila} Num {selectedSeat.numero}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Precio Neto: <span className="text-emerald-400 font-bold">${selectedZone.price} MXN</span></p>
+            </div>
 
-      {/* ─── MODAL MASIVO DE TOKENS GENERADOS ──────────────────────────── */}
-      {mostrarModalTokens && tokensGenerados.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-2xl rounded-2xl border border-emerald-500/40 bg-slate-950 p-8 shadow-2xl shadow-emerald-500/10">
-            <div className="mb-6 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                <HiCheckCircle className="h-10 w-10 text-emerald-400" />
+            {errorMsg && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-400">
+                <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
               </div>
-              <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white">
-                ¡{tokensGenerados.length} Token(s) generados!
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-            Los siguientes códigos de 8 dígitos se han registrado. Dicta o copia cada uno al alumno correspondiente.
-              </p>
-            </div>
+            )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 font-mono">
-              {tokensGenerados.map((token, idx) => (
-                <div
-                  key={idx}
-                  className="bg-slate-900 border border-emerald-500/20 rounded-xl py-4 px-3 text-center"
+            {/* BUSCADOR DE PRE-REGISTROS */}
+            <div className="mb-4 bg-slate-950 p-3 rounded-xl border border-white/5">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-cyan-400 mb-1.5">
+                ¿Tiene Pre-Registro? Buscar Usuario
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por Correo o Nombre..."
+                  className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleBuscarPreRegistro}
+                  className="bg-slate-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-slate-700 transition flex items-center gap-1"
                 >
-                  <p className="text-[10px] text-slate-500 mb-1">Token #{idx + 1}</p>
-                  <p className="text-xl font-black tracking-widest text-white">
-                    {token}
-                  </p>
+                  <HiSearch className="w-3 h-3" /> Buscar
+                </button>
+              </div>
+
+              {usuariosPendientes.length > 0 && (
+                <div className="mt-2 max-h-32 overflow-y-auto border border-white/5 bg-slate-900 rounded-lg divide-y divide-white/5 text-[11px]">
+                  {usuariosPendientes.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setUsuarioSeleccionado(u)
+                        setNombreAlumno(u.nombre || '')
+                        setEmailAlumno(u.email || '')
+                        setUsuariosPendientes([])
+                        setBusqueda('')
+                      }}
+                      className="w-full text-left px-2.5 py-2 hover:bg-white/5 transition flex justify-between items-center"
+                    >
+                      <div className="truncate pr-2">
+                        <span className="font-bold text-white block truncate">{u.nombre}</span>
+                        <span className="text-gray-400 font-mono text-[10px] block truncate">{u.email}</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {usuarioSeleccionado && (
+                <div className="mt-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5 text-emerald-400 truncate">
+                    <HiUser className="w-4 h-4 shrink-0" />
+                    <p className="truncate">
+                      Vinculado: <span className="font-bold text-white">{usuarioSeleccionado.nombre}</span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUsuarioSeleccionado(null)
+                      setNombreAlumno('')
+                      setEmailAlumno('')
+                    }}
+                    className="text-red-400 hover:text-red-300 p-1"
+                  >
+                    <HiTrash className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setMostrarModalTokens(false)}
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition hover:from-emerald-500 hover:to-emerald-600"
-            >
-              Cerrar y continuar
-            </button>
+            {/* FORMULARIO DE COBRO */}
+            <form onSubmit={handleConfirmarNuevoCobro} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre del Asistente</label>
+                <input
+                  type="text"
+                  required
+                  value={nombreAlumno}
+                  onChange={(e) => setNombreAlumno(e.target.value)}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  required
+                  value={emailAlumno}
+                  onChange={(e) => setEmailAlumno(e.target.value)}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Esquema de Adquisición</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMetodoRegistro('pago')}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Pago Total
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMetodoRegistro('apartado')}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Dejar Apartado
+                  </button>
+                </div>
+              </div>
+
+              {metodoRegistro === 'apartado' && (
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 space-y-2 animate-fadeIn">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-400">Monto del Anticipo (MXN)</label>
+                  <input
+                    type="number"
+                    min={200}
+                    max={(selectedZone.price ?? 650) - 50}
+                    value={montoApartado}
+                    onChange={(e) => setMontoApartado(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-amber-500/30 rounded-lg px-3 py-1.5 text-white focus:outline-none"
+                  />
+                  <p className="text-[10px] text-slate-400">Monto Restante: <span className="text-white font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Método de Cobro</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTipoPago('efectivo')}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Efectivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipoPago('transferencia')}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-500/10 border-purple-500 text-purple-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Transferencia
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSeat(null); setModalMode(null) }}
+                  className="w-1/3 bg-slate-800 text-white rounded-xl font-bold py-3 hover:bg-slate-700 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="flex-1 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-black uppercase tracking-wider rounded-xl py-3 hover:opacity-90 disabled:opacity-50 transition"
+                >
+                  {isPending ? 'Procesando...' : metodoRegistro === 'apartado' ? 'Registrar Apartado' : 'Completar Inscripción'}
+                </button>
+              </div>
+            </form>
           </div>
-        </div>
-      )}
+        ) : modalMode === 'liquidar' && selectedSeat && infoApartado ? (
+          /* LIQUIDACIÓN DE UN APARTADO EXISTENTE */
+          <div className="rounded-3xl border border-amber-500/30 bg-slate-900/60 p-6 backdrop-blur-xl animate-fadeIn">
+            <div className="mb-4 border-b border-amber-500/10 pb-3">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                <HiClock className="w-3 h-3" /> Asiento Apartado
+              </span>
+              <h3 className="mt-1 text-sm font-black uppercase text-white">
+                Bloque {selectedSeat.bloque} — Fila {selectedSeat.fila} Num {selectedSeat.numero}
+              </h3>
+            </div>
+
+            <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2.5 text-xs mb-4">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Asistente</p>
+                <p className="text-white font-bold text-sm">{infoApartado.nombre || '—'}</p>
+                <p className="text-slate-400 font-mono text-[11px]">{infoApartado.email || '—'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-2 text-center">
+                <div className="bg-white/[0.02] p-2 rounded-lg border border-white/5">
+                  <p className="text-[9px] text-slate-500 uppercase font-bold">Abonado</p>
+                  <p className="text-emerald-400 font-black text-sm">${infoApartado.totalAbonado} MXN</p>
+                </div>
+                <div className="bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
+                  <p className="text-[9px] text-amber-500 uppercase font-bold">Saldo Restante</p>
+                  <p className="text-white font-black text-sm">${infoApartado.montoRestante} MXN</p>
+                </div>
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-[11px] text-red-400 flex items-start gap-2">
+                <HiExclamationCircle className="h-4 w-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Método para Liquidar Saldo</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTipoPagoLiquidacion('efectivo')}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Efectivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipoPagoLiquidacion('transferencia')}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-500/10 border-purple-500 text-purple-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                  >
+                    Transferencia
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSeat(null); setModalMode(null) }}
+                  className="w-1/3 bg-slate-800 text-white rounded-xl font-bold py-3 text-xs hover:bg-slate-700 transition"
+                >
+                  Regresar
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleConfirmarLiquidacion}
+                  className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black font-black uppercase tracking-wider text-xs rounded-xl py-3 hover:opacity-90 transition shadow-lg"
+                >
+                  {isPending ? 'Liquidando...' : `Liquidar $${infoApartado.montoRestante} MXN`}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : loadingApartado ? (
+          /* LOADING APARTADO */
+          <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-8 text-center backdrop-blur-xl">
+            <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
+            <p className="text-xs text-slate-400 font-mono">Consultando historial de abonos y pre-registros...</p>
+          </div>
+        ) : (
+          /* PANEL VACÍO */
+          <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/10 p-8 text-center backdrop-blur-xl">
+            <HiInformationCircle className="mx-auto h-8 w-8 text-slate-600 mb-2" />
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Monitoreo de Asientos</p>
+            <p className="mt-1 text-[11px] text-slate-500">Selecciona cualquier asiento en el mapa del teatro para desplegar los controles de taquilla física, buscador de pre-registros y cobro.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

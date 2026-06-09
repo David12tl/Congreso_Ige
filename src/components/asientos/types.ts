@@ -1,8 +1,27 @@
 import type { SeatIdentity } from '@/src/config/auditorioConfig'
 
+/**
+ * Estatus de pago del asiento.
+ * - 'libre'    : no aplica, el asiento está disponible.
+ * - 'pagado'   : el ticket está liquidado (verde en la consola de staff,
+ *                rojo en el mapa público).
+ * - 'pre-registro' : el ticket fue creado sin pago (naranja en consola de staff).
+ * - 'pendiente' : alias legacy equivalente a 'apartado' (ámbar en consola de staff).
+ * - 'apartado' : la compra relacionada está en estado 'pendiente' o el total
+ *                abonado es menor al precio del boleto. Amarillo en el mapa.
+ * - 'completo' : la compra está liquidada por el total. Rojo en el mapa.
+ */
+export type SeatEstatusPago =
+  | 'libre'
+  | 'pre-registro'
+  | 'pagado'
+  | 'pendiente'
+  | 'apartado'
+  | 'completo'
+
 export interface OccupiedSeat extends SeatIdentity {
   ticketId?: string
-  estatusPago?: 'pre-registro' | 'pagado' | 'pendiente'
+  estatusPago?: SeatEstatusPago
   buyerId?: string
 }
 

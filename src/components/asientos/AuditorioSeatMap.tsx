@@ -1,8 +1,9 @@
 'use client'
 
 import { auditorioConfig, getSeatKey, type SeatIdentity } from '@/src/config/auditorioConfig'
+import type { SeatEstatusPago } from './types'
 
-export type SeatStatus = 'libre' | 'pre-registro' | 'pagado' | 'pendiente'
+export type SeatStatus = SeatEstatusPago
 
 export interface SeatStatusMap {
   occupied: Set<string>
@@ -18,6 +19,15 @@ interface AuditorioSeatMapProps {
   seatStatusMap?: Record<string, SeatStatus>
 }
 
+/**
+ * Mapea el estatus de pago a su color representativo en el mapa.
+ *  - libre          : no se usa (se renderiza con el color de la zona)
+ *  - pre-registro   : NARANJA  (sin pago en consola de staff)
+ *  - pendiente      : ÁMBAR    (legacy = apartado)
+ *  - apartado       : AMARILLO (compra pendiente o total < $650)
+ *  - pagado         : VERDE    (consola staff)
+ *  - completo       : ROJO     (mapa público / vista de caja)
+ */
 function getStatusColor(
   status: SeatStatus | undefined,
   zoneColor: string,
@@ -32,9 +42,12 @@ function getStatusColor(
     case 'pre-registro':
       return { backgroundColor: '#EA580C' } // Naranja
     case 'pendiente':
-      return { backgroundColor: '#D97706' } // Ámbar
+    case 'apartado':
+      return { backgroundColor: '#EAB308' } // Amarillo / Ámbar
     case 'pagado':
       return { backgroundColor: '#059669' } // Verde
+    case 'completo':
+      return { backgroundColor: '#DC2626' } // Rojo (liquidado en mapa público)
     default:
       return { backgroundColor: '#6B7280' } // Gris ocupado genérico
   }
@@ -45,9 +58,13 @@ function getStatusTitle(status: SeatStatus | undefined, defaultTitle: string): s
     case 'pre-registro':
       return `${defaultTitle} — Pre-registro (Sin pago)`
     case 'pendiente':
-      return `${defaultTitle} — Pendiente de pago`
+      return `${defaultTitle} — Pendiente de pago (Apartado)`
+    case 'apartado':
+      return `${defaultTitle} — Apartado (Pago parcial)`
     case 'pagado':
       return `${defaultTitle} — Confirmado (Pagado)`
+    case 'completo':
+      return `${defaultTitle} — Liquidado`
     default:
       return defaultTitle
   }
@@ -113,6 +130,9 @@ export function AuditorioSeatMap({
                             const occupied = occupiedSeatKeys.has(key)
                             const selected = selectedSeatKey === key
                             const status = seatStatusMap?.[key]
+                            const isApartado = status === 'apartado' || status === 'pendiente'
+                            const isPagado = status === 'pagado' || status === 'completo'
+                            const isPreRegistro = status === 'pre-registro'
                             const isInteractive =
                               mode === 'assign' && !occupied
 
@@ -134,11 +154,11 @@ export function AuditorioSeatMap({
                                   className={`h-5 w-5 rounded-t-[4px] border text-[8px] font-bold leading-none transition-all duration-300 ${
                                     occupied && !status
                                       ? 'cursor-not-allowed border-gray-500/40 bg-gray-400 text-gray-700 opacity-80 animate-pulse'
-                                      : status === 'pre-registro'
+                                      : isPreRegistro
                                         ? 'cursor-pointer border-orange-400/60 bg-orange-600 text-orange-100 hover:scale-110 hover:border-orange-300'
-                                        : status === 'pendiente'
-                                          ? 'cursor-pointer border-amber-400/60 bg-amber-600 text-amber-100 hover:scale-110 hover:border-amber-300'
-                                          : status === 'pagado'
+                                        : isApartado
+                                          ? 'cursor-pointer border-yellow-300/70 bg-yellow-500 text-yellow-50 hover:scale-110 hover:border-yellow-200'
+                                          : isPagado
                                             ? 'cursor-not-allowed border-emerald-400/60 bg-emerald-700 text-emerald-200 opacity-80'
                                             : selected
                                               ? 'scale-110 border-white bg-white text-slate-950 shadow-[0_0_0_2px_rgba(255,255,255,0.35)]'
@@ -179,12 +199,16 @@ export function AuditorioSeatMap({
           <span className="text-orange-300">Pre-registro</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-amber-600" />
-          <span className="text-amber-300">Pendiente de pago</span>
+          <span className="inline-block h-3 w-3 rounded-sm bg-yellow-500" />
+          <span className="text-yellow-300">Apartado (Pago parcial)</span>
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm bg-emerald-700" />
           <span className="text-emerald-300">Confirmado / Pagado</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-sm bg-red-600" />
+          <span className="text-red-300">Liquidado (Mapa público)</span>
         </span>
       </div>
     </section>

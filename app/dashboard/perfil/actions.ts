@@ -3,6 +3,7 @@
 import { createClient } from '@/src/lib/supabase/server'
 
 export interface PerfilUsuario {
+  id: string // 👈 AGREGA ESTO EXPLÍCITAMENTE
   email: string | null
   createdAt: string
   rolNombre: string
@@ -46,6 +47,7 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
   const p = data[0] as unknown as SupabaseProfileJoin
 
   return {
+    id: user.id, // 👈 INYECTAMOS EL UUID REAL DESDE EL AUTH DE SUPABASE
     email: p.email,
     createdAt: p.created_at ? new Date(p.created_at).toLocaleDateString() : '—',
     rolNombre: p.roles?.nombre_rol || 'Usuario',
@@ -85,9 +87,9 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
     .eq('id', user.id)
 
   if (error) {
-    console.error('Error al actualizar unidad académica:', error)
-    return { success: false, message: `Error al guardar: ${error.message}` }
+    console.error('Error al actualizar UA:', error)
+    return { success: false, message: 'No se pudo guardar la Unidad Académica.' }
   }
 
-  return { success: true, message: 'Unidad Académica actualizada correctamente.' }
+  return { success: true, message: 'Unidad Académica actualizada.' }
 }

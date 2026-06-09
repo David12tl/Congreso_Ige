@@ -1,0 +1,3 @@
+app/dashboard/generar-tokens/TaquillaTokensView.tsx(8,3): error TS2305: Module '"./actions"' has no exported member 'cobrarAsientoYGenerarToken'.
+app/dashboard/generar-tokens/TaquillaTokensView.tsx(9,3): error TS2305: Module '"./actions"' has no exported member 'liquidarRestoAsiento'.
+app/dashboard/generar-tokens/TaquillaTokensView.tsx(10,3): error TS2305: Module '"./actions"' has no exported member 'getApartadoInfo'.

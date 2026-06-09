@@ -10,11 +10,34 @@ import {
   HiOutlineCheckCircle,
   HiOutlineExclamationCircle,
   HiOutlineSave,
+  HiOutlineClipboardList
 } from 'react-icons/hi'
 
-import { getMiPerfil, PerfilUsuario, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
-import { getResumenAsistente, ResumenDashboard } from '../usuario/actions'
-import type { UnidadAcademica } from './actions'
+// Importamos las funciones del servidor
+import { getMiPerfil, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
+import { getResumenAsistente } from '../usuario/actions'
+
+// Definición manual y limpia de tipos locales basados en las promesas
+interface PerfilUsuarioConId {
+  id: string
+  email: string | null
+  createdAt: string
+  rolNombre: string
+  nivelAcceso: number
+  unidadAcademicaId: number | null
+  unidadAcademicaNombre: string | null
+}
+
+interface UnidadAcademica {
+  id: number
+  nombre: string
+  tipo: 'interno' | 'externo'
+}
+
+type ResumenDashboard = Awaited<ReturnType<typeof getResumenAsistente>>
+
+// IMPORTAMOS EL COMPONENTE DE ONBOARDING 
+import { PreTicketOnboarding } from './PreTicketOnboarding'
 
 function GlassCard({ children, className = '', glowColor = 'cyan' }: {
   children: React.ReactNode
@@ -38,7 +61,7 @@ function GlassCard({ children, className = '', glowColor = 'cyan' }: {
 }
 
 export default function PerfilPage() {
-  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null)
+  const [perfil, setPerfil] = useState<PerfilUsuarioConId | null>(null)
   const [resumen, setResumen] = useState<ResumenDashboard | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -59,11 +82,16 @@ export default function PerfilPage() {
         getResumenAsistente(),
         getUnidadesAcademicas()
       ])
-      setPerfil(dataPerfil)
+      
+      if (dataPerfil) {
+        setPerfil(dataPerfil as PerfilUsuarioConId)
+      } else {
+        setPerfil(null)
+      }
+      
       setResumen(dataResumen)
-      setUnidadesAcademicas(dataUAs)
+      setUnidadesAcademicas(dataUAs as UnidadAcademica[])
 
-      // Precargar el selector si ya tiene una UA asignada
       if (dataPerfil?.unidadAcademicaId) {
         setSelectedUA(dataPerfil.unidadAcademicaId)
       }
@@ -84,9 +112,14 @@ export default function PerfilPage() {
         ])
         
         if (activo) {
-          setPerfil(dataPerfil)
+          if (dataPerfil) {
+            setPerfil(dataPerfil as PerfilUsuarioConId)
+          } else {
+            setPerfil(null)
+          }
+
           setResumen(dataResumen)
-          setUnidadesAcademicas(dataUAs)
+          setUnidadesAcademicas(dataUAs as UnidadAcademica[])
 
           if (dataPerfil?.unidadAcademicaId) {
             setSelectedUA(dataPerfil.unidadAcademicaId)
@@ -118,7 +151,6 @@ export default function PerfilPage() {
       const res = await actualizarMiUnidadAcademica(Number(selectedUA))
       if (res.success) {
         setUaSaved(true)
-        // Refrescar datos completos
         await actualizarDatosPantalla()
         setTimeout(() => setUaSaved(false), 3000)
       } else {
@@ -170,11 +202,10 @@ export default function PerfilPage() {
             <HiOutlineExclamationCircle className="w-8 h-8 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-base font-bold text-amber-300 uppercase tracking-wider">
-                Unidad Académica no asignada
+                Unidad Académica Obligatoria
               </h3>
               <p className="text-sm text-gray-400 mt-1">
-                Para acceder al sistema, debes seleccionar la Unidad Académica a la que perteneces.
-                Los encargados de cada unidad podrán visualizar tu registro correctamente.
+                Para poder tramitar tu solicitud de registro al congreso, primero debes asignar tu Unidad Académica en el panel Datos del Perfil abajo. Una vez guardado, se desbloqueará tu formulario de pre-ticket.
               </p>
             </div>
           </div>
@@ -223,7 +254,7 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              {/* ⭐ NUEVO: Selector de Unidad Académica */}
+              {/* Selector de Unidad Académica */}
               <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
                 <HiOutlineAcademicCap className="w-6 h-6 text-cyan-400 mt-1" />
                 <div className="flex-1">
@@ -241,7 +272,6 @@ export default function PerfilPage() {
                     <p className="text-amber-400 font-medium text-sm">No asignada</p>
                   )}
 
-                  {/* Selector para cambiar/asignar UA */}
                   <div className="mt-3 flex flex-col sm:flex-row gap-2">
                     <select
                       value={selectedUA}
@@ -270,7 +300,6 @@ export default function PerfilPage() {
                     </button>
                   </div>
 
-                  {/* Feedback */}
                   {uaSaved && (
                     <p className="text-emerald-400 text-xs font-mono mt-2 flex items-center gap-1">
                       <HiOutlineCheckCircle className="w-4 h-4" /> Unidad Académica guardada correctamente.
@@ -310,8 +339,30 @@ export default function PerfilPage() {
             )}
           </div>
         </GlassCard>
-
       </div>
+
+      {/* ─── 📦 SECCIÓN CONDICIONAL DEL ONBOARDING DESBLOQUEABLE ─── */}
+      <div className="mt-8 border-t border-white/5 pt-8">
+        {requiereCompletarUA ? (
+          <div className="max-w-md mx-auto text-center p-6 bg-slate-900/50 rounded-2xl border border-dashed border-white/10 opacity-60">
+            <HiOutlineClipboardList className="w-10 h-10 text-gray-500 mx-auto mb-2" />
+            <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Onboarding Bloqueado</h4>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Asigna tu Unidad Académica arriba para habilitar la solicitud del ticket.
+            </p>
+          </div>
+        ) : (
+          perfil && (
+            <div className="animate-fadeIn">
+              <PreTicketOnboarding 
+                userId={perfil.id} 
+                userEmail={perfil.email || ''} 
+              />
+            </div>
+          )
+        )}
+      </div>
+
     </div>
   )
 }
