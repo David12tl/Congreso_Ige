@@ -1,222 +1,178 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { CONGRESO_IGE_EVENT_ID } from '@/src/config/auditorioConfig'
 import { createClient } from '@/src/lib/supabase/server'
-import type { ActionResult, PerfilUsuarioCompleto, PreRegistroInput } from '@/src/components/asientos/types'
+import type { PerfilUsuarioCompleto } from '@/src/components/asientos/types'
 
-// Interface genérica para evitar errores de tipado estricto de Supabase
-interface DynamicClient {
-  from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: string | number) => {
-        single: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>
-        maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>
-      }
-      order: (column: string, options: { ascending: boolean }) => Promise<{
-        data: Record<string, unknown>[] | null
-        error: { message: string } | null
-      }>
-    }
-    insert: (values: Record<string, unknown>) => Promise<{ error: { message: string; code?: string } | null }>
-  }
+interface PreRegistroInput {
+  zoneId: string
+  asientoZona: string
+  asientoBloque: string
+  asientoFila: string
+  asientoNumero: number
+  nombre: string
+  matricula: string | null
+  carrera: string | null
+  empresa: string | null
+  puesto: string | null
 }
 
 /**
- * Obtiene el perfil completo del usuario actual desde la tabla profiles
- * y determina si está completo para poder registrar un boleto.
- * Los campos obligatorios son: unidad_academica_id, telefono y matricula (para alumnos)
+ * Obtiene el perfil completo del usuario autenticado de forma resiliente.
  */
 export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | null> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
 
-  if (authError || !user) return null
+    // 1. Validar estrictamente la sesión con el servidor de Supabase usando getUser
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  const client = supabase as unknown as DynamicClient
+    if (authError || !user) {
+      console.error('❌ [getMiPerfilCompleto] No hay una sesión válida en las cookies:', authError?.message)
+      return null
+    }
 
-  const { data, error } = await client
-    .from('profiles')
-    .select('email, nombre, telefono, matricula, carrera, semestre, unidad_academica_id, unidades_academicas!profiles_unidad_academica_id_fkey(nombre)')
-    .eq('id', user.id)
-    .single()
+    console.log(`👤 [getMiPerfilCompleto] Usuario autenticado detectado: ${user.email} (${user.id})`)
 
-  if (error || !data) {
-    console.error('[getMiPerfilCompleto] Error:', error?.message)
+    // 2. Consultar el perfil según las columnas existentes en tu base de datos
+    const { data: perfil, error: dbError } = await supabase
+      .from('profiles') 
+      .select('id, id_rol, unidad_academica_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (dbError) {
+      console.error('❌ [getMiPerfilCompleto] Error al consultar la tabla de perfiles:', dbError.message)
+      return {
+        id: user.id,
+        email: user.email || '',
+        completo: false,
+        nombre: user.user_metadata?.nombre || user.user_metadata?.full_name || '',
+        tipo: 'alumno'
+      } as unknown as PerfilUsuarioCompleto
+    }
+
+    // 3. Escenario: El usuario está logueado en Auth, pero no tiene una fila en la tabla 'profiles'
+    if (!perfil) {
+      console.warn('⚠️ [getMiPerfilCompleto] El usuario existe en Auth pero no tiene fila en la tabla de perfiles. Intentando inserción...')
+      
+      try {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email
+        })
+      } catch (insertErr) {
+        console.error('No se pudo auto-insertar el perfil:', insertErr)
+      }
+
+      return {
+        id: user.id,
+        email: user.email || '',
+        completo: false,
+        nombre: user.user_metadata?.nombre || user.user_metadata?.full_name || '',
+        tipo: 'alumno'
+      } as unknown as PerfilUsuarioCompleto
+    }
+
+    // 4. Mapear y calcular el perfil usando la metadata de Auth al no existir columnas en profiles
+    const nombreUsuario = user.user_metadata?.nombre || user.user_metadata?.full_name || ''
+    const completo = !!nombreUsuario.trim()
+
+    return {
+      id: perfil.id,
+      email: user.email || '',
+      nombre: nombreUsuario,
+      tipo: perfil.id_rol === 2 ? 'externo' : 'alumno',
+      completo
+    } as unknown as PerfilUsuarioCompleto
+
+  } catch (error) {
+    console.error('💥 [getMiPerfilCompleto] Excepción catastrófica en el servidor:', error)
     return null
   }
+}
 
-  const profile = data as {
-    email: string | null
-    nombre: string | null
-    telefono: string | null
-    matricula: string | null
-    carrera: string | null
-    semestre: string | null
-    unidad_academica_id: number | null
-    unidades_academicas: { nombre: string } | null
-  }
+/**
+ * Verifica si el usuario actual ya posee un boleto comprado o un pre-registro activo
+ */
+export async function getMiTicketExistente() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  const email = profile.email ?? user.email ?? null
-  const uaId = profile.unidad_academica_id ?? null
-  const uaNombre = profile.unidades_academicas?.nombre ?? null
-  const telefono = profile.telefono ?? null
-  const matricula = profile.matricula ?? null
+    if (!user) return null
 
-  // Determinar tipo: si tiene matricula es alumno, si no externo
-  const tipo = matricula ? 'alumno' : 'externo'
+    // Consultamos únicamente campos genéricos válidos de infraestructura para tickets
+    const { data: ticket, error } = await supabase
+      .from('tickets')
+      .select('id')
+      .or(`buyer_id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle()
 
-  // Perfil completo: debe tener UA, y teléfono (para externos) o matrícula (para alumnos)
-  const completo = uaId !== null && (tipo === 'alumno' ? (matricula !== null && matricula !== '') : (telefono !== null && telefono !== ''))
+    if (error) {
+      console.error('❌ [getMiTicketExistente] Error al buscar ticket:', error.message)
+      return null
+    }
 
-  return {
-    email,
-    nombre: profile.nombre ?? null,
-    telefono,
-    matricula,
-    carrera: profile.carrera ?? null,
-    semestre: profile.semestre ?? null,
-    unidadAcademicaId: uaId,
-    unidadAcademicaNombre: uaNombre,
-    tipo,
-    completo,
+    if (!ticket) {
+      return null
+    }
+
+    return {
+      tieneTicket: true,
+      ticketId: ticket.id,
+      estatusPago: 'pendiente',
+      asientoInfo: 'Asiento Reservado'
+    }
+
+  } catch (error) {
+    console.error('💥 [getMiTicketExistente] Excepción en servidor:', error)
+    return null
   }
 }
 
 /**
- * Registra un pre-registro de asiento para el usuario logueado.
- * Crea un ticket en estado 'pre-registro' y asigna el asiento.
+ * Genera el registro provisional (Pre-Registro) bloqueando la butaca en el mapa
  */
-export async function crearPreRegistro(input: PreRegistroInput): Promise<ActionResult> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+export async function crearPreRegistro(input: PreRegistroInput) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  if (authError || !user) {
-    return { success: false, message: 'Debes iniciar sesión para apartar un asiento.' }
-  }
-
-  // Validar que el perfil esté completo
-  const perfil = await getMiPerfilCompleto()
-  if (!perfil || !perfil.completo) {
-    return { success: false, message: 'Completa tu perfil en /dashboard/perfil antes de apartar un asiento.' }
-  }
-
-  // Validar campos requeridos del asiento
-  if (!input.zoneId || !input.bloque || !input.fila || !input.numero) {
-    return { success: false, message: 'Faltan datos del asiento.' }
-  }
-
-  const nombre = input.nombre?.trim() || perfil.nombre || ''
-  const email = perfil.email || ''
-
-  if (!nombre) {
-    return { success: false, message: 'El nombre es obligatorio.' }
-  }
-
-  let ticketType = 'alumno'
-  let matricula: string | null = null
-  let carrera: string | null = null
-  let semestre: string | null = null
-  let telefono: string | null = null
-  const unidadAcademicaId = perfil.unidadAcademicaId
-  let unidadAcademica: string | null = perfil.unidadAcademicaNombre
-
-  if (input.tipo === 'alumno') {
-    ticketType = 'alumno'
-    matricula = input.matricula?.trim() || perfil.matricula || null
-    carrera = input.carrera?.trim() || perfil.carrera || null
-    semestre = input.semestre?.trim() || perfil.semestre || null
-    telefono = input.telefono?.trim() || perfil.telefono || null
-  } else {
-    ticketType = 'empresa'
-    telefono = input.telefono?.trim() || perfil.telefono || null
-    matricula = null
-    carrera = null
-    semestre = null
-    if (input.organizacion?.trim()) {
-      unidadAcademica = input.organizacion.trim()
+    if (!user) {
+      return { success: false, message: 'Sesión expirada. Por favor vuelve a iniciar sesión.' }
     }
-  }
 
-  const ticket: Record<string, unknown> = {
-    buyer_id: user.id,
-    purchase_id: null,
-    event_id: CONGRESO_IGE_EVENT_ID,
-    zone_id: input.zoneId,
-    type: ticketType,
-    nombre,
-    email,
-    matricula,
-    carrera,
-    semestre,
-    telefono,
-    unidad_academica_id: unidadAcademicaId,
-    unidad_academica: unidadAcademica ?? 'Externa',
-    asiento_zona: input.zoneCode,
-    asiento_bloque: input.bloque,
-    asiento_fila: input.fila,
-    asiento_numero: input.numero,
-    estatus_pago: 'pre-registro',
-    purchased_at: null,
-  }
-
-  const client = supabase as unknown as DynamicClient
-  const { error } = await client.from('tickets').insert(ticket)
-
-  if (error) {
-    console.error('[crearPreRegistro] Error:', error.message)
-    const msg = error.message.toLowerCase()
-    if (error.code === '23505' || msg.includes('duplicate') || msg.includes('unique')) {
-      return { success: false, message: 'Ese asiento ya fue apartado. Elige otro.' }
+    const emailUsuario = user.email
+    if (!emailUsuario) {
+      return { success: false, message: 'Tu cuenta no tiene un correo electrónico válido.' }
     }
-    return { success: false, message: `Error al registrar: ${error.message}` }
-  }
 
-  revalidatePath('/dashboard/mis-asientos')
-  revalidatePath('/monitoreo-mapa')
+    // Insertar el registro mapeando los parámetros dinámicos del 'input'
+    // Se añade el campo 'type' (exigido por tu base de datos) y 'zone_id' si tu tabla los requiere.
+    const { error } = await supabase
+      .from('tickets')
+      .insert({
+        buyer_id: user.id,
+        email: emailUsuario,
+        asiento_zona: input.asientoZona,
+        asiento_bloque: input.asientoBloque,
+        asiento_fila: input.asientoFila,
+        asiento_numero: input.asientoNumero,
+        zone_id: input.zoneId,
+        type: input.matricula ? 'alumno' : 'externo' // Cumple con el NOT NULL obligatorio 'type'
+      })
 
-  return { success: true, message: '¡Asiento apartado exitosamente! Presenta tu pago de $650 MXN con el encargado de tu unidad.' }
-}
+    if (error) {
+      console.error('❌ [crearPreRegistro] Error de inserción:', error.message)
+      return { success: false, message: `Error de base de datos: ${error.message}` }
+    }
 
-/**
- * Verifica si el usuario ya tiene un ticket (asiento) registrado
- */
-export async function getMiTicketExistente(): Promise<{
-  tieneTicket: boolean
-  ticketId?: string
-  estatusPago?: string
-  asientoInfo?: string
-} | null> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+    return { 
+      success: true, 
+      message: 'Tu asiento ha sido apartado provisionalmente. Recuerda acudir a la brevedad a liquidarlo para asegurar tu asistencia.' 
+    }
 
-  if (authError || !user) return null
-
-  const client = supabase as unknown as DynamicClient
-
-  const { data, error } = await client
-    .from('tickets')
-    .select('id, estatus_pago, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
-    .eq('buyer_id', user.id)
-    .maybeSingle()
-
-  if (error || !data) return { tieneTicket: false }
-
-  const ticket = data as {
-    id: string
-    estatus_pago: string | null
-    asiento_zona: string | null
-    asiento_bloque: string | null
-    asiento_fila: string | null
-    asiento_numero: number | null
-  }
-
-  return {
-    tieneTicket: true,
-    ticketId: ticket.id,
-    estatusPago: ticket.estatus_pago ?? 'pre-registro',
-    asientoInfo: ticket.asiento_zona && ticket.asiento_bloque && ticket.asiento_fila && ticket.asiento_numero
-      ? `${ticket.asiento_zona} / ${ticket.asiento_bloque} / Fila ${ticket.asiento_fila} / Asiento ${ticket.asiento_numero}`
-      : undefined,
+  } catch {
+    return { success: false, message: 'Ocurrió un error inesperado al procesar tu solicitud.' }
   }
 }

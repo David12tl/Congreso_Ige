@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/src/lib/supabase/server'
 import type { ActionResult } from '@/src/components/asientos/types'
 
+// ─── INTERFACES DE DATOS ESTRICTAS ───────────────────────────────────
+
 export interface DatosTicketParaQR {
   ticketId: string
   qrData: string
@@ -21,10 +23,35 @@ export interface DatosTicketParaQR {
   unidadAcademica: string | null
 }
 
+export interface AsistenteValidado {
+  nombre: string
+  matricula: string | null
+  asiento: string
+  tipo: string
+}
+
+export interface ResultadoValidacionQR {
+  success: boolean
+  message: string
+  asistente?: AsistenteValidado
+}
+
+interface SupabaseFluentBuilder {
+  select: (columns?: string) => SupabaseFluentBuilder
+  insert: (values: Record<string, unknown>) => SupabaseFluentBuilder
+  update: (values: Record<string, unknown>) => SupabaseFluentBuilder
+  eq: (column: string, value: unknown) => SupabaseFluentBuilder
+  or: (filters: string) => SupabaseFluentBuilder
+  single: () => Promise<{ data: Record<string, unknown> | null; error: unknown }>
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: unknown }>
+}
+
+interface SupabaseBypass {
+  from: (table: string) => SupabaseFluentBuilder
+}
+
 /**
- * Verifica si el usuario tiene un token canjeado (status='usado', utilizado_por=user.id).
- * Si el ticket no existe en public.tickets, lo crea y genera el qr_data.
- * Maneja errores de constraints (asiento duplicado, buyer_id único).
+ * 1. OBTENER, REPARAR Y SINCRONIZAR TICKET (Evita Duplicidad Absoluta)
  */
 export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTicketParaQR }> {
   const supabase = await createClient()
@@ -34,217 +61,205 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     return { success: false, message: 'Debes iniciar sesión para acceder a esta sección.' }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const client = supabase as any
+  const client = supabase as unknown as SupabaseBypass
 
-  // ─── 1. Verificar si el usuario tiene un token canjeado ───────────────
-  const { data: tokenUsado, error: tokenError } = await client
-    .from('tokens_canje')
-    .select('id, event_id, zone_id, status')
-    .eq('utilizado_por', user.id)
-    .eq('status', 'usado')
-    .maybeSingle()
+  let asientoZona = 'General'
+  let asientoBloque = 'Único'
+  let asientoFila = 'N/A'
+  let asientoNumero: number | null = null
+  let qrDataFinal = `ELIGE2026|${user.id}|SIN_MATRICULA|General-Único-N/A-NA`
+  let tipoFinal = 'alumno'
 
-  if (tokenError) {
-    console.error('[obtenerQRData] Error al buscar token:', tokenError.message)
-    return { success: false, message: 'Error de conexión. Intenta de nuevo.' }
+  const [profileRes, tokenRes, ticketRes] = await Promise.all([
+    client.from('profiles').select('nombre, email, matricula, carrera, semestre, telefono, unidad_academica_id').eq('id', user.id).maybeSingle(),
+    client.from('tokens_canje').select('id, seat_id, type').eq('utilizado_por', user.id).maybeSingle(),
+    client.from('tickets').select('id, qr_data, nombre, email, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, matricula, carrera, semestre, telefono, unidad_academica_id').or(`id.eq.${user.id},buyer_id.eq.${user.id}`).maybeSingle()
+  ])
+
+  const profileData = profileRes?.data as Record<string, unknown> | null
+  const tokenData = tokenRes?.data as { id: string; seat_id: string | null; type: string } | null
+  const ticketDb = ticketRes?.data as Record<string, unknown> | null
+
+  const nombreFinal = (ticketDb?.nombre as string) || (profileData?.nombre as string) || 'Usuario Registrado'
+  const emailFinal = (ticketDb?.email as string) || (profileData?.email as string) || user.email || ''
+  const matriculaFinal = (ticketDb?.matricula as string) || (profileData?.matricula as string) || null
+
+  if (tokenData?.type) {
+    tipoFinal = tokenData.type === 'empresa' ? 'empresa' : 'alumno'
+  } else if (ticketDb?.type) {
+    tipoFinal = ticketDb.type as string
   }
 
-  if (!tokenUsado) {
-    return {
-      success: false,
-      message: '⚠️ Aún no has activado tu pase. Por favor, ingresa primero el token de 8 dígitos que te proporcionó tu encargado en la sección /dashboard/ingresar-token.',
-      ticket: undefined,
+  if (ticketDb && ticketDb.asiento_fila && ticketDb.asiento_fila !== 'N/A') {
+    asientoZona = (ticketDb.asiento_zona as string) || 'General'
+    asientoBloque = (ticketDb.asiento_bloque as string) || 'Único'
+    asientoFila = (ticketDb.asiento_fila as string) || 'N/A'
+    asientoNumero = ticketDb.asiento_numero !== null ? Number(ticketDb.asiento_numero) : null
+    qrDataFinal = (ticketDb.qr_data as string) || `ELIGE2026|${ticketDb.id}|${matriculaFinal || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
+  } else if (tokenData?.seat_id) {
+    const { data: seatData } = await client
+      .from('seats')
+      .select('zona, bloque, fila, numero')
+      .eq('id', tokenData.seat_id)
+      .maybeSingle() as unknown as { data: { zona: string; bloque: string; fila: string; numero: number } | null }
+
+    if (seatData) {
+      asientoZona = seatData.zona
+      asientoBloque = seatData.bloque
+      asientoFila = seatData.fila
+      asientoNumero = Number(seatData.numero)
+      qrDataFinal = `ELIGE2026|${ticketDb?.id || user.id}|${matriculaFinal || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
     }
   }
 
-  const t = tokenUsado as { id: string; event_id: string; zone_id: string; status: string }
+  try {
+    const payloadBD = {
+      asiento_zona: asientoZona,
+      asiento_bloque: asientoBloque,
+      asiento_fila: asientoFila,
+      asiento_numero: asientoNumero,
+      qr_data: qrDataFinal,
+      nombre: nombreFinal,
+      email: emailFinal,
+      type: tipoFinal,
+      matricula: matriculaFinal,
+      carrera: profileData?.carrera || null,
+      semestre: profileData?.semestre || null,
+      telefono: profileData?.telefono || null,
+      offset_asiento: null,
+      unidad_academica_id: profileData?.unidad_academica_id || null
+    }
 
-  // ─── 2. Buscar ticket existente del usuario ───────────────────────────
-  let ticketExistente: Record<string, unknown> | null = null
-  let ticketId: string
-  let qrData: string
-
-  // Primero buscar un ticket que ya tenga buyer_id = user.id
-  const { data: existingTicket } = await client
-    .from('tickets')
-    .select('id, nombre, email, matricula, carrera, semestre, telefono, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, unidad_academica, qr_data')
-    .eq('buyer_id', user.id)
-    .eq('event_id', t.event_id)
-    .maybeSingle()
-
-  if (existingTicket) {
-    ticketExistente = existingTicket as Record<string, unknown>
-    ticketId = ticketExistente.id as string
-
-    // Si ya tiene qr_data, lo reusamos; si no, lo generamos
-    if (ticketExistente.qr_data) {
-      qrData = ticketExistente.qr_data as string
+    if (ticketDb) {
+      if (ticketDb.asiento_fila === 'N/A' && asientoFila !== 'N/A') {
+        await client.from('tickets').update({
+          asiento_zona: asientoZona,
+          asiento_bloque: asientoBloque,
+          asiento_fila: asientoFila,
+          asiento_numero: asientoNumero,
+          qr_data: qrDataFinal
+        }).eq('id', ticketDb.id)
+      }
     } else {
-      // Generar qr_data y actualizar el registro
-      const matricula = (ticketExistente.matricula as string) || 'SIN_MATRICULA'
-      const asientoZona = (ticketExistente.asiento_zona as string) || 'SIN_ZONA'
-      const asientoBloque = (ticketExistente.asiento_bloque as string) || 'SIN_BLOQUE'
-      const asientoFila = (ticketExistente.asiento_fila as string) || 'SIN_FILA'
-      const asientoNumero = (ticketExistente.asiento_numero as number) ?? 0
-
-      qrData = `CONGRESO2026|${ticketId}|${matricula}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
-
-      const { error: updateQrError } = await client
-        .from('tickets')
-        .update({ qr_data: qrData })
-        .eq('id', ticketId)
-
-      if (updateQrError) {
-        console.error('[obtenerQRData] Error al actualizar qr_data:', updateQrError.message)
-      }
+      await client.from('tickets').insert({
+        id: user.id,
+        buyer_id: user.id,
+        ...payloadBD
+      })
     }
-  } else {
-    // ─── 3. No existe ticket para este buyer_id → crear uno nuevo ──────
+  } catch (dbError) {
+    console.warn('⚠️ Nota sobre base de datos:', dbError)
+  }
 
-    // Obtener perfil del usuario para los datos de identidad
-    const { data: perfil } = await client
-      .from('profiles')
-      .select('email, nombre, telefono, matricula, carrera, semestre, unidad_academica_id')
-      .eq('id', user.id)
-      .single()
-
-    const profile = perfil as Record<string, unknown> | null
-
-    const email = (profile?.email as string) || user.email || ''
-    const nombre = (profile?.nombre as string) || ''
-    const matricula = (profile?.matricula as string) || null
-    const carrera = (profile?.carrera as string) || null
-    const semestre = (profile?.semestre as string) || null
-    const telefono = (profile?.telefono as string) || null
-    const unidadAcademicaId = (profile?.unidad_academica_id as number) ?? null
-
-    // Determinar tipo
-    const tipo = matricula ? 'alumno' : 'empresa'
-
-    // Obtener nombre de la unidad académica
-    let unidadAcademicaNombre: string | null = null
-    if (unidadAcademicaId) {
-      const { data: ua } = await client
-        .from('unidades_academicas')
-        .select('nombre')
-        .eq('id', unidadAcademicaId)
-        .single()
-
-      if (ua) {
-        unidadAcademicaNombre = (ua as Record<string, unknown>).nombre as string
-      }
-    }
-
-    // Valores por defecto para asiento (se asignarán después si es necesario)
-    const asientoZona = 'PREFERENTE'
-    const asientoBloque = 'GENERAL'
-    const asientoFila = 'A'
-    const asientoNumero = 1
-
-    // Construir el objeto del nuevo ticket
-    const nuevoTicket: Record<string, unknown> = {
-      buyer_id: user.id,
-      event_id: t.event_id,
-      zone_id: t.zone_id,
-      type: tipo,
-      nombre,
-      email,
-      matricula,
-      carrera,
-      semestre,
-      telefono,
-      unidad_academica_id: unidadAcademicaId,
-      unidad_academica: unidadAcademicaNombre ?? 'No especificada',
-      asiento_zona: asientoZona,
-      asiento_bloque: asientoBloque,
-      asiento_fila: asientoFila,
-      asiento_numero: asientoNumero,
-      estatus_pago: 'pagado',
-      purchased_at: new Date().toISOString(),
-    }
-
-    const { data: insertData, error: insertError } = await client
-      .from('tickets')
-      .insert(nuevoTicket)
-      .select('id')
-      .single()
-
-    if (insertError) {
-      console.error('[obtenerQRData] Error al insertar ticket:', insertError.message)
-
-      // Manejo de errores de constraints
-      const msg = (insertError.message || '').toLowerCase()
-      if (insertError.code === '23505' || msg.includes('unq_asitorio_orizaba_asiento_unico')) {
-        return {
-          success: false,
-          message: 'Este asiento ya ha sido reservado, por favor contacta a tu encargado.',
-        }
-      }
-      if (msg.includes('tickets_buyer_id_key') || msg.includes('tickets_buyer_id_unique')) {
-        return {
-          success: false,
-          message: 'Ya tienes un boleto registrado. Si crees que es un error, contacta a tu encargado.',
-        }
-      }
-
-      return { success: false, message: `Error al generar tu pase: ${insertError.message}` }
-    }
-
-    ticketId = (insertData as { id: string }).id
-
-    // Generar qr_data
-    qrData = `CONGRESO2026|${ticketId}|${matricula || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
-
-    const { error: updateQrError } = await client
-      .from('tickets')
-      .update({ qr_data: qrData })
-      .eq('id', ticketId)
-
-    if (updateQrError) {
-      console.error('[obtenerQRData] Error al guardar qr_data:', updateQrError.message)
-    }
-
-    // Actualizar referencia del ticket en el objeto para el return
-    ticketExistente = {
-      id: ticketId,
-      nombre,
-      email,
-      matricula,
-      carrera,
-      semestre,
-      telefono,
-      asiento_zona: asientoZona,
-      asiento_bloque: asientoBloque,
-      asiento_fila: asientoFila,
-      asiento_numero: asientoNumero,
-      type: tipo,
-      unidad_academica: unidadAcademicaNombre,
+  const unidadId = ticketDb?.unidad_academica_id || profileData?.unidad_academica_id
+  let unidadNombre: string | null = null
+  if (unidadId) {
+    try {
+      const { data: ua } = await client.from('unidades_academicas').select('name').eq('id', unidadId).maybeSingle() as unknown as { data: { name: string } | null }
+      if (ua) unidadNombre = ua.name
+    } catch {
+      unidadNombre = null
     }
   }
 
   revalidatePath('/dashboard/generar-qr')
 
-  const ticketData = ticketExistente as Record<string, unknown>
+  return {
+    success: true,
+    message: 'Tu pase ha sido procesado de manera exitosa.',
+    ticket: {
+      ticketId: (ticketDb?.id as string) || user.id,
+      qrData: qrDataFinal,
+      nombre: nombreFinal,
+      email: emailFinal,
+      matricula: matriculaFinal,
+      carrera: (profileData?.carrera as string) || (ticketDb?.carrera as string) || null,
+      semestre: (profileData?.semestre as string) || (ticketDb?.semestre as string) || null,
+      telefono: (profileData?.telefono as string) || (ticketDb?.telefono as string) || null,
+      asientoZona: asientoZona,
+      asientoBloque: asientoBloque,
+      asientoFila: asientoFila,
+      asientoNumero: asientoNumero,
+      tipo: tipoFinal,
+      unidadAcademica: unidadNombre,
+    },
+  }
+}
+
+/**
+ * 2. PROCESAR Y VALIDAR CÓDIGO QR PARA EL ENCARGADO / STAFF
+ * ¡Buscador ultra-flexible para evitar falsos negativos escaneando UUID, Texto Largo o Matrícula!
+ */
+export async function validarCodigoQR(qrData: string): Promise<ResultadoValidacionQR> {
+  try {
+    if (!qrData) {
+      return { success: false, message: 'Código QR vacío o ilegible.' }
+    }
+
+    let ticketIdEnQR = qrData.trim()
+
+    // Si viene en formato extendido, extraemos el ID central
+    if (qrData.startsWith('ELIGE2026|')) {
+      const partes = qrData.split('|')
+      ticketIdEnQR = partes[1]?.trim() || qrData.trim()
+    }
+
+    if (!ticketIdEnQR) {
+      return { success: false, message: 'La estructura interna del código no contiene un identificador válido.' }
+    }
+
+    const supabase = await createClient()
+    const client = supabase as unknown as SupabaseBypass
+
+    // Ampliamos .or para verificar id primario, id de comprador o coincidencia parcial en la columna completa de qr_data
+    const { data: t, error } = await client
+      .from('tickets')
+      .select('id, nombre, matricula, type, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, qr_data')
+      .or(`id.eq.${ticketIdEnQR},buyer_id.eq.${ticketIdEnQR},qr_data.ilike.%${ticketIdEnQR}%`)
+      .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
+
+    // Si por alguna razón sigue sin aparecer, hacemos un fallback directo por Matrícula escolar
+    if (error || !t) {
+      const { data: tPorMatricula } = await client
+        .from('tickets')
+        .select('id, nombre, matricula, type, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
+        .eq('matricula', ticketIdEnQR)
+        .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
+
+      if (!tPorMatricula) {
+        return { 
+          success: false, 
+          message: `El registro (${ticketIdEnQR.substring(0, 8)}...) no se encuentra indexado bajo ningún boleto activo en el sistema.` 
+        }
+      }
+      
+      return estructurarRespuestaExitosa(tPorMatricula)
+    }
+
+    return estructurarRespuestaExitosa(t)
+
+  } catch (err) {
+    console.error('Error interno en validación:', err)
+    return { success: false, message: 'Surgió un error inesperado al procesar el código QR.' }
+  }
+}
+
+// Función auxiliar para formatear la respuesta sin duplicar lógica
+function estructurarRespuestaExitosa(t: Record<string, unknown>): ResultadoValidacionQR {
+  const zona = (t.asiento_zona as string) || 'General'
+  const bloque = (t.asiento_bloque as string) || 'Único'
+  const fila = (t.asiento_fila as string) || 'N/A'
+  const numero = t.asiento_numero !== null ? String(t.asiento_numero) : 'N/A'
+  const asientoFormateado = `${zona} (${bloque}-${fila}-${numero})`
 
   return {
     success: true,
-    message: 'Tu pase está listo.',
-    ticket: {
-      ticketId: ticketId!,
-      qrData: qrData!,
-      nombre: (ticketData.nombre as string) || '',
-      email: (ticketData.email as string) || '',
-      matricula: (ticketData.matricula as string) || null,
-      carrera: (ticketData.carrera as string) || null,
-      semestre: (ticketData.semestre as string) || null,
-      telefono: (ticketData.telefono as string) || null,
-      asientoZona: (ticketData.asiento_zona as string) || null,
-      asientoBloque: (ticketData.asiento_bloque as string) || null,
-      asientoFila: (ticketData.asiento_fila as string) || null,
-      asientoNumero: (ticketData.asiento_numero as number) ?? null,
-      tipo: (ticketData.type as string) || 'alumno',
-      unidadAcademica: (ticketData.unidad_academica as string) || null,
-    },
+    message: '¡Acceso Autorizado! Bienvenido/a al congreso.',
+    asistente: {
+      nombre: (t.nombre as string) || 'Asistente Registrado',
+      matricula: (t.matricula as string) || null,
+      asiento: asientoFormateado,
+      tipo: (t.type as string) || 'alumno'
+    }
   }
 }

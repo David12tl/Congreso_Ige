@@ -19,6 +19,7 @@ import {
   HiOutlinePlusCircle,
   HiOutlineQrcode,
   HiOutlineCash,
+  HiOutlineCamera, // Importamos el ícono de la cámara para el escáner
 } from 'react-icons/hi'
 
 type UserRole = 'admin' | 'encargado' | 'user'
@@ -43,19 +44,27 @@ const navItems: NavItem[] = [
     label: 'Dashboard',
     href: '/dashboard/admin',
     icon: <HiOutlineViewGrid className="w-5 h-5" />,
-    roles: ['admin'], // Admin y Encargado tienen dashboards con métricas
+    roles: ['admin'],
   },
   {
     label: 'Dashboard',
     href: '/dashboard/encargados',
     icon: <HiOutlineViewGrid className="w-5 h-5" />,
-    roles: ['encargado'], // Admin y Encargado tienen dashboards con métricas
+    roles: ['encargado'],
   },
   {
     label: 'Perfil',
     href: '/dashboard/perfil',
     icon: <HiOutlineIdentification className="w-5 h-5" />,
-    roles: ['user'], // El usuario común aterriza directo en su perfil
+    roles: ['user'],
+  },
+
+  // ─── NUEVA OPCIÓN: MÓDULO DE ESCANEO DE ACCESOS ─────────────────────
+  {
+    label: 'Escanear Accesos',
+    href: '/dashboard/escanear-qr',
+    icon: <HiOutlineCamera className="w-5 h-5" />,
+    roles: ['admin', 'encargado'], // Solo accesible para administradores y encargados
   },
 
   // ─── OPCIONES EXCLUSIVAS DE ADMINISTRADOR ───────────────────────────
@@ -159,32 +168,22 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   const supabase = useMemo(() => createClient(), [])
   const [collapsed, setCollapsed] = useState(false)
 
-  // Filtra de forma estricta asegurando que solo se renderice lo que indica la imagen
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role),
   )
 
   const handleSignOut = async () => {
     console.log("🔄 [DEBUG LOGOUT 1/3]: Iniciando proceso de cierre de sesión...")
-
     try {
-      // 1. Forzar a Supabase a destruir los tokens de sesión locales y del servidor
       const { error } = await supabase.auth.signOut()
-
       if (error) {
         console.error("❌ [ERROR SUPABASE LOGOUT]: Error devuelto por Supabase:", error.message)
         alert(`No se pudo cerrar la sesión: ${error.message}`)
         return
       }
-
       console.log("✅ [DEBUG LOGOUT 2/3]: Sesión destruida con éxito en Supabase.")
-
-      // 2. Limpiar la caché de rutas de Next.js para asegurar que los Server Components se enteren del cambio de auth
       router.refresh()
-
       console.log("🚀 [DEBUG LOGOUT 3/3]: Redirigiendo limpiamente a la raíz del sitio...")
-
-      // 3. Redirigir al inicio de forma inmediata
       router.push('/')
     } catch (catchError) {
       console.error("💥 [CRASH CRÍTICO EN LOGOUT]: Ocurrió un error inesperado al cerrar sesión:", catchError)
