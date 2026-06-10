@@ -142,33 +142,33 @@ export default function GenerarQRPage() {
 
               {/* Detalles de Auditoría Académica y Coordenadas del Asiento */}
               <div className="text-left pt-3 space-y-1 font-mono text-[10px]" style={{ borderTop: '1px solid #374151' }}>
-                <div className="grid grid-cols-2 gap-x-2" style={{ color: '#9ca3af' }}>
-                  <div>MATRÍCULA: <span style={{ color: '#ffffff', fontWeight: 'bold' }} className="block truncate">{ticket.matricula || '-'}</span></div>
-                  <div>CARRERA: <span style={{ color: '#ffffff', fontWeight: 'bold' }} className="block truncate">{ticket.carrera || '-'}</span></div>
+                <div className="flex flex-wrap justify-between" style={{ color: '#9ca3af' }}>
+                  <div className="w-[48%]">MATRÍCULA: <span style={{ color: '#ffffff', fontWeight: 'bold', letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.matricula || '-'}</span></div>
+                  <div className="w-[48%]">CARRERA: <span style={{ color: '#ffffff', fontWeight: 'bold', letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.carrera || '-'}</span></div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-x-2 pt-0.5" style={{ color: '#9ca3af' }}>
-                  <div>SEMESTRE: <span style={{ color: '#ffffff', fontWeight: 'bold' }} className="block truncate">{ticket.semestre || '-'}</span></div>
-                  <div>UNIDAD ACAD.: <span style={{ color: '#ffffff', fontWeight: 'bold' }} className="block truncate">{ticket.unidadAcademica || '-'}</span></div>
+                <div className="flex flex-wrap justify-between pt-0.5" style={{ color: '#9ca3af' }}>
+                  <div className="w-[48%]">SEMESTRE: <span style={{ color: '#ffffff', fontWeight: 'bold', letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.semestre || '-'}</span></div>
+                  <div className="w-[48%]">UNIDAD ACAD.: <span style={{ color: '#ffffff', fontWeight: 'bold', letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.unidadAcademica || '-'}</span></div>
                 </div>
 
                 {/* Grid de Coordenadas con colores CSS Web Seguros */}
-                <div className="mt-2 pt-2 grid grid-cols-4 gap-1 text-center p-1.5 rounded-md" style={{ backgroundColor: '#030712', border: '1px solid #1f2937', fontSize: '9px' }}>
-                  <div>
-                    <span className="block text-[8px]" style={{ color: '#6b7280' }}>ZONA</span>
-                    <span className="text-white font-black uppercase truncate block">{ticket.asientoZona || 'Gral'}</span>
+                <div className="flex justify-between mt-2 pt-2 text-center p-1.5 rounded-md" style={{ backgroundColor: '#030712', border: '1px solid #1f2937', fontSize: '9px' }}>
+                  <div className="w-[23%]">
+                    <span className="text-[8px]" style={{ color: '#6b7280', display: 'block' }}>ZONA</span>
+                    <span className="text-white font-black uppercase" style={{ letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.asientoZona || 'Gral'}</span>
                   </div>
-                  <div>
-                    <span className="block text-[8px]" style={{ color: '#6b7280' }}>BLOQUE</span>
-                    <span className="text-white font-black uppercase truncate block">{ticket.asientoBloque || 'Único'}</span>
+                  <div className="w-[23%]">
+                    <span className="text-[8px]" style={{ color: '#6b7280', display: 'block' }}>BLOQUE</span>
+                    <span className="text-white font-black uppercase" style={{ letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.asientoBloque || 'Único'}</span>
                   </div>
-                  <div>
-                    <span className="block text-[8px]" style={{ color: '#6b7280' }}>FILA</span>
-                    <span className="text-white font-black uppercase truncate block">{ticket.asientoFila || 'N/A'}</span>
+                  <div className="w-[23%]">
+                    <span className="text-[8px]" style={{ color: '#6b7280', display: 'block' }}>FILA</span>
+                    <span className="text-white font-black uppercase" style={{ letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.asientoFila || 'N/A'}</span>
                   </div>
-                  <div>
-                    <span className="block text-[8px]" style={{ color: '#6b7280' }}>ASIENTO</span>
-                    <span className="font-black block" style={{ color: '#22d3ee' }}>{ticket.asientoNumero !== null ? ticket.asientoNumero : 'N/A'}</span>
+                  <div className="w-[23%]">
+                    <span className="text-[8px]" style={{ color: '#6b7280', display: 'block' }}>ASIENTO</span>
+                    <span className="font-black" style={{ color: '#22d3ee', letterSpacing: 'normal', whiteSpace: 'nowrap' }}>{ticket.asientoNumero !== null ? ticket.asientoNumero : 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -185,20 +185,6 @@ export default function GenerarQRPage() {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Panel de Depuración de Datos (Opcional) */}
-      <div className="p-3 bg-gray-950 border border-yellow-600/20 rounded-xl font-mono text-[10px] text-yellow-500/90 space-y-1">
-        <div className="font-bold border-b border-yellow-600/10 pb-0.5">
-          📊 Control Interno del Ticket
-        </div>
-        <pre className="text-cyan-400/90 overflow-auto max-h-[120px] text-[9px] p-1 bg-black/40 rounded">
-          {JSON.stringify({ 
-            id: ticket?.ticketId, 
-            qr: ticket?.qrData, 
-            asiento: `${ticket?.asientoZona}-${ticket?.asientoBloque}-${ticket?.asientoFila}-${ticket?.asientoNumero}`
-          }, null, 2)}
-        </pre>
       </div>
     </div>
   )
