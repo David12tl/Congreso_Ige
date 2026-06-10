@@ -75,6 +75,12 @@ const navItems: NavItem[] = [
     roles: ['admin'],
   },
   {
+    label: 'Usuarios por UA',
+    href: '/dashboard/usuarios-ua',
+    icon: <HiOutlineUsers className="w-5 h-5" />,
+    roles: ['admin'],
+  },
+  {
     label: 'Tickets Vendidos',
     href: '/dashboard/tickets-vendidos',
     icon: <HiOutlineTicket className="w-5 h-5" />,
@@ -98,12 +104,6 @@ const navItems: NavItem[] = [
     label: 'Lista UA Encargada',
     href: '/dashboard/mi-ua',
     icon: <HiOutlineOfficeBuilding className="w-5 h-5" />,
-    roles: ['admin', 'encargado'],
-  },
-  {
-    label: 'Usuarios por UA',
-    href: '/dashboard/usuarios-ua',
-    icon: <HiOutlineUsers className="w-5 h-5" />,
     roles: ['admin', 'encargado'],
   },
   {
@@ -193,18 +193,18 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   return (
     <aside
       className={`fixed left-0 top-0 h-screen z-40 flex flex-col transition-all duration-300 ease-in-out
-        bg-slate-950/40 backdrop-blur-md
+        bg-congreso-bgDark/40 backdrop-blur-md
         border-r border-white/5
         ${collapsed ? 'w-20' : 'w-64'}`}
     >
       {/* Header / Logo */}
       <div className="flex items-center gap-3 px-6 h-16 border-b border-white/5 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-congreso-teal to-congreso-emerald flex items-center justify-center shrink-0">
           <span className="text-white font-bold text-sm">IGE</span>
         </div>
         {!collapsed && (
           <span className="text-white font-semibold text-lg whitespace-nowrap">
-            Congreso IGE
+            ELIGE 2026
           </span>
         )}
       </div>
@@ -218,7 +218,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
           <p className="text-gray-400 text-xs truncate mt-0.5">
             {user.email}
           </p>
-          <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+          <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-congreso-teal/10 text-congreso-teal border border-congreso-teal/20">
             {roleLabels[user.role]}
           </span>
         </div>
@@ -244,7 +244,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
                 <span className="text-sm font-medium">{item.label}</span>
               )}
               {isActive && !collapsed && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.5)]" />
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-congreso-teal shadow-[0_0_6px_rgba(0,151,167,0.5)]" />
               )}
             </Link>
           )

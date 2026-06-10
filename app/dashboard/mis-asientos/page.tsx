@@ -217,9 +217,9 @@ export default function MisAsientosPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 p-4 text-white xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:gap-8 text-white xl:grid-cols-3">
       {/* MAPA PRINCIPAL */}
-      <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-6 backdrop-blur-xl xl:col-span-2">
+      <div className="rounded-3xl border border-white/5 bg-congreso-bgDark/60 p-4 sm:p-6 backdrop-blur-xl xl:col-span-2">
         <div className="mb-4">
           <h2 className="text-lg font-black uppercase tracking-wider text-cyan-400">
             Reserva de Asiento (Pre-Registro)
@@ -231,7 +231,7 @@ export default function MisAsientosPage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl bg-slate-950/40 p-4 border border-white/5">
+        <div className="overflow-x-auto rounded-2xl bg-congreso-dark/40 p-4 border border-white/5">
           <AuditorioSeatMap
             mode="assign"
             occupiedSeatKeys={occupiedSeatKeys}
@@ -264,7 +264,7 @@ export default function MisAsientosPage() {
         )}
 
         {selectedSeat && selectedZone ? (
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl animate-fadeIn">
+          <div className="rounded-3xl border border-white/10 bg-congreso-bgDark/60 p-4 sm:p-6 backdrop-blur-xl animate-fadeIn">
             <div className="border-b border-white/5 pb-3 mb-4">
               <span className="inline-block rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
                 Lugar Seleccionado
@@ -278,7 +278,7 @@ export default function MisAsientosPage() {
             </div>
 
             {/* Selector de tipo */}
-            <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-950 p-1 border border-white/5">
+            <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-congreso-dark p-1 border border-white/5">
               <button
                 type="button"
                 onClick={() => setTipo('alumno')}
@@ -410,7 +410,7 @@ export default function MisAsientosPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-2 text-sm font-black uppercase tracking-widest text-white transition-all hover:from-cyan-500 hover:to-blue-500 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400"
+                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-congreso-teal to-congreso-blue px-6 py-2 text-sm font-black uppercase tracking-widest text-white transition-all hover:from-congreso-teal/90 hover:to-congreso-blue/90 disabled:cursor-not-allowed disabled:from-congreso-greyDark disabled:to-congreso-greyDark disabled:text-congreso-greyMed"
                 >
                   <HiOutlineTicket className="h-4 w-4" />
                   {isPending ? 'Apartando...' : 'Apartar asiento'}
@@ -419,7 +419,7 @@ export default function MisAsientosPage() {
             </form>
           </div>
         ) : (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/10 p-8 text-center backdrop-blur-xl">
+          <div className="rounded-3xl border border-dashed border-white/10 bg-congreso-bgDark/10 p-6 sm:p-8 text-center backdrop-blur-xl">
             <HiOutlineArrowRight className="mx-auto h-8 w-8 text-slate-600 mb-2 rotate-90 xl:rotate-0" />
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
               {miTicket ? 'Apartado completado' : 'Selecciona un asiento'}

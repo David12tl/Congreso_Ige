@@ -1,99 +1,165 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { HiAcademicCap, HiLocationMarker, HiMail, HiPhone } from 'react-icons/hi';
 
 export default function Footer() {
   const añoActual = new Date().getFullYear();
 
   return (
-    <footer className="bg-surface-card border-t border-border-subtle w-full py-8 px-4 md:px-8 relative overflow-hidden font-sans">
-      
-      {/* Detalle LED decorativo en la parte superior del footer */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#03B3C3]/40 to-transparent" />
+    <footer className="relative w-full bg-congreso-bgDark text-gray-300 overflow-hidden">
+      {/* Línea decorativa superior con gradiente institucional */}
+      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-congreso-teal via-congreso-blue to-congreso-orange" />
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
-        
-        {/* COLUMNA 1: LOGO Y DESCRIPCIÓN */}
-        <div className="md:col-span-2">
-          <h3 className="text-lg font-black tracking-widest uppercase mb-4" style={{ color: 'var(--text-principal)' }}>
-            ELIGE <span className="text-[#03B3C3]">2030</span>
-            <br className="hidden md:block" /><p>Ingenieria en Gestion Empresarial</p>
-          </h3>
-          <p className="text-xs leading-relaxed max-w-sm" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
-            El epicentro de la ingeniería, la tecnología y el desarrollo estratégico. 
-            Impulsando a la próxima generación de líderes globales desde Orizaba, Veracruz.
-          </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           
-          {/* Redes Sociales Simuladas */}
-          <div className="flex gap-4 mt-6">
-            <a href="#" className="w-8 h-8 rounded-md bg-superficie-card border border-borde-sutil flex items-center justify-center text-xs hover:border-[#03B3C3] transition-colors" style={{ color: 'var(--text-principal)' }}>
-              FB
-            </a>
-            <a href="#" className="w-8 h-8 rounded-md bg-superficie-card border border-borde-sutil flex items-center justify-center text-xs hover:border-[#D856BF] transition-colors" style={{ color: 'var(--text-principal)' }}>
-              IG
-            </a>
-            <a href="#" className="w-8 h-8 rounded-md bg-superficie-card border border-borde-sutil flex items-center justify-center text-xs hover:border-[#10B981] transition-colors" style={{ color: 'var(--text-principal)' }}>
-              X
-            </a>
-            <a href="#" className="w-8 h-8 rounded-md bg-superficie-card border border-borde-sutil flex items-center justify-center text-xs hover:border-red-500 transition-colors" style={{ color: 'var(--text-principal)' }}>
-              YT
-            </a>
+          {/* COLUMNA 1: LOGO Y DESCRIPCIÓN INSTITUCIONAL */}
+          <div className="lg:col-span-1">
+            <div className="flex items-center gap-3 mb-4">
+              <HiAcademicCap className="w-8 h-8 text-congreso-teal" />
+              <div>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">
+                  Congreso <span className="text-congreso-orange">IGE</span>
+                </h3>
+                <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-mono">
+                  1er Congreso Internacional
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
+              Impulsando el desarrollo de competencias empresariales, el emprendimiento 
+              y la innovación tecnológica en la Zona Centro del Estado de Veracruz.
+            </p>
+            
+            {/* Redes Sociales */}
+            <div className="flex gap-3 mt-6">
+              <a 
+                href="#" 
+                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400 hover:bg-congreso-teal/20 hover:border-congreso-teal/40 hover:text-congreso-teal transition-all duration-300"
+                aria-label="Facebook"
+              >
+                FB
+              </a>
+              <a 
+                href="#" 
+                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400 hover:bg-congreso-orange/20 hover:border-congreso-orange/40 hover:text-congreso-orange transition-all duration-300"
+                aria-label="Instagram"
+              >
+                IG
+              </a>
+              <a 
+                href="#" 
+                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400 hover:bg-congreso-emerald/20 hover:border-congreso-emerald/40 hover:text-congreso-emerald transition-all duration-300"
+                aria-label="Twitter / X"
+              >
+                X
+              </a>
+              <a 
+                href="#" 
+                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-400 hover:bg-congreso-yellow/20 hover:border-congreso-yellow/40 hover:text-congreso-yellow transition-all duration-300"
+                aria-label="YouTube"
+              >
+                YT
+              </a>
+            </div>
           </div>
+
+          {/* COLUMNA 2: ENLACES RÁPIDOS */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-5 border-b border-white/10 pb-2">
+              Enlaces Rápidos
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/" className="text-sm text-gray-400 hover:text-congreso-teal transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-teal/60" />
+                  Inicio
+                </Link>
+              </li>
+              <li>
+                <Link href="/about-ige" className="text-sm text-gray-400 hover:text-congreso-teal transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-teal/60" />
+                  Sobre IGE
+                </Link>
+              </li>
+              <li>
+                <Link href="/aboutme" className="text-sm text-gray-400 hover:text-congreso-teal transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-teal/60" />
+                  Nuestra Historia
+                </Link>
+              </li>
+              <li>
+                <Link href="/faqs" className="text-sm text-gray-400 hover:text-congreso-teal transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-teal/60" />
+                  Preguntas Frecuentes
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* COLUMNA 3: LEGAL */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-5 border-b border-white/10 pb-2">
+              Legal
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/terminos" className="text-sm text-gray-400 hover:text-congreso-orange transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-orange/60" />
+                  Términos y Condiciones
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacidad" className="text-sm text-gray-400 hover:text-congreso-orange transition-colors duration-200 flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-congreso-orange/60" />
+                  Aviso de Privacidad
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* COLUMNA 4: CONTACTO */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-5 border-b border-white/10 pb-2">
+              Contacto
+            </h4>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <HiLocationMarker className="w-5 h-5 text-congreso-teal shrink-0 mt-0.5" />
+                <span className="text-sm text-gray-400">
+                  Instituto Tecnológico Superior de Zongolica<br />
+                  Campus Zongolica, Veracruz
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <HiMail className="w-5 h-5 text-congreso-orange shrink-0" />
+                <a href="mailto:contacto@congresoige.com" className="text-sm text-gray-400 hover:text-congreso-orange transition-colors">
+                  contacto@congresoige.com
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <HiPhone className="w-5 h-5 text-congreso-emerald shrink-0" />
+                <span className="text-sm text-gray-400">
+                  +52 (278) 123 4567
+                </span>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        {/* COLUMNA 2: NAVEGACIÓN */}
-        <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-principal)' }}>
-            Ecosistema
-          </h4>
-          <ul className="space-y-2 text-xs">
-            <li>
-              <a href="#hero" className="hover:text-[#03B3C3] transition-colors">Inicio</a>
-            </li>
-            <li>
-              <a href="#lands" className="hover:text-[#03B3C3] transition-colors">Lands Temáticas</a>
-            </li>
-            <li>
-              <a href="#speakers" className="hover:text-[#03B3C3] transition-colors">Speakers Magistrales</a>
-            </li>
-            <li>
-              <a href="#teatro" className="hover:text-[#03B3C3] transition-colors">Mapa del Teatro</a>
-            </li>
-          </ul>
+        {/* LÍNEA DE CIERRE */}
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-gray-500 font-mono">
+            &copy; {añoActual} Congreso Internacional en Gestión Empresarial &mdash; ELIGE. Todos los derechos reservados.
+          </p>
+          <p className="text-[10px] text-gray-600 font-mono uppercase tracking-widest">
+            ITSZ &middot; Tecnológico Nacional de México
+          </p>
         </div>
-
-        <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--text-principal)' }}>
-            Información
-          </h4>
-          <ul className="space-y-2 text-xs">
-            <li>
-              <a href="/faqs" className="transition-colors hover:text-[#03B3C3]">Preguntas Frecuentes</a>
-            </li>
-            <li>
-              <a href="/terminos" className="transition-colors hover:text-[#03B3C3]">Términos y Condiciones</a>
-            </li>
-            <li>
-              <a href="/privacidad" className="transition-colors hover:text-[#03B3C3]">Aviso de Privacidad</a>
-            </li>
-            <li>
-              <span className="block mt-2 font-mono text-[10px]" style={{ color: 'var(--text-principal)', opacity: 0.5 }}>📍 Auditorio Metropolitano, Orizaba</span>
-            </li>
-          </ul>
-        </div>
-
       </div>
-
-      {/* LÍNEA DE CRÉDITOS Y DERECHOS */}
-      <div className="max-w-6xl mx-auto mt-12 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10 text-[11px] font-mono" style={{ color: 'var(--text-principal)', opacity: 0.5, borderTop: '1px solid var(--border-componentes)' }}>
-        <div>
-          © {añoActual} Congreso IGE. Todos los derechos reservados.
-        </div>
-        <div className="hover:text-[#03B3C3] transition-colors cursor-pointer">
-          [ DESIGNED BY DAVID_DEV ]
-        </div>
-      </div>
-
     </footer>
   );
 }

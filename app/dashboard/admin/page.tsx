@@ -13,22 +13,22 @@ import {
 import { getAdminDashboardData, AdminDashboardData } from './actions'
 
 // ─── GlassCard Component ───────────────────────────────────────────────────
-function GlassCard({ children, className = '', glowColor = 'cyan' }: {
+function GlassCard({ children, className = '', glowColor = 'blue' }: {
   children: React.ReactNode
   className?: string
   glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald' | 'rose'
 }) {
   const glowStyles: Record<string, string> = {
-    blue: 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
+    blue: 'border-congreso-blue/30 shadow-[0_0_20px_rgba(13,71,161,0.15)]',
     purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    cyan: 'border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]',
-    emerald: 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    amber: 'border-congreso-orange/30 shadow-[0_0_20px_rgba(255,122,0,0.15)]',
+    cyan: 'border-congreso-teal/30 shadow-[0_0_20px_rgba(0,151,167,0.15)]',
+    emerald: 'border-congreso-emerald/30 shadow-[0_0_20px_rgba(0,184,148,0.15)]',
     rose: 'border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.15)]',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
+    <div className={`relative rounded-2xl border bg-congreso-bgDark/60 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       {children}
     </div>
@@ -42,14 +42,14 @@ const ROLE_LABELS: Record<number, string> = {
 }
 
 const ROLE_BADGES: Record<number, string> = {
-  1: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-  2: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-  3: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+  1: 'bg-congreso-orange/10 text-congreso-orange border-congreso-orange/30',
+  2: 'bg-congreso-teal/10 text-congreso-teal border-congreso-teal/30',
+  3: 'bg-congreso-blue/10 text-congreso-blue border-congreso-blue/30',
 }
 
 const TYPE_BADGES: Record<string, string> = {
-  alumno: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  empresa: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+  alumno: 'bg-congreso-teal/10 text-congreso-teal border-congreso-teal/30',
+  empresa: 'bg-congreso-orange/10 text-congreso-orange border-congreso-orange/30',
 }
 
 export default function AdminDashboardPage() {
@@ -77,42 +77,42 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-rose-500/20 border-t-rose-500 animate-spin" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Cargando panel de control...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-congreso-blue/20 border-t-congreso-blue animate-spin" />
+        <p className="text-congreso-greyMed font-mono text-xs uppercase tracking-widest">Cargando panel de control...</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
+    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto">
       {/* Header Estilo Centro de Comando */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">
             Centro de Mando{' '}
-            <span className="bg-gradient-to-r from-rose-400 to-orange-500 bg-clip-text text-transparent ml-2">
+            <span className="bg-gradient-to-r from-congreso-teal to-congreso-emerald bg-clip-text text-transparent ml-2">
               General
             </span>
           </h1>
-          <p className="text-gray-500 text-sm font-mono mt-1">ADMIN // PANEL_DE_CONTROL // MÉTRICAS_GLOBALES</p>
+          <p className="text-congreso-greyMed text-xs sm:text-sm font-mono mt-1">ADMIN // PANEL_DE_CONTROL // MÉTRICAS_GLOBALES</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">DB Conectada</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-congreso-emerald/10 border border-congreso-emerald/30 rounded-full self-start md:self-auto">
+          <div className="w-2 h-2 rounded-full bg-congreso-emerald animate-pulse" />
+          <span className="text-congreso-emerald text-xs font-bold uppercase tracking-widest">DB Conectada</span>
         </div>
       </header>
 
       {/* ─── Fila 1: KPIs Globales ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <GlassCard className="p-6" glowColor="blue">
-          <div className="flex items-center gap-3 mb-4 text-blue-400">
+          <div className="flex items-center gap-3 mb-4 text-congreso-blue">
             <HiOutlineUsers className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-400/80">Usuarios Registrados</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-congreso-blue/80">Usuarios Registrados</span>
           </div>
-          <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(13,71,161,0.4)]">
             {data?.totalUsuarios ?? '—'}
           </span>
-          <p className="text-[10px] text-blue-400 mt-2 font-mono">Total en profiles</p>
+          <p className="text-[10px] text-congreso-blue mt-2 font-mono">Total en profiles</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="purple">
@@ -120,40 +120,40 @@ export default function AdminDashboardPage() {
             <HiOutlineShieldCheck className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-purple-400/80">Encargados Activos</span>
           </div>
-          <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
             {data?.totalEncargados ?? '—'}
           </span>
           <p className="text-[10px] text-purple-400 mt-2 font-mono">id_rol = 2</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="emerald">
-          <div className="flex items-center gap-3 mb-4 text-emerald-400">
+          <div className="flex items-center gap-3 mb-4 text-congreso-emerald">
             <HiOutlineOfficeBuilding className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400/80">Unidades Académicas</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-congreso-emerald/80">Unidades Académicas</span>
           </div>
-          <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(0,184,148,0.4)]">
             {data?.totalUnidadesAcademicas ?? '—'}
           </span>
-          <p className="text-[10px] text-emerald-400 mt-2 font-mono">Registradas en el sistema</p>
+          <p className="text-[10px] text-congreso-emerald mt-2 font-mono">Registradas en el sistema</p>
         </GlassCard>
       </div>
 
       {/* ─── Fila 2: KPIs de Tickets ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <GlassCard className="p-6" glowColor="cyan">
-          <div className="flex items-center gap-3 mb-4 text-cyan-400">
+          <div className="flex items-center gap-3 mb-4 text-congreso-teal">
             <HiOutlineTicket className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-cyan-400/80">Total Tickets</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-congreso-teal/80">Total Tickets</span>
           </div>
-          <span className="text-4xl font-black text-white">{data?.totalTickets ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalTickets ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="blue">
-          <div className="flex items-center gap-3 mb-4 text-blue-400">
+          <div className="flex items-center gap-3 mb-4 text-congreso-blue">
             <HiOutlineAcademicCap className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-400/80">Alumnos</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-congreso-blue/80">Alumnos</span>
           </div>
-          <span className="text-4xl font-black text-white">{data?.totalAlumnos ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalAlumnos ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="rose">
@@ -161,19 +161,19 @@ export default function AdminDashboardPage() {
             <HiOutlineBriefcase className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-rose-400/80">Empresas</span>
           </div>
-          <span className="text-4xl font-black text-white">{data?.totalEmpresas ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalEmpresas ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="amber">
-          <div className="flex items-center gap-3 mb-4 text-amber-400">
+          <div className="flex items-center gap-3 mb-4 text-congreso-orange">
             <HiOutlineTicket className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-400/80">Zona Top</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-congreso-orange/80">Zona Top</span>
           </div>
           <div className="relative">
-            <span className="text-xl font-black text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)] uppercase tracking-tighter block truncate">
+            <span className="text-lg sm:text-xl font-black text-white drop-shadow-[0_0_15px_rgba(255,122,0,0.4)] uppercase tracking-tighter block truncate">
               {data?.topZone ?? 'Ninguna'}
             </span>
-            <p className="text-[10px] text-amber-400 mt-1 font-mono">{data?.topZoneTickets ?? 0} boletos</p>
+            <p className="text-[10px] text-congreso-orange mt-1 font-mono">{data?.topZoneTickets ?? 0} boletos</p>
           </div>
         </GlassCard>
       </div>
@@ -184,11 +184,11 @@ export default function AdminDashboardPage() {
         <GlassCard className="overflow-hidden" glowColor="blue">
           <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
             <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <HiOutlineUsers className="w-4 h-4 text-blue-400" />
+              <HiOutlineUsers className="w-4 h-4 text-congreso-blue" />
               Últimos usuarios registrados
             </span>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
                     <tr key={u.id} className="hover:bg-white/[0.01] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-slate-800 border border-white/10 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-md bg-congreso-dark border border-white/10 flex items-center justify-center">
                             <HiOutlineUserCircle className="w-4 h-4 text-gray-500" />
                           </div>
                           <span className="text-xs font-mono text-gray-300 truncate max-w-[180px] block">{u.email ?? 'Sin email'}</span>
@@ -235,11 +235,11 @@ export default function AdminDashboardPage() {
         <GlassCard className="overflow-hidden" glowColor="cyan">
           <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
             <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <HiOutlineTicket className="w-4 h-4 text-cyan-400" />
+              <HiOutlineTicket className="w-4 h-4 text-congreso-teal" />
               Últimos tickets vendidos
             </span>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
               <thead className="bg-white/[0.02] border-b border-white/5">
                 <tr>

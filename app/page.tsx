@@ -36,28 +36,28 @@ const LANDS = [
   {
     id: 'dev',
     name: 'DEVELOPER LAND',
-    color: '#03B3C3',
+    color: '#0097A7',
     preset: hyperspeedPresets.one,
     desc: 'Investigación en IA aplicada al emprendimiento y desarrollo de software empresarial.',
   },
   {
     id: 'creative',
     name: 'CREATIVE LAND',
-    color: '#D856BF',
+    color: '#0D47A1',
     preset: hyperspeedPresets.two,
     desc: 'Innovación en modelos de negocio, diseño estratégico y emprendimiento social.',
   },
   {
     id: 'blockchain',
     name: 'BLOCKCHAIN LAND',
-    color: '#ff102a',
+    color: '#FF7A00',
     preset: hyperspeedPresets.three,
     desc: 'Economía digital, Ciudades Inteligentes y Sustentabilidad tecnológica.',
   },
   {
     id: 'business',
     name: 'BUSINESS LAND',
-    color: '#f1eece',
+    color: '#00B894',
     preset: hyperspeedPresets.four,
     desc: 'Liderazgo, vinculación laboral y crecimiento económico en la Zona Centro.',
   },
@@ -127,10 +127,10 @@ export default function TalentLandInspiredPage() {
 
   if (status === 'loading') {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-congreso-dark">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(147,51,234,0.4)]"></div>
-          <p className="font-mono text-xs text-purple-400 uppercase tracking-[0.3em] animate-pulse">Validando credenciales...</p>
+          <div className="w-12 h-12 border-4 border-congreso-teal border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(0,151,167,0.4)]"></div>
+          <p className="font-mono text-xs text-congreso-teal uppercase tracking-[0.3em] animate-pulse">Validando credenciales...</p>
         </div>
       </div>
     );
@@ -138,7 +138,7 @@ export default function TalentLandInspiredPage() {
 
   if (status === 'error') {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-congreso-dark">
         <div className="flex flex-col items-center gap-6 max-w-sm text-center px-6">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
             <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,7 +147,7 @@ export default function TalentLandInspiredPage() {
           </div>
           <div className="space-y-2">
             <h3 className="text-white font-bold text-lg tracking-tight uppercase">Error de Sincronización</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-gray-300 text-sm leading-relaxed">
               No pudimos establecer conexión con el sistema de seguridad. Por favor, verifica tu conexión a internet.
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function TalentLandInspiredPage() {
               setStatus('loading');
               checkRealSession();
             }}
-            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)]"
+            className="px-8 py-3 bg-congreso-orange hover:bg-congreso-orange/80 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(255,122,0,0.3)]"
           >
             Reintentar Conexión
           </button>
@@ -183,7 +183,7 @@ export default function TalentLandInspiredPage() {
         <div className="mt-12 w-full max-w-6xl mx-auto px-4 mb-16">
           <TeatroMap 
             color={
-              LANDS.find(l => l.preset === currentPreset)?.color || '#03B3C3'
+              LANDS.find(l => l.preset === currentPreset)?.color || '#0097A7'
             }
             asientosSeleccionados={asientosSeleccionados}
             setAsientosSeleccionados={setAsientosSeleccionados}
@@ -221,8 +221,10 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 
 function HeroSection() {
   return (
-    <section className="animate-fadeIn mb-[14vh]">
-      <div className="mt-12 md:mt-24 flex flex-col items-center justify-center text-center w-full">
+    <section className="animate-fadeIn mb-[14vh] relative">
+      {/* Fondo con gradiente institucional */}
+      <div className="absolute inset-0 bg-gradient-to-b from-congreso-dark/80 via-congreso-blue/40 to-transparent rounded-3xl -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" />
+      <div className="relative z-10 mt-12 md:mt-24 flex flex-col items-center justify-center text-center w-full">
         <div className="w-full max-w-5xl mx-auto mt-[40px] sm:mt-[70px] md:mt-[90px] mb-8 h-[80px] sm:h-[130px] md:h-[180px] flex items-center justify-center overflow-hidden">
           <TextPressure 
             text="ELIGE 2026"
@@ -232,34 +234,43 @@ function HeroSection() {
             width={true}
             weight={true}
             italic={true}
-            textColor="currentColor"
+            textColor="#FFB02E"
             minFontSize={20}
           />
         </div>
-      </div>
-      <p style={styles.heroDesc}>
-        Emprendimiento Liderazgo e Innovación en la Gestión Empresarial
-      </p>
-      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center my-8">
-        <a 
-          href="/agenda-dia-1" 
-          className="relative group px-8 py-3.5 bg-black/40 backdrop-blur-md text-white font-bold text-sm tracking-wider uppercase rounded-lg border border-[#D856BF]/40 transition-all duration-300 hover:border-[#D856BF] hover:text-[#D856BF] hover:shadow-[0_0_25px_rgba(216,86,191,0.5)] flex items-center justify-center overflow-hidden min-w-[200px]"
-        >
-          <span className="absolute top-0 left-0 w-full h-[2px] bg-[#D856BF] opacity-50 group-hover:opacity-100 transition-opacity" />
-          <span className="relative z-10 flex items-center gap-2">
-            Ver Día 1 <span className="text-[11px] opacity-60 font-mono">(25 Mayo)</span>
-          </span>
-        </a>
 
-        <a 
-          href="/agenda-dia-2" 
-          className="relative group px-8 py-3.5 bg-black/40 backdrop-blur-md text-white font-bold text-sm tracking-wider uppercase rounded-lg border border-[#10B981]/40 transition-all duration-300 hover:border-[#10B981] hover:text-[#10B981] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center justify-center overflow-hidden min-w-[200px]"
-        >
-          <span className="absolute top-0 left-0 w-full h-[2px] bg-[#10B981] opacity-50 group-hover:opacity-100 transition-opacity" />
-          <span className="relative z-10 flex items-center gap-2">
-            Ver Día 2 <span className="text-[11px] opacity-60 font-mono">(26 Mayo)</span>
-          </span>
-        </a>
+        {/* Subtítulo con teal */}
+        <p className="text-lg md:text-xl text-congreso-teal font-light tracking-wide max-w-2xl mx-auto mb-6">
+          Emprendimiento · Liderazgo · Innovación en la Gestión Empresarial
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center my-8">
+          {/* Botón Día 1 - Naranja Vibrante */}
+          <a 
+            href="/agenda-dia-1" 
+            className="relative group px-10 py-4 bg-congreso-orange text-white font-bold text-sm tracking-wider uppercase rounded-xl transition-all duration-300 hover:bg-congreso-orange/90 hover:shadow-[0_0_30px_rgba(255,122,0,0.5)] flex items-center justify-center overflow-hidden min-w-[200px]"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              Ver Día 1 <span className="text-[11px] opacity-80 font-mono">(25 Mayo)</span>
+            </span>
+          </a>
+
+          {/* Botón Día 2 - Amarillo / Oro */}
+          <a 
+            href="/agenda-dia-2" 
+            className="relative group px-10 py-4 bg-congreso-yellow text-congreso-dark font-bold text-sm tracking-wider uppercase rounded-xl transition-all duration-300 hover:bg-congreso-yellow/90 hover:shadow-[0_0_30px_rgba(255,176,46,0.5)] flex items-center justify-center overflow-hidden min-w-[200px]"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              Ver Día 2 <span className="text-[11px] opacity-80 font-mono">(26 Mayo)</span>
+            </span>
+          </a>
+        </div>
+
+        {/* Badge de registro con esmeralda */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-congreso-emerald/20 border border-congreso-emerald/30 text-congreso-emerald text-xs font-bold uppercase tracking-wider animate-fadeIn">
+          <span className="w-2 h-2 rounded-full bg-congreso-emerald animate-pulse" />
+          Registro abierto &mdash; ¡Asegura tu lugar!
+        </div>
       </div>
     </section>
   );
@@ -271,16 +282,16 @@ function HeroSection() {
 function ObjectivesSection() {
   return (
     <section className="mb-24 scroll-reveal">
-      <div className="bg-surface-card border border-border-subtle shadow-[0_0_50px_-12px_rgba(124,58,237,0.3)] backdrop-blur-xl p-8 md:p-12 rounded-3xl relative overflow-hidden">
-        {/* Adorno de fondo: rombo brillante fantasmal */}
-        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-purple-500/5 blur-3xl pointer-events-none" aria-hidden="true" />
-        <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-cyan-500/5 blur-3xl pointer-events-none" aria-hidden="true" />
+      <div className="bg-white border border-congreso-teal/10 shadow-[0_0_50px_-12px_rgba(0,151,167,0.15)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+        {/* Adornos de fondo */}
+        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-congreso-teal/5 blur-3xl pointer-events-none" aria-hidden="true" />
+        <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-congreso-blue/5 blur-3xl pointer-events-none" aria-hidden="true" />
         
         {/* Barra lateral izquierda de acento */}
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 via-purple-400 to-cyan-400 rounded-r-full" />
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-congreso-dark via-congreso-blue to-congreso-teal rounded-r-full" />
         
-        {/* Icono flotante decorativo de fondo */}
-        <div className="absolute top-6 right-8 text-purple-500/10 dark:text-purple-400/10 select-none pointer-events-none" aria-hidden="true">
+        {/* Icono flotante decorativo */}
+        <div className="absolute top-6 right-8 text-congreso-teal/10 select-none pointer-events-none" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z" />
@@ -288,11 +299,11 @@ function ObjectivesSection() {
           </svg>
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-black mb-8 uppercase tracking-tight bg-gradient-to-r from-purple-500 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+        <h2 className="text-3xl md:text-4xl font-black mb-8 uppercase tracking-tight bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
           Propósito Estratégico
         </h2>
         
-        <p className="text-xl md:text-2xl leading-relaxed text-text-main font-light border-l-4 border-purple-500 pl-6">
+        <p className="text-xl md:text-2xl leading-relaxed text-congreso-dark/80 font-light border-l-4 border-congreso-teal pl-6">
           Impulsar el desarrollo de competencias empresariales, el emprendimiento y la innovación tecnológica mediante un espacio de intercambio de conocimientos, experiencias y oportunidades, que integre a estudiantes, profesionales, empresas e investigadores, fomentando la creación de proyectos sostenibles, la vinculación laboral y el crecimiento económico y social en la Zona Centro del Estado de Veracruz.
         </p>
       </div>
@@ -301,10 +312,10 @@ function ObjectivesSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   2. MESAS DE TRABAJO — Grid Futurista Metálico con Neón Atenuado
+   2. MESAS DE TRABAJO — Grid con paleta institucional
    ═══════════════════════════════════════════════════════════════ */
 const diamondIcon = (
-  <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-purple-500 dark:text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-congreso-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2L2 7l10 5 10-5-10-5z" />
     <path d="M2 17l10 5 10-5" />
     <path d="M2 12l10 5 10-5" />
@@ -312,7 +323,7 @@ const diamondIcon = (
 );
 
 const arrowRightIcon = (
-  <svg className="w-4 h-4 shrink-0 mt-0.5 text-cyan-500 dark:text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="w-4 h-4 shrink-0 mt-0.5 text-congreso-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="5" y1="12" x2="19" y2="12" />
     <polyline points="12 5 19 12 12 19" />
   </svg>
@@ -321,49 +332,48 @@ const arrowRightIcon = (
 function WorkTablesSection() {
   return (
     <section className="mb-24">
-      <h2 className="text-3xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter bg-gradient-to-r from-purple-500 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+      <h2 className="text-3xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
         Mesas de Trabajo
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
         {/* Mesa 01 */}
-        <div className="group scroll-reveal bg-surface-card text-text-main border border-border-subtle shadow-[0_0_40px_-16px_rgba(124,58,237,0.2)] backdrop-blur-xl rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.4)] hover:border-purple-500/30">
-          {/* Brillo esquina */}
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500" aria-hidden="true" />
+        <div className="group scroll-reveal bg-white text-congreso-dark border border-congreso-teal/20 shadow-[0_0_40px_-16px_rgba(0,151,167,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(0,151,167,0.3)] hover:border-congreso-teal/40">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-congreso-teal/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-congreso-teal/20 transition-all duration-500" aria-hidden="true" />
           
-          <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-purple-500 bg-purple-500/10 px-3 py-1 rounded-full w-fit mb-4 block">
+          <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-congreso-teal bg-congreso-teal/10 px-3 py-1 rounded-full w-fit mb-4 block">
             Mesa 01
           </span>
-          <h3 className="text-2xl font-bold mb-4 text-text-main">Emprendimiento</h3>
-          <ul className="space-y-2 text-sm text-text-main/80">
-            <li className="flex items-start gap-3 hover:bg-purple-500/5 p-2 rounded-xl transition-colors duration-200">
+          <h3 className="text-2xl font-bold mb-4 text-congreso-dark">Emprendimiento</h3>
+          <ul className="space-y-2 text-sm text-congreso-dark/70">
+            <li className="flex items-start gap-3 hover:bg-congreso-teal/5 p-2 rounded-xl transition-colors duration-200">
               {diamondIcon}
-              <span><strong className="text-text-main">Intraemprendimiento:</strong> Estudios e investigaciones relacionadas en innovación dentro de las organizaciones.</span>
+              <span><strong className="text-congreso-dark">Intraemprendimiento:</strong> Estudios e investigaciones relacionadas en innovación dentro de las organizaciones.</span>
             </li>
-            <li className="flex items-start gap-3 hover:bg-purple-500/5 p-2 rounded-xl transition-colors duration-200">
+            <li className="flex items-start gap-3 hover:bg-congreso-teal/5 p-2 rounded-xl transition-colors duration-200">
               {diamondIcon}
-              <span><strong className="text-text-main">Emprendimientos:</strong> Agrícolas, Sociales, Turísticos, Comunitarios y Tecnológicos.</span>
+              <span><strong className="text-congreso-dark">Emprendimientos:</strong> Agrícolas, Sociales, Turísticos, Comunitarios y Tecnológicos.</span>
             </li>
           </ul>
         </div>
 
         {/* Mesa 02 */}
-        <div className="group scroll-reveal bg-surface-card text-text-main border border-border-subtle shadow-[0_0_40px_-16px_rgba(6,182,212,0.2)] backdrop-blur-xl rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(6,182,212,0.4)] hover:border-cyan-500/30">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-cyan-500/20 transition-all duration-500" aria-hidden="true" />
+        <div className="group scroll-reveal bg-white text-congreso-dark border border-congreso-blue/20 shadow-[0_0_40px_-16px_rgba(13,71,161,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(13,71,161,0.3)] hover:border-congreso-blue/40">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-congreso-blue/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-congreso-blue/20 transition-all duration-500" aria-hidden="true" />
           
-          <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-cyan-500 bg-cyan-500/10 px-3 py-1 rounded-full w-fit mb-4 block">
+          <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-congreso-blue bg-congreso-blue/10 px-3 py-1 rounded-full w-fit mb-4 block">
             Mesa 02
           </span>
-          <h3 className="text-2xl font-bold mb-4 text-text-main">Innovación Tecnológica</h3>
-          <ul className="space-y-2 text-sm text-text-main/80">
-            <li className="flex items-start gap-3 hover:bg-cyan-500/5 p-2 rounded-xl transition-colors duration-200">
+          <h3 className="text-2xl font-bold mb-4 text-congreso-dark">Innovación Tecnológica</h3>
+          <ul className="space-y-2 text-sm text-congreso-dark/70">
+            <li className="flex items-start gap-3 hover:bg-congreso-blue/5 p-2 rounded-xl transition-colors duration-200">
               {arrowRightIcon}
-              <span><strong className="text-text-main">IA en el Emprendimiento:</strong> Estudios e investigaciones relacionadas.</span>
+              <span><strong className="text-congreso-dark">IA en el Emprendimiento:</strong> Estudios e investigaciones relacionadas.</span>
             </li>
-            <li className="flex items-start gap-3 hover:bg-cyan-500/5 p-2 rounded-xl transition-colors duration-200">
+            <li className="flex items-start gap-3 hover:bg-congreso-blue/5 p-2 rounded-xl transition-colors duration-200">
               {arrowRightIcon}
               <span>Ciudades inteligentes y sustentabilidad.</span>
             </li>
-            <li className="flex items-start gap-3 hover:bg-cyan-500/5 p-2 rounded-xl transition-colors duration-200">
+            <li className="flex items-start gap-3 hover:bg-congreso-blue/5 p-2 rounded-xl transition-colors duration-200">
               {arrowRightIcon}
               <span>Proyectos de Innovación Tecnológica.</span>
             </li>
@@ -380,7 +390,7 @@ function WorkTablesSection() {
 function ScheduleSection() {
   return (
     <section className="mb-24">
-      <h2 className="text-3xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter bg-gradient-to-r from-purple-500 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+      <h2 className="text-3xl md:text-4xl font-black text-center mb-12 uppercase tracking-tighter bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
         Cronograma Oficial
       </h2>
 
@@ -390,10 +400,10 @@ function ScheduleSection() {
         {/* ══ COLUMNA DÍA 1 ══ */}
         <div className="relative">
           {/* Línea de timeline vertical */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-500/20 rounded-full" aria-hidden="true" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-congreso-teal via-congreso-blue to-congreso-teal/20 rounded-full" aria-hidden="true" />
           
           {/* Círculo superior */}
-          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-purple-600 border-[3px] border-bg-base shadow-[0_0_16px_rgba(168,85,247,0.6)] z-10" aria-hidden="true" />
+          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-teal border-[3px] border-white shadow-[0_0_16px_rgba(0,151,167,0.6)] z-10" aria-hidden="true" />
           
           {/* Header Día 1 */}
           <TimelineDayHeader
@@ -401,9 +411,9 @@ function ScheduleSection() {
             title="Emprendimiento"
             date="Miércoles 18 de Noviembre"
             location="Teatro Metropolitano"
-            gradientFrom="from-purple-600"
-            gradientTo="to-purple-700"
-            shadowColor="shadow-purple-500/25"
+            gradientFrom="from-congreso-teal"
+            gradientTo="to-congreso-blue"
+            shadowColor="shadow-congreso-teal/25"
           />
 
           {/* Items del timeline Día 1 */}
@@ -411,26 +421,26 @@ function ScheduleSection() {
             <TimelineItem 
               time="Mañana" 
               activities={['Conferencia Magistral', 'Panel Mujeres Emprendedoras']} 
-              dotColor="bg-purple-500" 
-              lineColor="via-purple-400"
+              dotColor="bg-congreso-teal" 
+              lineColor="via-congreso-blue"
             />
             <TimelineItem 
               time="Tarde" 
               activities={['Expo Emprendimiento', 'Comida & Networking']} 
-              dotColor="bg-purple-500"
-              lineColor="via-purple-400" 
+              dotColor="bg-congreso-teal"
+              lineColor="via-congreso-blue" 
             />
             <TimelineItem 
               time="Noche" 
               activities={['Evento Cultural (Talento IGE)']} 
-              dotColor="bg-purple-500"
-              lineColor="via-purple-400" 
+              dotColor="bg-congreso-teal"
+              lineColor="via-congreso-blue" 
             />
             <TimelineItem 
               time="Cierre" 
               activities={['Grupo Musical']} 
-              dotColor="bg-purple-500"
-              lineColor="via-purple-400"
+              dotColor="bg-congreso-teal"
+              lineColor="via-congreso-blue"
               isLast
             />
           </div>
@@ -439,10 +449,10 @@ function ScheduleSection() {
         {/* ══ COLUMNA DÍA 2 ══ */}
         <div className="relative">
           {/* Línea de timeline vertical */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500 via-emerald-400 to-emerald-500/20 rounded-full" aria-hidden="true" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-congreso-emerald via-congreso-teal to-congreso-emerald/20 rounded-full" aria-hidden="true" />
           
           {/* Círculo superior */}
-          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-emerald-600 border-[3px] border-bg-base shadow-[0_0_16px_rgba(16,185,129,0.6)] z-10" aria-hidden="true" />
+          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-emerald border-[3px] border-white shadow-[0_0_16px_rgba(0,184,148,0.6)] z-10" aria-hidden="true" />
           
           {/* Header Día 2 */}
           <TimelineDayHeader
@@ -450,9 +460,9 @@ function ScheduleSection() {
             title="Innovación"
             date="Jueves 19 de Noviembre"
             location="Teatro Metropolitano"
-            gradientFrom="from-emerald-600"
-            gradientTo="to-emerald-700"
-            shadowColor="shadow-emerald-500/25"
+            gradientFrom="from-congreso-emerald"
+            gradientTo="to-congreso-teal"
+            shadowColor="shadow-congreso-emerald/25"
           />
 
           {/* Items del timeline Día 2 */}
@@ -460,32 +470,32 @@ function ScheduleSection() {
             <TimelineItem 
               time="09:00" 
               activities={['Conferencia 01']} 
-              dotColor="bg-emerald-500"
-              lineColor="via-emerald-400"
+              dotColor="bg-congreso-emerald"
+              lineColor="via-congreso-teal"
             />
             <TimelineItem 
               time="11:00" 
               activities={['Conferencia 02']} 
-              dotColor="bg-emerald-500"
-              lineColor="via-emerald-400"
+              dotColor="bg-congreso-emerald"
+              lineColor="via-congreso-teal"
             />
             <TimelineItem 
               time="13:00" 
               activities={['Conferencia 03']} 
-              dotColor="bg-emerald-500"
-              lineColor="via-emerald-400"
+              dotColor="bg-congreso-emerald"
+              lineColor="via-congreso-teal"
             />
             <TimelineItem 
               time="Tarde" 
               activities={['Expo Innovación', 'Gran Rifa']} 
-              dotColor="bg-emerald-500"
-              lineColor="via-emerald-400"
+              dotColor="bg-congreso-emerald"
+              lineColor="via-congreso-teal"
             />
             <TimelineItem 
               time="Cierre" 
               activities={['Clausura Oficial']} 
-              dotColor="bg-emerald-500"
-              lineColor="via-emerald-400"
+              dotColor="bg-congreso-emerald"
+              lineColor="via-congreso-teal"
               isLast
             />
           </div>
@@ -543,7 +553,7 @@ function TimelineItem({
   time,
   activities,
   dotColor,
-  lineColor = 'via-purple-400',
+  lineColor = 'via-congreso-blue',
   isLast = false,
 }: {
   time: string;
@@ -560,10 +570,10 @@ function TimelineItem({
       )}
       
       {/* Círculo conector */}
-      <div className={`absolute -left-[10px] top-[14px] w-[22px] h-[22px] rounded-full border-[3px] border-bg-base ${dotColor} shadow-[0_0_12px_rgba(168,85,247,0.3)] z-10 transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.5)]`} aria-hidden="true" />
+      <div className={`absolute -left-[10px] top-[14px] w-[22px] h-[22px] rounded-full border-[3px] border-white ${dotColor} shadow-[0_0_12px_rgba(0,151,167,0.3)] z-10 transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_20px_rgba(0,151,167,0.5)]`} aria-hidden="true" />
       
       {/* Tarjeta de contenido */}
-      <div className="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl ml-2">
+      <div className="bg-white border border-congreso-teal/10 rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl ml-2">
         <div className="flex flex-col md:flex-row gap-2 md:gap-6">
           {/* Badge de tiempo */}
           <span className={`w-fit md:min-w-[80px] text-center text-white font-bold text-[11px] py-1.5 px-3 rounded-md shadow-md ${dotColor}`}>
@@ -572,7 +582,7 @@ function TimelineItem({
           {/* Lista de actividades */}
           <div className="space-y-1.5">
             {activities.map((act, i) => (
-              <p key={i} className="text-sm font-semibold text-text-main leading-snug flex items-start gap-2">
+              <p key={i} className="text-sm font-semibold text-congreso-dark leading-snug flex items-start gap-2">
                 <span className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${dotColor}`} aria-hidden="true" />
                 {act}
               </p>
@@ -597,8 +607,10 @@ function LandsSection({
 }) {
   return (
     <section id="lands" style={styles.landsSection}>
-      <h2 style={styles.sectionTitle}>EXPLORA NUESTRAS TIERRAS TEMÁTICAS</h2>
-      <p style={styles.sectionSub}>
+      <h2 className="text-3xl md:text-4xl font-black text-center mb-2 uppercase tracking-tighter bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
+        Explora Nuestras Tierras Temáticas
+      </h2>
+      <p className="text-center text-congreso-dark/60 mb-12 text-base">
         Interactúa con las tarjetas para alterar el flujo y los colores del hiperespacio 3D.
       </p>
       <div style={styles.landsGrid}>
@@ -621,7 +633,7 @@ function LandCard({
     <div
       onMouseEnter={onSelect}
       onClick={onSelect}
-      className="bg-white dark:bg-slate-900 text-texto-base border border-borde-sutil p-10 rounded-lg cursor-pointer transition-all duration-300 shadow-lg"
+      className="bg-white text-congreso-dark border border-congreso-teal/20 p-10 rounded-xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(0,151,167,0.2)] hover:border-congreso-teal/40"
       style={{
         borderTop: `4px solid ${land.color}`,
         transform: 'none',
@@ -629,7 +641,7 @@ function LandCard({
     >
       <span className="font-bold text-xs tracking-widest block mb-3" style={{ color: land.color }}>IGE LANDS</span>
       <h3 className="text-[1.4rem] font-bold mb-4 tracking-tight">{land.name}</h3>
-      <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-principal)', opacity: 0.65 }}>{land.desc}</p>
+      <p className="text-sm leading-relaxed mb-8 text-congreso-dark/60">{land.desc}</p>
       <div className="text-sm font-bold flex items-center gap-2" style={{ color: land.color }}>
         Conocer conferencias <span>→</span>
       </div>
@@ -674,7 +686,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   heroTagline: {
     letterSpacing: '0.4em',
-    color: '#03B3C3',
+    color: '#0097A7',
     fontSize: '0.8rem',
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -696,7 +708,7 @@ const styles: Record<string, React.CSSProperties> = {
   divider: {
     border: 0,
     height: 1,
-    background: 'linear-gradient(to right, transparent, var(--border-componentes), transparent)',
+    background: 'linear-gradient(to right, transparent, rgba(0,151,167,0.3), transparent)',
     margin: '5rem 0',
   },
   landsSection: { marginBottom: '12vh' },

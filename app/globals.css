@@ -16,6 +16,33 @@
   --animate-aurora-slow: aurora-movement 25s infinite alternate ease-in-out;
   --animate-aurora-fast: aurora-movement 15s infinite alternate-reverse ease-in-out;
   --animate-fluid-pulse: fluid-pulse 8s infinite ease-in-out;
+
+  /* ── Paleta Oficial del 1er Congreso Internacional en Gestión Empresarial - ELIGE ── */
+  /* Colores Principales */
+  --color-congreso-dark: #07264D;
+  --color-congreso-blue: #0D47A1;
+  --color-congreso-teal: #0097A7;
+  --color-congreso-emerald: #00B894;
+  --color-congreso-orange: #FF7A00;
+
+  /* Colores Secundarios y Soporte */
+  --color-congreso-mint: #26A69A;
+  --color-congreso-sky: #2E7DE1;
+  --color-congreso-pastel: #7BD3E6;
+  --color-congreso-apple: #6BBF59;
+  --color-congreso-yellow: #FFB02E;
+  --color-congreso-deep: #0A305F;
+  --color-congreso-electric: #1565C0;
+  --color-congreso-cyan: #0091B2;
+  --color-congreso-turquesa: #4CC9C0;
+  --color-congreso-lime: #A3D977;
+
+  /* Colores Neutros de Marca */
+  --color-congreso-bgDark: #1A1F2E;
+  --color-congreso-greyDark: #374151;
+  --color-congreso-greyMed: #6B7280;
+  --color-congreso-greyLight: #E5E7EB;
+  --color-congreso-whiteSmoke: #F8FAFC;
 }
 
 /* --- MAPEO DE VARIABLES NATIVAS --- */

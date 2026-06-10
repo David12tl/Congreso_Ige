@@ -10,15 +10,15 @@ function GlassCard({ children, className = '', glowColor = 'amber' }: {
   glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
 }) {
   const glowStyles: Record<string, string> = {
-    blue: 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
+    blue: 'border-congreso-blue/30 shadow-[0_0_20px_rgba(13,71,161,0.15)]',
     purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    cyan: 'border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]',
-    emerald: 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    amber: 'border-congreso-orange/30 shadow-[0_0_20px_rgba(255,122,0,0.15)]',
+    cyan: 'border-congreso-teal/30 shadow-[0_0_20px_rgba(0,151,167,0.15)]',
+    emerald: 'border-congreso-emerald/30 shadow-[0_0_20px_rgba(0,184,148,0.15)]',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
+    <div className={`relative rounded-2xl border bg-congreso-bgDark/60 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       {children}
     </div>
@@ -31,18 +31,18 @@ export default function TicketsVendidosPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">
-            <HiOutlineTicket className="inline-block w-8 h-8 mr-3 text-amber-400" />
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">
+            <HiOutlineTicket className="inline-block w-6 h-6 sm:w-8 sm:h-8 mr-3 text-congreso-orange" />
             Tickets{' '}
-            <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-congreso-orange to-congreso-yellow bg-clip-text text-transparent">
               Vendidos
             </span>
           </h1>
           <p className="text-gray-500 text-sm font-mono mt-1">ADMIN // MÉTRICAS_DE_VENTAS_Y_EMISIÓN</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">Actualizado</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-congreso-orange/10 border border-congreso-orange/30 rounded-full">
+          <div className="w-2 h-2 rounded-full bg-congreso-orange animate-pulse" />
+          <span className="text-congreso-orange text-xs font-bold uppercase tracking-widest">Actualizado</span>
         </div>
       </header>
 
@@ -52,7 +52,7 @@ export default function TicketsVendidosPage() {
         <GlassCard className="p-6" glowColor="blue">
           <div className="flex items-center gap-3 mb-4 text-blue-400">
             <HiOutlineTicket className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-400/80">Total Emitidos</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-congreso-blue/80">Total Emitidos</span>
           </div>
           <span className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]">—</span>
           <p className="text-[10px] text-blue-400 mt-2 font-mono">Cargando desde DB...</p>
@@ -61,7 +61,7 @@ export default function TicketsVendidosPage() {
         <GlassCard className="p-6" glowColor="amber">
           <div className="flex items-center gap-3 mb-4 text-amber-400">
             <HiOutlineChartBar className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-400/80">Capacidad Utilizada</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-congreso-orange/80">Capacidad Utilizada</span>
           </div>
           <span className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">—%</span>
           <p className="text-[10px] text-amber-400 mt-2 font-mono">Evento — Aforo total</p>
