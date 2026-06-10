@@ -234,7 +234,7 @@ function HeroSection() {
             width={true}
             weight={true}
             italic={true}
-            textColor="#FFB02E"
+            textColor="#fafafa"
             minFontSize={20}
           />
         </div>
