@@ -136,7 +136,7 @@ const campoLaboral = [
    ═══════════════════════════════════════════════════════════════ */
 export default function AboutIGEPage() {
   return (
-    <main className="relative z-10 w-full min-h-screen bg-congreso-whiteSmoke">
+    <main className="relative z-10 w-full min-h-screen bg-congreso-whiteSmoke dark:bg-congreso-bgDark">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
@@ -144,7 +144,7 @@ export default function AboutIGEPage() {
         <div className="mb-10 scroll-reveal">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-congreso-teal/20 text-congreso-dark hover:bg-congreso-teal/10 hover:border-congreso-teal/40 transition-all duration-300 shadow-sm text-sm font-medium group"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-slate-900/60 border border-congreso-teal/20 text-congreso-dark dark:text-slate-100 hover:bg-congreso-teal/10 hover:border-congreso-teal/40 transition-all duration-300 shadow-sm text-sm font-medium group"
           >
             <span className="transform group-hover:-translate-x-1 transition-transform duration-200">
               ←
@@ -162,9 +162,9 @@ export default function AboutIGEPage() {
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
             Ingeniería en Gestión<br />
-            <span className="text-congreso-dark">Empresarial</span>
+            <span className="text-congreso-dark dark:text-slate-100">Empresarial</span>
           </h1>
-          <p className="text-lg md:text-xl text-congreso-dark/70 max-w-2xl leading-relaxed">
+          <p className="text-lg md:text-xl text-congreso-dark/70 dark:text-slate-400 max-w-2xl leading-relaxed">
             Perfil Profesional y Oportunidades Globales — Formamos líderes con
             visión estratégica, conciencia social y dominio tecnológico para
             transformar el mundo empresarial del siglo XXI.
@@ -178,7 +178,7 @@ export default function AboutIGEPage() {
           {/* Encabezado de sección */}
           <div className="flex items-center gap-4 mb-10">
             <div className="w-10 h-[2px] bg-gradient-to-r from-congreso-teal to-transparent" />
-            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-congreso-dark">
+            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-congreso-dark dark:text-slate-100">
               Perfil de Ingreso
             </h2>
             <div className="flex-1 h-[2px] bg-gradient-to-l from-congreso-teal/30 to-transparent" />
@@ -189,7 +189,7 @@ export default function AboutIGEPage() {
             {perfilIngreso.map((item) => (
               <div
                 key={item.num}
-                className="bg-white border border-congreso-teal/10 p-5 rounded-2xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:border-congreso-teal/30 hover:shadow-congreso-teal/10 scroll-reveal relative group"
+                className="bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 p-5 rounded-2xl shadow-md transition-all duration-300 hover:scale-[1.02] hover:border-congreso-teal/30 hover:shadow-congreso-teal/10 scroll-reveal relative group"
               >
                 {/* Número secuencial brillante */}
                 <span className="absolute top-3 right-4 text-3xl md:text-4xl font-black leading-none bg-gradient-to-b from-congreso-teal/40 to-transparent bg-clip-text text-transparent select-none">
@@ -197,10 +197,10 @@ export default function AboutIGEPage() {
                 </span>
 
                 {/* Contenido */}
-                <h3 className="text-base font-bold text-congreso-dark mb-2 pr-12">
+                <h3 className="text-base font-bold text-congreso-dark dark:text-slate-200 mb-2 pr-12">
                   {item.keyword}
                 </h3>
-                <p className="text-sm text-congreso-dark/60 leading-relaxed">
+                <p className="text-sm text-congreso-dark/60 dark:text-slate-400 leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -208,7 +208,7 @@ export default function AboutIGEPage() {
           </div>
 
           {/* Nota decorativa al final */}
-          <p className="text-xs text-congreso-dark/40 text-center mt-10 font-mono tracking-wide">
+          <p className="text-xs text-congreso-dark/40 dark:text-slate-500 text-center mt-10 font-mono tracking-wide">
             [ 16 competencias clave para el éxito profesional ]
           </p>
         </section>
@@ -220,13 +220,13 @@ export default function AboutIGEPage() {
           {/* Encabezado de sección */}
           <div className="flex items-center gap-4 mb-10">
             <div className="w-10 h-[2px] bg-gradient-to-r from-congreso-teal to-transparent" />
-            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-congreso-dark">
+            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-congreso-dark dark:text-slate-100">
               📍 Campo Laboral
             </h2>
             <div className="flex-1 h-[2px] bg-gradient-to-l from-congreso-teal/30 to-transparent" />
           </div>
 
-          <p className="text-congreso-dark/70 text-base md:text-lg mb-10 max-w-3xl leading-relaxed">
+          <p className="text-congreso-dark/70 dark:text-slate-400 text-base md:text-lg mb-10 max-w-3xl leading-relaxed">
             El egresado de Ingeniería en Gestión Empresarial posee un perfil
             multidisciplinario que le permite insertarse en los sectores público,
             privado y social, así como emprender su propia unidad productiva.
@@ -238,7 +238,7 @@ export default function AboutIGEPage() {
             {campoLaboral.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-congreso-teal/10 rounded-2xl overflow-hidden shadow-md transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_50px_-12px_rgba(0,151,167,0.15)] scroll-reveal group"
+                className="bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-2xl overflow-hidden shadow-md transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_50px_-12px_rgba(0,151,167,0.15)] scroll-reveal group"
               >
                 {/* Banner superior con gradiente */}
                 <div
@@ -246,7 +246,7 @@ export default function AboutIGEPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-congreso-teal animate-pulse" />
-                    <h3 className="text-lg md:text-xl font-bold text-congreso-dark">
+                    <h3 className="text-lg md:text-xl font-bold text-congreso-dark dark:text-slate-200">
                       {item.area}
                     </h3>
                   </div>
@@ -254,7 +254,7 @@ export default function AboutIGEPage() {
 
                 {/* Cuerpo de la tarjeta */}
                 <div className="p-6">
-                  <p className="text-congreso-dark/80 text-sm md:text-base text-justify leading-relaxed">
+                  <p className="text-congreso-dark/80 dark:text-slate-400 text-sm md:text-base text-justify leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
@@ -264,7 +264,7 @@ export default function AboutIGEPage() {
 
           {/* Cierre decorativo */}
           <div className="mt-14 text-center scroll-reveal">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white border border-congreso-emerald/20 text-sm text-congreso-dark/70 font-mono">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white dark:bg-slate-900/60 border border-congreso-emerald/20 text-sm text-congreso-dark/70 dark:text-slate-400 font-mono">
               <span className="w-2 h-2 rounded-full bg-congreso-emerald animate-pulse" />
               Tasa de inserción laboral superior al 85 % en el primer año
             </div>

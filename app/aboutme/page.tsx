@@ -52,7 +52,7 @@ export default function AboutMePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           {/* Botón premium estilo Aurora UI para regresar al inicio */}
           <div className="mb-8 scroll-reveal">
-            <Link href="/" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-congreso-teal/20 text-congreso-dark hover:bg-congreso-teal/10 hover:border-congreso-teal/40 transition-all duration-300 shadow-sm text-sm font-medium group">
+            <Link href="/" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-slate-900/60 border border-congreso-teal/20 text-congreso-dark dark:text-slate-100 hover:bg-congreso-teal/10 hover:border-congreso-teal/40 transition-all duration-300 shadow-sm text-sm font-medium group">
               <span className="transform group-hover:-translate-x-1 transition-transform duration-200">←</span>
               Regresar al Inicio
             </Link>
@@ -67,7 +67,7 @@ export default function AboutMePage() {
             </span>
 
             {/* Tarjeta masiva satinada con la historia */}
-            <div className="bg-white border border-congreso-teal/10 shadow-2xl rounded-3xl p-6 md:p-10 relative overflow-hidden">
+            <div className="bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 shadow-2xl rounded-3xl p-6 md:p-10 relative overflow-hidden">
               {/* Adornos de fondo */}
               <div
                 className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-congreso-teal/5 blur-3xl pointer-events-none"
@@ -87,7 +87,7 @@ export default function AboutMePage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                 {/* Columna de texto — ocupa 2 de 3 columnas */}
-                <div className="lg:col-span-2 space-y-6 text-base md:text-lg text-congreso-dark/80 leading-relaxed text-justify">
+                <div className="lg:col-span-2 space-y-6 text-base md:text-lg text-congreso-dark/80 dark:text-slate-400 leading-relaxed text-justify">
                   <p>
                     El programa educativo de Ingeniería en Gestión Empresarial nació en el{' '}
                     <strong className="text-congreso-teal font-bold">
@@ -143,7 +143,7 @@ export default function AboutMePage() {
           <section>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
               {/* ─── TARJETA DE MISIÓN ─── */}
-              <div className="scroll-reveal bg-white border border-congreso-teal/10 shadow-2xl rounded-3xl p-8 relative overflow-hidden group transition-all duration-300 hover:shadow-[0_0_50px_-12px_rgba(0,151,167,0.2)]">
+              <div className="scroll-reveal bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 shadow-2xl rounded-3xl p-8 relative overflow-hidden group transition-all duration-300 hover:shadow-[0_0_50px_-12px_rgba(0,151,167,0.2)]">
                 {/* Esfera decorativa */}
                 <div
                   className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-congreso-teal/8 blur-[80px] pointer-events-none group-hover:bg-congreso-teal/15 transition-all duration-500"
@@ -153,10 +153,10 @@ export default function AboutMePage() {
                 {/* Icono + título */}
                 {TargetIcon}
                 <div className="border-l-4 border-congreso-teal pl-6">
-                  <h3 className="text-2xl font-bold mb-4 text-congreso-dark uppercase tracking-tight">
+                  <h3 className="text-2xl font-bold mb-4 text-congreso-dark dark:text-slate-100 uppercase tracking-tight">
                     Misión
                   </h3>
-                  <p className="text-base md:text-lg text-congreso-dark/80 leading-relaxed text-justify">
+                  <p className="text-base md:text-lg text-congreso-dark/80 dark:text-slate-400 leading-relaxed text-justify">
                     Formar profesionistas en gestión empresarial con un enfoque 
                     emprendinnovador, creativo y sustentable, que coadyuven de manera 
                     eficiente y eficaz hacia el desarrollo económico de la zona de 
@@ -166,7 +166,7 @@ export default function AboutMePage() {
               </div>
 
               {/* ─── TARJETA DE VISIÓN ─── */}
-              <div className="scroll-reveal bg-white border border-congreso-blue/10 shadow-2xl rounded-3xl p-8 relative overflow-hidden group transition-all duration-300 hover:shadow-[0_0_50px_-12px_rgba(13,71,161,0.2)]">
+              <div className="scroll-reveal bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-blue/10 shadow-2xl rounded-3xl p-8 relative overflow-hidden group transition-all duration-300 hover:shadow-[0_0_50px_-12px_rgba(13,71,161,0.2)]">
                 {/* Esfera decorativa */}
                 <div
                   className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-congreso-blue/8 blur-[80px] pointer-events-none group-hover:bg-congreso-blue/15 transition-all duration-500"
@@ -176,10 +176,10 @@ export default function AboutMePage() {
                 {/* Icono + título */}
                 {VisionIcon}
                 <div className="border-l-4 border-congreso-blue pl-6">
-                  <h3 className="text-2xl font-bold mb-4 text-congreso-dark uppercase tracking-tight">
+                  <h3 className="text-2xl font-bold mb-4 text-congreso-dark dark:text-slate-100 uppercase tracking-tight">
                     Visión
                   </h3>
-                  <p className="text-base md:text-lg text-congreso-dark/80 leading-relaxed text-justify">
+                  <p className="text-base md:text-lg text-congreso-dark/80 dark:text-slate-400 leading-relaxed text-justify">
                     Ser un programa educativo líder a nivel nacional por su excelencia 
                     profesional, mediante la mejora continua, impulsando el desarrollo 
                     sustentable emprendeinnovador, que permita elevar la calidad de vida 

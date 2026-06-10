@@ -30,7 +30,7 @@ const faqs = [
 
 export default function FAQsPage() {
   return (
-    <main className="min-h-screen bg-congreso-whiteSmoke text-congreso-dark selection:bg-congreso-teal/30 font-sans overflow-x-hidden">
+    <main className="min-h-screen bg-congreso-whiteSmoke dark:bg-congreso-bgDark text-congreso-dark dark:text-slate-100 selection:bg-congreso-teal/30 font-sans overflow-x-hidden">
       <div className="relative z-50">
         <Navbar />
       </div>
@@ -48,10 +48,10 @@ export default function FAQsPage() {
             <span className="inline-block px-3 py-1 mb-4 text-[10px] font-bold tracking-[0.3em] text-congreso-teal uppercase border border-congreso-teal/30 rounded-full bg-congreso-teal/5 backdrop-blur-sm">
               Soporte & Ayuda
             </span>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-congreso-dark mb-6 uppercase leading-tight">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-congreso-dark dark:text-slate-100 mb-6 uppercase leading-tight">
               Preguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal">Frecuentes</span>
             </h1>
-            <p className="text-congreso-dark/60 text-lg max-w-xl mx-auto leading-relaxed">
+            <p className="text-congreso-dark/60 dark:text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
               Resolvemos tus dudas sobre el proceso de registro, pagos y acceso al evento tecnológico del año.
             </p>
           </header>
@@ -63,8 +63,8 @@ export default function FAQsPage() {
           </div>
 
           {/* Call to action sutil */}
-          <div className="mt-20 text-center p-8 rounded-2xl bg-white border border-congreso-teal/10 backdrop-blur-sm animate-fadeIn opacity-0 [animation-fill-mode:forwards] [animation-delay:600ms]">
-            <p className="text-congreso-dark/60 mb-4">¿Aún tienes dudas?</p>
+          <div className="mt-20 text-center p-8 rounded-2xl bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 backdrop-blur-sm animate-fadeIn opacity-0 [animation-fill-mode:forwards] [animation-delay:600ms]">
+            <p className="text-congreso-dark/60 dark:text-slate-400 mb-4">¿Aún tienes dudas?</p>
             <a 
               href="mailto:soporte@congresoige.com" 
               className="text-congreso-teal font-bold hover:text-congreso-blue transition-colors underline underline-offset-4"
@@ -87,10 +87,10 @@ function FAQItem({ faq, index }: { faq: typeof faqs[0], index: number }) {
 
   return (
     <div 
-      className={`group bg-white backdrop-blur-md border transition-all duration-500 rounded-2xl overflow-hidden animate-fadeIn opacity-0 [animation-fill-mode:forwards] ${
+      className={`group bg-white dark:bg-slate-900/60 backdrop-blur-md border transition-all duration-500 rounded-2xl overflow-hidden animate-fadeIn opacity-0 [animation-fill-mode:forwards] ${
         isOpen 
-          ? 'border-congreso-teal/50 shadow-[0_0_30px_rgba(0,151,167,0.1)]' 
-          : 'border-congreso-teal/10 hover:border-congreso-teal/30'
+          ? 'border-congreso-teal/50 shadow-[0_0_30px_rgba(0,151,167,0.1)] dark:border-congreso-teal/30' 
+          : 'border-congreso-teal/10 dark:border-slate-800 hover:border-congreso-teal/30'
       }`}
       style={{ animationDelay: `${index * 100}ms` }}
     >
@@ -98,11 +98,11 @@ function FAQItem({ faq, index }: { faq: typeof faqs[0], index: number }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-6 py-6 flex items-center justify-between text-left focus:outline-none cursor-pointer"
       >
-        <span className={`text-lg font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-congreso-teal' : 'text-congreso-dark group-hover:text-congreso-dark'}`}>
+        <span className={`text-lg font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-congreso-teal' : 'text-congreso-dark dark:text-slate-200 group-hover:text-congreso-dark dark:group-hover:text-slate-200'}`}>
           {faq.question}
         </span>
         <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 ${
-          isOpen ? 'bg-congreso-teal/20 border-congreso-teal/50 text-congreso-teal rotate-180' : 'bg-white/5 border-congreso-teal/20 text-congreso-dark/40'
+          isOpen ? 'bg-congreso-teal/20 border-congreso-teal/50 text-congreso-teal rotate-180' : 'bg-white/5 dark:bg-slate-800/50 border-congreso-teal/20 dark:border-slate-700 text-congreso-dark/40 dark:text-slate-400'
         }`}>
           <FiChevronDown className="w-5 h-5" />
         </div>
@@ -113,7 +113,7 @@ function FAQItem({ faq, index }: { faq: typeof faqs[0], index: number }) {
           isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-6 pb-8 text-congreso-dark/70 leading-relaxed text-base border-t border-congreso-teal/10 pt-6 bg-gradient-to-b from-transparent to-congreso-teal/[0.02]">
+        <div className="px-6 pb-8 text-congreso-dark/70 dark:text-slate-400 leading-relaxed text-base border-t border-congreso-teal/10 dark:border-slate-800 pt-6 bg-gradient-to-b from-transparent to-congreso-teal/[0.02]">
           {faq.answer}
         </div>
       </div>

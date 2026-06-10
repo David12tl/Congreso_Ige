@@ -282,7 +282,7 @@ function HeroSection() {
 function ObjectivesSection() {
   return (
     <section className="mb-24 scroll-reveal">
-      <div className="bg-white border border-congreso-teal/10 shadow-[0_0_50px_-12px_rgba(0,151,167,0.15)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 shadow-[0_0_50px_-12px_rgba(0,151,167,0.15)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
         {/* Adornos de fondo */}
         <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-congreso-teal/5 blur-3xl pointer-events-none" aria-hidden="true" />
         <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-congreso-blue/5 blur-3xl pointer-events-none" aria-hidden="true" />
@@ -303,7 +303,7 @@ function ObjectivesSection() {
           Propósito Estratégico
         </h2>
         
-        <p className="text-xl md:text-2xl leading-relaxed text-congreso-dark/80 font-light border-l-4 border-congreso-teal pl-6">
+        <p className="text-xl md:text-2xl leading-relaxed text-congreso-dark/80 dark:text-slate-300 font-light border-l-4 border-congreso-teal pl-6">
           Impulsar el desarrollo de competencias empresariales, el emprendimiento y la innovación tecnológica mediante un espacio de intercambio de conocimientos, experiencias y oportunidades, que integre a estudiantes, profesionales, empresas e investigadores, fomentando la creación de proyectos sostenibles, la vinculación laboral y el crecimiento económico y social en la Zona Centro del Estado de Veracruz.
         </p>
       </div>
@@ -337,37 +337,37 @@ function WorkTablesSection() {
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
         {/* Mesa 01 */}
-        <div className="group scroll-reveal bg-white text-congreso-dark border border-congreso-teal/20 shadow-[0_0_40px_-16px_rgba(0,151,167,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(0,151,167,0.3)] hover:border-congreso-teal/40">
+        <div className="group scroll-reveal bg-white dark:bg-slate-900/60 dark:border-slate-800 text-congreso-dark dark:text-slate-100 border border-congreso-teal/20 shadow-[0_0_40px_-16px_rgba(0,151,167,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(0,151,167,0.3)] hover:border-congreso-teal/40">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-congreso-teal/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-congreso-teal/20 transition-all duration-500" aria-hidden="true" />
           
           <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-congreso-teal bg-congreso-teal/10 px-3 py-1 rounded-full w-fit mb-4 block">
             Mesa 01
           </span>
-          <h3 className="text-2xl font-bold mb-4 text-congreso-dark">Emprendimiento</h3>
-          <ul className="space-y-2 text-sm text-congreso-dark/70">
+          <h3 className="text-2xl font-bold mb-4 text-congreso-dark dark:text-slate-100">Emprendimiento</h3>
+          <ul className="space-y-2 text-sm text-congreso-dark/70 dark:text-slate-400">
             <li className="flex items-start gap-3 hover:bg-congreso-teal/5 p-2 rounded-xl transition-colors duration-200">
               {diamondIcon}
-              <span><strong className="text-congreso-dark">Intraemprendimiento:</strong> Estudios e investigaciones relacionadas en innovación dentro de las organizaciones.</span>
+              <span><strong className="text-congreso-dark dark:text-slate-200">Intraemprendimiento:</strong> Estudios e investigaciones relacionadas en innovación dentro de las organizaciones.</span>
             </li>
             <li className="flex items-start gap-3 hover:bg-congreso-teal/5 p-2 rounded-xl transition-colors duration-200">
               {diamondIcon}
-              <span><strong className="text-congreso-dark">Emprendimientos:</strong> Agrícolas, Sociales, Turísticos, Comunitarios y Tecnológicos.</span>
+              <span><strong className="text-congreso-dark dark:text-slate-200">Emprendimientos:</strong> Agrícolas, Sociales, Turísticos, Comunitarios y Tecnológicos.</span>
             </li>
           </ul>
         </div>
 
         {/* Mesa 02 */}
-        <div className="group scroll-reveal bg-white text-congreso-dark border border-congreso-blue/20 shadow-[0_0_40px_-16px_rgba(13,71,161,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(13,71,161,0.3)] hover:border-congreso-blue/40">
+        <div className="group scroll-reveal bg-white dark:bg-slate-900/60 dark:border-slate-800 text-congreso-dark dark:text-slate-100 border border-congreso-blue/20 shadow-[0_0_40px_-16px_rgba(13,71,161,0.15)] rounded-3xl p-8 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_-12px_rgba(13,71,161,0.3)] hover:border-congreso-blue/40">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-congreso-blue/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-congreso-blue/20 transition-all duration-500" aria-hidden="true" />
           
           <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-congreso-blue bg-congreso-blue/10 px-3 py-1 rounded-full w-fit mb-4 block">
             Mesa 02
           </span>
-          <h3 className="text-2xl font-bold mb-4 text-congreso-dark">Innovación Tecnológica</h3>
-          <ul className="space-y-2 text-sm text-congreso-dark/70">
+          <h3 className="text-2xl font-bold mb-4 text-congreso-dark dark:text-slate-100">Innovación Tecnológica</h3>
+          <ul className="space-y-2 text-sm text-congreso-dark/70 dark:text-slate-400">
             <li className="flex items-start gap-3 hover:bg-congreso-blue/5 p-2 rounded-xl transition-colors duration-200">
               {arrowRightIcon}
-              <span><strong className="text-congreso-dark">IA en el Emprendimiento:</strong> Estudios e investigaciones relacionadas.</span>
+              <span><strong className="text-congreso-dark dark:text-slate-200">IA en el Emprendimiento:</strong> Estudios e investigaciones relacionadas.</span>
             </li>
             <li className="flex items-start gap-3 hover:bg-congreso-blue/5 p-2 rounded-xl transition-colors duration-200">
               {arrowRightIcon}
@@ -403,7 +403,7 @@ function ScheduleSection() {
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-congreso-teal via-congreso-blue to-congreso-teal/20 rounded-full" aria-hidden="true" />
           
           {/* Círculo superior */}
-          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-teal border-[3px] border-white shadow-[0_0_16px_rgba(0,151,167,0.6)] z-10" aria-hidden="true" />
+          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-teal border-[3px] border-white dark:border-slate-900 shadow-[0_0_16px_rgba(0,151,167,0.6)] z-10" aria-hidden="true" />
           
           {/* Header Día 1 */}
           <TimelineDayHeader
@@ -452,7 +452,7 @@ function ScheduleSection() {
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-congreso-emerald via-congreso-teal to-congreso-emerald/20 rounded-full" aria-hidden="true" />
           
           {/* Círculo superior */}
-          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-emerald border-[3px] border-white shadow-[0_0_16px_rgba(0,184,148,0.6)] z-10" aria-hidden="true" />
+          <div className="absolute left-[11px] top-0 w-[18px] h-[18px] rounded-full bg-congreso-emerald border-[3px] border-white dark:border-slate-900 shadow-[0_0_16px_rgba(0,184,148,0.6)] z-10" aria-hidden="true" />
           
           {/* Header Día 2 */}
           <TimelineDayHeader
@@ -573,7 +573,7 @@ function TimelineItem({
       <div className={`absolute -left-[10px] top-[14px] w-[22px] h-[22px] rounded-full border-[3px] border-white ${dotColor} shadow-[0_0_12px_rgba(0,151,167,0.3)] z-10 transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_20px_rgba(0,151,167,0.5)]`} aria-hidden="true" />
       
       {/* Tarjeta de contenido */}
-      <div className="bg-white border border-congreso-teal/10 rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl ml-2">
+      <div className="bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-xl p-4 shadow-lg backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl ml-2">
         <div className="flex flex-col md:flex-row gap-2 md:gap-6">
           {/* Badge de tiempo */}
           <span className={`w-fit md:min-w-[80px] text-center text-white font-bold text-[11px] py-1.5 px-3 rounded-md shadow-md ${dotColor}`}>
@@ -582,7 +582,7 @@ function TimelineItem({
           {/* Lista de actividades */}
           <div className="space-y-1.5">
             {activities.map((act, i) => (
-              <p key={i} className="text-sm font-semibold text-congreso-dark leading-snug flex items-start gap-2">
+              <p key={i} className="text-sm font-semibold text-congreso-dark dark:text-slate-200 leading-snug flex items-start gap-2">
                 <span className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${dotColor}`} aria-hidden="true" />
                 {act}
               </p>
@@ -610,7 +610,7 @@ function LandsSection({
       <h2 className="text-3xl md:text-4xl font-black text-center mb-2 uppercase tracking-tighter bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal bg-clip-text text-transparent">
         Explora Nuestras Tierras Temáticas
       </h2>
-      <p className="text-center text-congreso-dark/60 mb-12 text-base">
+      <p className="text-center text-congreso-dark/60 dark:text-slate-400 mb-12 text-base">
         Interactúa con las tarjetas para alterar el flujo y los colores del hiperespacio 3D.
       </p>
       <div style={styles.landsGrid}>
@@ -633,7 +633,7 @@ function LandCard({
     <div
       onMouseEnter={onSelect}
       onClick={onSelect}
-      className="bg-white text-congreso-dark border border-congreso-teal/20 p-10 rounded-xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(0,151,167,0.2)] hover:border-congreso-teal/40"
+      className="bg-white dark:bg-slate-900/60 dark:border-slate-800 text-congreso-dark dark:text-slate-100 border border-congreso-teal/20 p-10 rounded-xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(0,151,167,0.2)] hover:border-congreso-teal/40"
       style={{
         borderTop: `4px solid ${land.color}`,
         transform: 'none',
@@ -641,7 +641,7 @@ function LandCard({
     >
       <span className="font-bold text-xs tracking-widest block mb-3" style={{ color: land.color }}>IGE LANDS</span>
       <h3 className="text-[1.4rem] font-bold mb-4 tracking-tight">{land.name}</h3>
-      <p className="text-sm leading-relaxed mb-8 text-congreso-dark/60">{land.desc}</p>
+      <p className="text-sm leading-relaxed mb-8 text-congreso-dark/60 dark:text-slate-400">{land.desc}</p>
       <div className="text-sm font-bold flex items-center gap-2" style={{ color: land.color }}>
         Conocer conferencias <span>→</span>
       </div>
