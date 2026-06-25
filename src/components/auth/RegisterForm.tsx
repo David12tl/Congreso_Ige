@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signUp, signInWithGoogle } from '@/app/auth/actions';
+import { signUp, signInWithGoogle } from '../../../app/auth/actions';
 
 export default function RegisterForm() {
   const router = useRouter();

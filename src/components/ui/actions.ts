@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database.types'
 
 interface TicketSelect {
   qr_data: string | null
@@ -10,7 +11,8 @@ interface TicketSelect {
 export async function obtenerAsientosOcupados(eventId: string) {
   const supabase = await createClient()
 
-  const { data: tickets, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: tickets, error } = await (supabase as any)
     .from('tickets')
     .eq('type', 'student')
     .eq('event_id', eventId)

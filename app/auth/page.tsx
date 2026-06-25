@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { signOut } from "@/app/auth/actions";
+import { signOut } from "./actions";
 import React, { Suspense } from "react";
 
 // Mapeo de colores basado en la Land de Interés
