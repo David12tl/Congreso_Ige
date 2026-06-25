@@ -1,8 +1,8 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState, useTransition } from 'react'
-import { CONGRESO_IGE_EVENT_ID, getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/src/config/auditorioConfig'
-import { createClient } from '@/src/lib/supabase/client'
+import { CONGRESO_IGE_EVENT_ID, getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
+import { createClient } from '@/lib/supabase/client'
 import { createManualSeatTicket, confirmarPagoTicket } from '@/app/dashboard/generar-tokens/actions'
 import { AuditorioSeatMap } from './AuditorioSeatMap'
 import type { AssignmentContext } from './types'

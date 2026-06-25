@@ -2,11 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "./database.types";
 
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
 export async function createClient(request: NextRequest) {
   // Crear una respuesta mutable para poder setear cookies
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient<Database>(
+  const supabase = createServerClient<DatabaseWithoutInternals>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

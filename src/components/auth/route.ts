@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/src/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Determina la ruta del dashboard según el rol del usuario.

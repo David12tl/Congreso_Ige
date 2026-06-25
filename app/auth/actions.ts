@@ -1,8 +1,8 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { generateAndSendCredential } from '@/src/app/auth/actions-credentials';
+import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
 
 export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
@@ -52,7 +52,7 @@ export async function signInWithPassword(
   // --- CRÍTICO: Consultar id_rol REAL desde la base de datos ---
   // No confiar en user_metadata porque puede estar desactualizada
   // cuando un administrador cambia el rol en la BD.
-  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/src/db/perfiles');
+  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
   const profile = await getUserProfile(userId);
 
   // Sincronizar metadata de Auth con el valor real de la BD

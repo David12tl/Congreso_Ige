@@ -1,4 +1,4 @@
-import { createClient } from "@/src/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 const CREDENTIALS_BUCKET = "credentials";
 

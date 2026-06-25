@@ -1,4 +1,4 @@
-import type { SeatIdentity } from '@/src/config/auditorioConfig'
+import type { SeatIdentity } from '@/config/auditorioConfig'
 
 /**
  * Estatus de pago del asiento.

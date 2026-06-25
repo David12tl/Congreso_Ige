@@ -1,99 +1,83 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
+import { InfiniteSliderBasic as InfiniteSlider } from "@/components/ui/infinite-slider";
 
 interface Partner {
   id: number;
   nombre: string;
-  categoria: 'institucional' | 'patrocinador_gold' | 'patrocinador_silver';
-  logoPlaceholder: string;
+  categoria: 'institucional';
+  logoUrl: string;
   url?: string;
 }
 
 export default function AliadosYPatrocinadores() {
   const aliados: Partner[] = [
-    { id: 1, nombre: "Gobierno del Estado", categoria: 'institucional', logoPlaceholder: "GOB VERACRUZ" },
-    { id: 2, nombre: "Tecnológico Nacional de México", categoria: 'institucional', logoPlaceholder: "TecNM ORIZABA" },
-    { id: 3, nombre: "Cámara de Comercio Regional", categoria: 'institucional', logoPlaceholder: "CANACO SERVYTUR" },
-    { id: 4, nombre: "Universidad de Innovación", categoria: 'institucional', logoPlaceholder: "UNI_TECH" },
-  ];
-
-  const patrocinadoresGold: Partner[] = [
-    { id: 5, nombre: "Apex Cloud Solutions", categoria: 'patrocinador_gold', logoPlaceholder: "APEX CLOUD" },
-    { id: 6, nombre: "Quantum CyberSec", categoria: 'patrocinador_gold', logoPlaceholder: "⚡ QUANTUM" },
-    { id: 7, nombre: "Krypton Global Dev", categoria: 'patrocinador_gold', logoPlaceholder: "KRYPTON_DEV" },
+    { id: 1, nombre: 'Institución Aliada 1', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-1.webp" },
+    { id: 2, nombre: 'Institución Aliada 2', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-2.webp" },
+    { id: 3, nombre: 'Institución Aliada 3', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-3.webp" },
+    { id: 4, nombre: 'Institución Aliada 4', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-4.webp" },
+    { id: 5, nombre: 'Institución Aliada 5', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-5.webp" },
+    { id: 6, nombre: 'Institución Aliada 6', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-6.webp" },
+    { id: 7, nombre: 'Institución Aliada 7', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-7.jpg" },
+    { id: 8, nombre: 'Institución Aliada 8', categoria: 'institucional', logoUrl: "/patriots/institucional/Escolar-8.webp" }
   ];
 
   return (
-    <section className="w-full py-20 px-4 md:px-8 relative bg-white dark:bg-slate-950" style={{ color: 'var(--text-principal)', borderTop: '1px solid var(--border-componentes)' }}>
+    <section className="w-full py-20 relative bg-white text-gray-800" style={{ borderTop: '1px solid var(--border-componentes)' }}>
       
       <div className="max-w-6xl mx-auto relative z-10">
         
         {/* ENCABEZADO DE SECCIÓN SERIA */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-[11px] font-mono tracking-[0.4em] text-gray-400 uppercase block mb-2">
+          <span className="text-[11px] font-mono tracking-[0.4em] text-gray-500 uppercase block mb-2">
             Respaldando el Ecosistema
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: 'var(--text-principal)' }}>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Alianzas Estratégicas
           </h2>
           <div className="w-12 h-[1px] mx-auto mb-4" style={{ backgroundColor: 'var(--border-componentes)' }} />
-          <p className="text-xs md:text-sm leading-relaxed font-light" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
+          <p className="text-xs sm:text-sm leading-relaxed font-light text-gray-600">
             Gracias al compromiso mutuo con la innovación, la educación y el desarrollo tecnológico, 
             estas destacadas organizaciones hacen posible este magno encuentro de talento nacional.
           </p>
         </div>
 
         {/* CONTENEDOR DE ALIADOS INSTITUCIONALES */}
-        <div className="mb-16">
-          <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
+        <div className="mb-16 px-4 md:px-8">
+          <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8 text-gray-500">
             Aliados Institucionales
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Rejilla responsiva para los logos */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8 md:gap-y-12">
             {aliados.map((aliado) => (
               <div
                 key={aliado.id}
-                /* Fondo gris ultra claro para los bloques sobre el fondo blanco */
-                className="h-24 rounded-lg flex items-center justify-center p-4 transition-all duration-300 filter grayscale opacity-70 hover:grayscale-0 hover:opacity-100 group cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-tarjetas)', border: '1px solid var(--border-componentes)' }}
+                className="h-28 rounded-xl flex items-center justify-center p-4 transition-all duration-300 filter grayscale opacity-60 hover:grayscale-0 hover:opacity-100 group cursor-pointer hover:-translate-y-1 bg-white"
+                style={{ border: '1px solid var(--border-componentes)'}}
               >
-                  <span className="text-xs font-mono font-semibold tracking-wider text-center uppercase transition-colors" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
-                  {aliado.logoPlaceholder}
-                </span>
+                <Image
+                  src={aliado.logoUrl}
+                  alt={`Logo de ${aliado.nombre}`}
+                  width={150}
+                  height={50}
+                  loading="lazy"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                  className="object-contain transition-transform duration-300 group-hover:scale-105"
+                />
               </div>
             ))}
           </div>
         </div>
-
-        {/* CONTENEDOR DE PATROCINADORES PRINCIPALES (GOLD) */}
-        <div>
-          <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8" style={{ color: 'var(--text-principal)', opacity: 0.6 }}>
-            Sponsors Oficiales
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {patrocinadoresGold.map((spon) => (
-              <div
-                key={spon.id}
-                /* Tarjetas blancas con una sombra suave para resaltar */
-                className="h-28 rounded-xl flex flex-col items-center justify-center p-6 transition-all duration-300 filter grayscale opacity-80 hover:grayscale-0 hover:opacity-100 group cursor-pointer relative overflow-hidden"
-                style={{ backgroundColor: 'var(--bg-tarjetas)', border: '1px solid var(--border-componentes)' }}
-              >
-                {/* Línea decorativa que se ilumina en cian al pasar el cursor */}
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#03B3C3] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-
-                  <span className="text-sm font-bold tracking-widest transition-colors duration-300 text-center" style={{ color: 'var(--text-principal)' }}>
-                  {spon.logoPlaceholder}
-                </span>
-                  <span className="text-[9px] font-mono mt-2 uppercase tracking-widest group-hover:text-[#03B3C3] transition-colors" style={{ color: 'var(--text-principal)', opacity: 0.5 }}>
-                  [ GOLD PARTNER ]
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
+      </div>
+      {/* CONTENEDOR DE PATROCINADORES PRINCIPALES (GOLD) - AHORA A PANTALLA COMPLETA */}
+      <div className="w-full text-center mt-24">
+        <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8 text-gray-500">
+          Patrocinadores Principales
+        </h3>
+        <InfiniteSlider />
       </div>
     </section>
   );

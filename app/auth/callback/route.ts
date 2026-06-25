@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/src/lib/supabase/server";
-import { getUserProfile, syncAuthMetadataWithProfile } from "@/src/db/perfiles";
+import { createClient } from "@/lib/supabase/server";
+import { getUserProfile, syncAuthMetadataWithProfile } from "@/db/perfiles";
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.

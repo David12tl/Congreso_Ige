@@ -1,6 +1,6 @@
-import { createClient } from "@/src/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import type { Database } from "@/src/types/database.types";
+import type { Database } from "@/types/database.types";
 
 interface ScanRequestBody {
   qr_data: string;

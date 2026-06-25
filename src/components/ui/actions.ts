@@ -1,23 +1,30 @@
 'use server'
 
-import { createClient } from '@/src/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+
+interface TicketSelect {
+  qr_data: string | null
+}
 
 // 1. Obtener asientos ocupados filtrando por el evento actual
-export async function obtenerAsientosOcupados(seccion: string) {
+export async function obtenerAsientosOcupados(eventId: string) {
   const supabase = await createClient()
 
-  const { data: tickets, error } = await (supabase as any)
+  const { data: tickets, error } = await supabase
     .from('tickets')
-    .select('qr_data') 
-    .eq('status', 'ocupado') 
+    .eq('type', 'student')
+    .eq('event_id', eventId)
+    .select('qr_data')
 
   if (error) {
     console.error('Error al obtener asientos:', error)
     return []
   }
 
-  // Retorna un arreglo plano de strings: ["Platea Central-A-3", "Platea Central-A-4"]
-  return (tickets || []).map((t: any) => t.qr_data).filter(Boolean)
+  const ticketsData = (tickets as TicketSelect[] | null) || []
+  return ticketsData
+    .map((ticket: TicketSelect) => ticket.qr_data)
+    .filter((qr): qr is string => qr !== null)
 }
 
 // 2. Apartar los asientos vinculándolos al evento real enviado desde el cliente
@@ -27,18 +34,17 @@ export async function apartarAsientosEnBD(asientosIds: string[], eventId: string
 
   if (!user) return { success: false, message: 'Usuario no autenticado.' }
   if (!eventId) return { success: false, message: 'Error: No se especificó un ID de evento válido.' }
+  if (!user.email) return { success: false, message: 'Error: Tu cuenta de usuario no tiene un email asociado.' }
 
   const filasAInsertar = asientosIds.map((id) => ({
     buyer_id: user.id,
-    qr_data: id,          // Guarda la nomenclatura estructurada (ej. "Platea Central-A-5")
-    status: 'ocupado',    
-    event_id: eventId,    // 🌟 Vinculación dinámica obligatoria con la tabla de eventos
-    created_at: new Date().toISOString()
+    email: user.email!,
+    qr_data: id,
+    event_id: eventId,
+    type: 'student',
   }))
 
-  const { error } = await (supabase as any)
-    .from('tickets') 
-    .insert(filasAInsertar)
+  const { error } = await supabase.from('tickets').insert(filasAInsertar)
 
   if (error) {
     console.error('Error en la inserción de Supabase:', error)

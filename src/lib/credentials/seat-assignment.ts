@@ -1,5 +1,5 @@
-import { createClient } from "@/src/lib/supabase/server";
-import { auditorioConfig, ZoneCode } from "@/src/config/auditorioConfig";
+import { createClient } from "@/lib/supabase/server";
+import { auditorioConfig, ZoneCode } from "@/config/auditorioConfig";
 
 export interface AssignedSeat {
   asiento_zona: string;

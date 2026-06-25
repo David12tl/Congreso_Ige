@@ -1,4 +1,4 @@
-import { PublicSeatMonitor } from '@/src/components/asientos/PublicSeatMonitor'
+import { PublicSeatMonitor } from '@/components/asientos/PublicSeatMonitor'
 import { getOccupiedSeatKeys } from './actions'
 
 export default async function MonitoreoMapaPage() {

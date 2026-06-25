@@ -1,6 +1,6 @@
 'use client'
 
-import { auditorioConfig, getSeatKey, type SeatIdentity } from '@/src/config/auditorioConfig'
+import { auditorioConfig, getSeatKey, type SeatIdentity } from '@/config/auditorioConfig'
 import type { SeatEstatusPago } from './types'
 
 export type SeatStatus = SeatEstatusPago

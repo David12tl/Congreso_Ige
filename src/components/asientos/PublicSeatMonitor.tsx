@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { CONGRESO_IGE_EVENT_ID, getSeatKey, type SeatIdentity, type ZoneCode } from '@/src/config/auditorioConfig'
-import { createClient } from '@/src/lib/supabase/client'
+import { CONGRESO_IGE_EVENT_ID, getSeatKey, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
+import { createClient } from '@/lib/supabase/client'
 import { AuditorioSeatMap } from './AuditorioSeatMap'
 
 interface PublicSeatMonitorProps {

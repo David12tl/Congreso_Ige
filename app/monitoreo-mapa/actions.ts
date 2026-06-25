@@ -1,8 +1,8 @@
 'use server'
 
-import { CONGRESO_IGE_EVENT_ID, getSeatKey, type ZoneCode } from '@/src/config/auditorioConfig'
-import { createClient } from '@/src/lib/supabase/server'
-import type { OccupiedSeat } from '@/src/components/asientos/types'
+import { CONGRESO_IGE_EVENT_ID, getSeatKey, type ZoneCode } from '@/config/auditorioConfig'
+import { createClient } from '@/lib/supabase/server'
+import type { OccupiedSeat } from '@/components/asientos/types'
 
 interface TicketSeatRow {
   id: string

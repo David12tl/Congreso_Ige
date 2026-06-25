@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 
 const AnimatedBackground = dynamic(
-  () => import('@/src/components/ui/AnimatedBackground'),
+  () => import('@/components/ui/AnimatedBackground'),
   { ssr: false }
 );
 
