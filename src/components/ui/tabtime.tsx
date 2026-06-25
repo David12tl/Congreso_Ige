@@ -1,19 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Confetti from 'react-confetti';
 
 const calculateTimeLeft = () => {
   const now = new Date();
-  const year = now.getFullYear();
   
-  // La fecha meta es el 18 de Noviembre
-  const targetDate = new Date(year, 10, 18); // Mes 10 es Noviembre (0-indexed)
-
-  // Si la fecha ya pasó este año, apuntar al próximo año
-  if (now > targetDate) {
-    targetDate.setFullYear(year + 1);
-  }
+  // La fecha meta es el 18 de Noviembre de 2026
+  const targetDate = new Date(2026, 10, 18); // Mes 10 es Noviembre (0-indexed)
 
   const difference = +targetDate - +now;
 
@@ -38,69 +32,116 @@ const calculateTimeLeft = () => {
   return { ...timeLeft, isFinished };
 };
 
-const TimeBlock = ({ value, label }: { value: number; label: string }) => (
-  <div className="flex flex-col items-center justify-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl w-28 h-28 md:w-36 md:h-36 p-2 shadow-lg backdrop-blur-sm transition-all">
-    <span className="text-5xl md:text-7xl font-black text-gray-800 dark:text-white tracking-tighter">
+// Subcomponente de bloque de tiempo adaptado a la Paleta Institucional (M3 Glass Container)
+const TimeBlock = ({ value, label, accentColor }: { value: number; label: string; accentColor: string }) => (
+  <div 
+    style={{ 
+      background: 'rgba(255, 255, 255, 0.7)', 
+      backdropFilter: 'blur(12px)',
+      borderColor: `${accentColor}25`
+    }}
+    className="flex flex-col items-center justify-center border rounded-2xl w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 p-2 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
+  >
+    <span 
+      style={{ color: '#0B2545' }} 
+      className="text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tighter transition-transform duration-300 group-hover:scale-105"
+    >
       {String(value).padStart(2, '0')}
     </span>
-    <span className="text-xs md:text-sm font-mono text-gray-500 dark:text-white/60 uppercase tracking-widest mt-2">
+    <span 
+      style={{ color: accentColor }} 
+      className="text-[10px] md:text-[11px] font-bold tracking-widest uppercase mt-1.5"
+    >
       {label}
     </span>
   </div>
 );
 
 export default function TabTime() {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+  const [timeLeft, setTimeLeft] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0, isFinished: false });
+  const [isMounted, setIsMounted] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      const newTimeLeft = calculateTimeLeft();
-      setTimeLeft(newTimeLeft);
+    const timeoutId = setTimeout(() => {
+      setTimeLeft(calculateTimeLeft());
+      setIsMounted(true);
+    }, 0);
 
-      if (newTimeLeft.isFinished && timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+    timerRef.current = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    // Efecto para el confeti
-    function handleResize() {
+    const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
-        height: window.document.body.scrollHeight, // Usar el alto total de la página
+        height: window.document.body.scrollHeight,
       });
-    }
+    };
     
     window.addEventListener('resize', handleResize);
     handleResize();
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      clearTimeout(timeoutId);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Paleta familiar basada en tu Logotipo
+  const brandColors = {
+    primary: '#0B2545',   // Azul Marino (Estructura base)
+    secondary: '#00B4D8', // Azul Turquesa (Crecimiento tecnológico)
+    tertiary: '#D95D26',  // Naranja Quemado (Sinergia humana)
+    emerald: '#006B55',   // Verde Esmeralda (Sostenibilidad)
+  };
+
+  if (!isMounted) {
+    return null;
+  }
 
   if (timeLeft.isFinished) {
     return (
       <>
         <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={500} />
-        <div className="text-center p-4">
-          <h3 className="text-4xl md:text-5xl font-black text-gray-800 dark:text-white tracking-tight animate-pulse">¡El evento ha comenzado!</h3>
+        <div className="text-center p-6 bg-[#0B2545]/5 rounded-2xl border border-[#0B2545]/10 max-w-xl mx-auto backdrop-blur-xs">
+          <h3 
+            style={{ color: brandColors.primary }} 
+            className="text-2xl md:text-3xl font-extrabold tracking-tight animate-pulse"
+          >
+            ¡El encuentro ha comenzado!
+          </h3>
+          <p style={{ color: brandColors.secondary }} className="text-xs uppercase font-bold tracking-widest mt-2">
+            Bienvenidos al 1er Congreso Internacional
+          </p>
         </div>
       </>
     );
   }
+
   return (
-    <div className="w-full flex justify-center items-center p-4">
-      <div className="flex items-center gap-4 md:gap-6">
-        <TimeBlock value={timeLeft.dias} label="Días" />
-        <span className="text-5xl md:text-6xl font-light text-gray-400 dark:text-white/30">:</span>
-        <TimeBlock value={timeLeft.horas} label="Horas" />
-        <span className="text-5xl md:text-6xl font-light text-gray-400 dark:text-white/30">:</span>
-        <TimeBlock value={timeLeft.minutos} label="Minutos" />
-        <span className="text-5xl md:text-6xl font-light text-gray-400 dark:text-white/30">:</span>
-        <TimeBlock value={timeLeft.segundos} label="Segundos" />
+    // 🛠️ Añadimos suppressHydrationWarning aquí para que Next.js ignore de forma segura la milésima de segundo de diferencia inicial entre servidor/cliente
+    <div className="w-full flex flex-col justify-center items-center p-4" suppressHydrationWarning>
+      {/* Subtítulo indicativo opcional con diseño minimalista */}
+      <span className="text-[11px] font-extrabold tracking-widest uppercase text-[#5C6E85] mb-4 flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#D95D26] animate-ping"></span>
+        Cuenta regresiva para el magno evento
+      </span>
+
+      {/* Grid del Contador */}
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
+        <TimeBlock value={timeLeft.dias} label="Días" accentColor={brandColors.tertiary} />
+        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
+        
+        <TimeBlock value={timeLeft.horas} label="Horas" accentColor={brandColors.secondary} />
+        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
+        
+        <TimeBlock value={timeLeft.minutos} label="Minutos" accentColor={brandColors.emerald} />
+        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
+        
+        <TimeBlock value={timeLeft.segundos} label="Segundos" accentColor={brandColors.primary} />
       </div>
     </div>
   );

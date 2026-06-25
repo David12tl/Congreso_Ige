@@ -197,23 +197,27 @@ const TextPressure: React.FC<TextPressureProps> = ({
 
   const styleElement = useMemo(() => {
     return (
-      <style>{`
-        @import url('${fontUrl}');
-        .stroke span {
-          position: relative;
-          color: ${textColor};
-        }
-        .stroke span::after {
-          content: attr(data-char);
-          position: absolute;
-          left: 0;
-          top: 0;
-          color: transparent;
-          z-index: -1;
-          -webkit-text-stroke-width: ${strokeWidth}px;
-          -webkit-text-stroke-color: ${strokeColor};
-        }
-      `}</style>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @import url('${fontUrl}');
+            .stroke span {
+              position: relative;
+              color: ${textColor};
+            }
+            .stroke span::after {
+              content: attr(data-char);
+              position: absolute;
+              left: 0;
+              top: 0;
+              color: transparent;
+              z-index: -1;
+              -webkit-text-stroke-width: ${strokeWidth}px;
+              -webkit-text-stroke-color: ${strokeColor};
+            }
+          `,
+        }}
+      />
     );
   }, [fontUrl, textColor, strokeColor, strokeWidth]);
 

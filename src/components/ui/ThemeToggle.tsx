@@ -1,15 +1,15 @@
 'use client';
 
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
 import { FiSun, FiMoon } from 'react-icons/fi';
 
 export default function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = theme === 'dark';
 
   const toggleTheme = () => {
-    const nuevoTema = resolvedTheme === 'dark' ? 'light' : 'dark';
+    const nuevoTema = theme === 'dark' ? 'light' : 'dark';
     setTheme(nuevoTema);
   };
 

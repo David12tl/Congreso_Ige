@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useEffect } from 'react';
+// Asegúrate de ajustar la ruta de importación de TextPressure según tu estructura de carpetas
+import TextPressure from '@/components/ui/TextPressure'; 
 import Image from 'next/image';
+import Footer from '@/components/ui/Footer';
 import TabTime from '@/components/ui/tabtime';
-import SpeakerCardSection from '@/components/ui/SpeakersMagistralesSection';
+import SpeakersMagistralesSection from '@/components/ui/SpeakersMagistralesSection';
 
 export default function CongresoPage() {
   
-  // Efecto para inicializar el Intersection Observer (reemplaza el script de animación original)
+  // Efecto para inyectar dinámicamente las tipografías variables y símbolos de Material Design 3
   useEffect(() => {
-    // Inyectar fuentes de Google Fonts y Material Symbols dinámicamente si no están en el layout global
     const linkSora = document.createElement('link');
     linkSora.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap';
     linkSora.rel = 'stylesheet';
@@ -20,6 +22,7 @@ export default function CongresoPage() {
     linkIcons.rel = 'stylesheet';
     document.head.appendChild(linkIcons);
 
+    // Animación de entrada fluida mediante Intersection Observer
     const observerOptions = { threshold: 0.1 };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -41,7 +44,7 @@ export default function CongresoPage() {
     };
   }, []);
 
-  // Manejador de scroll suave
+  // Manejador de scroll suave de Material Design
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>, targetId: string) => {
     e.preventDefault();
     const target = document.getElementById(targetId);
@@ -50,60 +53,156 @@ export default function CongresoPage() {
     }
   };
 
-  // Clases personalizadas del estilo original transformadas a inline styles reutilizables
+  // Roles de color estrictos basados en la heráldica del Logo y especificación M3
+  const tokens = {
+    bg: 'bg-[#F4F7FA]',                  // Surface Bright (Gris azulado ultra claro)
+    text: 'text-[#0A192F]',              // On Surface (Azul Marino de alta densidad)
+    primary: '#0B2545',                  // Azul Marino Corporativo (Escudo base)
+    secondary: '#00B4D8',                // Azul Turquesa / Cian (Flecha de crecimiento)
+    tertiary: '#D95D26',                 // Naranja Quemado (Sinergia humana / Acción)
+    variant: '#13B0C6',                  // Variante turquesa complementaria del engrane
+    emerald: '#006B55',                  // Verde Esmeralda (Montañas de la región / Sostenibilidad)
+    surfaceContainer: 'bg-[#EAF0F6]',    // M3 Surface Container
+  };
+
+  // Estilos inline de diseño avanzado
   const styles = {
     iconSettings: {
       fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
     },
     glassCard: {
       background: 'rgba(255, 255, 255, 0.8)',
-      backdropFilter: 'blur(12px)',
-      border: '1px solid rgba(229, 229, 229, 1)'
+      backdropFilter: 'blur(16px)',
+      border: '1px solid rgba(11, 37, 69, 0.08)'
     },
     heroGradient: {
-      background: 'radial-gradient(circle at 70% 30%, rgba(0, 184, 148, 0.05) 0%, rgba(255, 255, 255, 0) 70%)'
+      background: `radial-gradient(circle at 80% 20%, rgba(0, 180, 216, 0.08) 0%, rgba(217, 93, 38, 0.03) 40%, rgba(244, 247, 250, 0) 100%)`
     }
   };
 
+  // Datos para la navegación
+  const navLinks = [
+    { href: "#", text: 'Inicio', isPrimary: true },
+    { href: "#schedule", text: 'Programa' },
+    { href: "#info", text: 'Información' },
+  ];
+
+  // Datos para la comunidad destino
+  const communityTags = [
+    { name: 'Estudiantes', style: 'bg-[#0B2545]/5 text-[#0B2545]' },
+    { name: 'Docentes', style: 'bg-[#00B4D8]/10 text-[#00B4D8]' },
+    { name: 'Investigadores', style: 'bg-[#006B55]/10 text-[#006B55]' },
+    { name: 'Emprendedores', style: 'bg-[#D95D26]/10 text-[#D95D26]' },
+  ];
+
+  // Datos del programa para hacer el código más declarativo
+  const scheduleDay1 = {
+    dayTitle: 'Miércoles 18 de Noviembre',
+    daySubtitle: 'Emprendimiento y Sinergias Tecnológicas',
+    themeColor: tokens.primary,
+    items: [
+      { icon: 'mic', text: 'Conferencia Magistral: Gestión Estratégica', color: tokens.primary },
+      { icon: 'diversity_3', text: 'Panel Foro: Ecosistemas de Innovación', color: tokens.secondary },
+      { icon: 'public', text: 'Mesa Redonda: Alianzas del Centro del Estado', color: tokens.emerald },
+      { icon: 'devices', text: 'Expo Emprendimiento & Proyectos Científicos', color: tokens.primary },
+      { icon: 'lightbulb', text: 'Concurso Native Pitch: Proyectos de Impacto', color: tokens.tertiary }
+    ]
+  };
+
+  const scheduleDay2 = {
+    dayTitle: 'Jueves 19 de Noviembre',
+    daySubtitle: 'Desarrollo Sostenible y Competitividad',
+    themeColor: tokens.tertiary,
+    items: [
+      { icon: 'analytics', text: 'Conferencia: Data Analytics en PyMEs', color: tokens.primary },
+      { icon: 'psychology', text: 'Workshop: Inteligencia Artificial Aplicada', color: tokens.secondary },
+      { icon: 'model_training', text: 'Estrategias de Escalabilidad de Capital', color: tokens.tertiary },
+      { icon: 'workspace_premium', text: 'Evaluación e indexación científica (ISSN / ISBN)', color: tokens.emerald },
+      { icon: 'emoji_events', text: 'Clausura, Galardón y Premiación 2026', color: tokens.tertiary }
+    ]
+  };
+
+  // Datos para las tarjetas de información
+  const infoCardsData = [
+    {
+      icon: 'location_on',
+      iconColor: tokens.primary,
+      title: 'Sede Central',
+      description: <><strong>Auditorio Metropolitano</strong><br />Orizaba, Veracruz, México</>,
+    },
+    {
+      icon: 'calendar_month',
+      iconColor: tokens.secondary,
+      title: 'Calendario',
+      description: <><strong>18 y 19 de Noviembre</strong><br />Edición Ejecutiva 2026</>,
+    },
+    {
+      icon: 'shield',
+      iconColor: tokens.emerald,
+      title: 'Ecosistema',
+      description: <>Cámaras de Comercio e<br /><strong>Industrias de la Región</strong></>,
+    },
+  ];
+
   return (
-    <div className="bg-[#f4fbf6] text-[#161d1a] font-['Sora'] overflow-x-hidden min-h-screen">
+    <div className={`${tokens.bg} ${tokens.text} font-['Sora'] overflow-x-hidden min-h-screen antialiased`}>
       
-      {/* TopNavBar */}
-      <header className="fixed top-0 w-full z-50 bg-[#f4fbf6]/80 backdrop-blur-md shadow-sm border-b border-[#dde4df]">
-        <nav className="max-w-7xl mx-auto px-16 flex justify-between items-center h-20 max-md:px-4">
-          <div className="text-[48px] font-extrabold tracking-tighter text-[#07264D] leading-tight max-md:text-[10px]">
-            ELIGE
+      {/* TopNavBar — Adaptado para integrar el Logo Familiarizado */}
+      <header className="fixed top-0 w-full z-50 bg-[#F4F7FA]/80 backdrop-blur-md border-b border-[#0B2545]/10">
+        <nav className="max-w-7xl mx-auto px-16 flex justify-between items-center h-20 max-md:px-6">
+          
+          {/* Bloque del Logo & Título Combinado */}
+          <div className="flex items-center gap-4 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="relative w-12 h-12 flex items-center justify-center rounded-xl p-1.5 shadow-md border border-[#00B4D8]/20 group hover:border-[#D95D26]/40 transition-colors duration-300">
+              {/* Espacio reservado optimizado para logo.jpg, usando next/image */}
+              <Image 
+                src="/logo.png"
+                alt="Logo Congreso" 
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  // Fallback elegante en caso de que la ruta de la imagen cambie localmente
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const fallback = document.createElement('span');
+                    fallback.className = 'text-white font-black text-xs';
+                    fallback.innerText = 'C2026';
+                    parent.appendChild(fallback);
+                  }
+                }}
+                width={48}
+                height={48}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span style={{ color: tokens.primary }} className="text-[20px] font-extrabold tracking-tight leading-none">
+                ELIGE <span style={{ color: tokens.secondary }}>2026</span>
+              </span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#5C6E85] mt-0.5">Gestión Empresarial</span>
+            </div>
           </div>
-          <Image 
-            src="/logo.png"
-            alt="Logo del Congreso"
-            width={48}
-            height={48}
-            className="w-12 h-12"
-          />
-          <div className="hidden md:flex gap-12 items-center">
-            <a 
-              className="text-[#006b55] font-bold border-b-2 border-[#006b55] pb-1 text-[16px]" 
-              href="#"
-            >
-              Inicio
-            </a>
-            <a 
-              className="text-[#3c4a44] text-[16px] hover:text-[#006b55] transition-colors duration-200" 
-              href="#schedule"
-              onClick={(e) => handleSmoothScroll(e, 'schedule')}
-            >
-              Programa
-            </a>
-            <a 
-              className="text-[#3c4a44] text-[16px] hover:text-[#006b55] transition-colors duration-200" 
-              href="#info"
-              onClick={(e) => handleSmoothScroll(e, 'info')}
-            >
-              Información
-            </a>
+
+          {/* Menú de Navegación */}
+          <div className="hidden md:flex gap-10 items-center">
+            {navLinks.map(link => (
+              <a
+                key={link.text}
+                href={link.href}
+                onClick={(e) => handleSmoothScroll(e, link.href.substring(1))}
+                style={link.isPrimary ? { color: tokens.primary, borderColor: tokens.primary } : {}}
+                className={link.isPrimary
+                  ? "font-bold border-b-2 pb-1 text-[15px]"
+                  : "text-[#5C6E85] text-[15px] font-medium hover:text-[#00B4D8] transition-colors duration-200"
+                }
+              >{link.text}</a>
+            ))}
           </div>
-          <button className="bg-[#00b894] text-white text-[14px] font-semibold tracking-wide px-6 py-3 rounded-lg active:scale-95 duration-100 transition-transform">
+
+          {/* Botón de Registro M3 con el Naranja del logotipo */}
+          <button 
+            style={{ backgroundColor: tokens.tertiary }}
+            className="text-white text-[14px] font-bold tracking-wide px-6 py-3 rounded-xl active:scale-95 duration-100 transition-transform shadow-md hover:brightness-110 shadow-orange-600/10"
+          >
             Registrarse
           </button>
         </nav>
@@ -111,52 +210,78 @@ export default function CongresoPage() {
 
       <main className="pt-20">
 
-        {/* Hero Section */}
-        <section style={styles.heroGradient} className="relative min-h-[821px] flex items-center overflow-hidden">
-          <div className="max-w-7xl mx-auto px-16 grid grid-cols-1 md:grid-cols-12 gap-20 items-center relative z-10 max-md:px-4 max-md:py-12">
-            <div className="md:col-span-7">
-              <div className="inline-flex items-center gap-1 mb-6">
-                <span className="w-12 h-[2px] bg-[#006874]"></span>
-                <span className="text-[14px] font-semibold tracking-widest text-[#006874] uppercase">
+        {/* Hero Section — Incorporando TextPressure Dinámico */}
+        <section style={styles.heroGradient} className="relative min-h-[820px] flex items-center overflow-hidden">
+          <div className="max-w-7xl mx-auto px-16 grid grid-cols-1 md:grid-cols-12 gap-16 items-center relative z-10 max-md:px-6 max-md:py-16">
+            
+            <div className="md:col-span-8 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-2 mb-6">
+                <span style={{ backgroundColor: tokens.secondary }} className="w-10 h-[3px] rounded-full"></span>
+                <span style={{ color: tokens.secondary }} className="text-[13px] font-bold tracking-widest uppercase">
                   18-19 Noviembre 2026
                 </span>
               </div>
-              <h1 className="text-[48px] font-extrabold tracking-tight mb-6 text-[#161d1a] leading-tight max-md:text-[36px]">
-                1er Congreso Internacional<br />
-                <span className="text-[#00b894]">en Gestión Empresarial</span>
+              
+              <h1 style={{ color: tokens.primary }} className="text-[48px] font-extrabold tracking-tight mb-2 leading-[1.1] max-md:text-[36px]">
+                1er Congreso Internacional
               </h1>
-              <div className="flex flex-wrap gap-3 mb-6">
-                <span className="px-3 py-1 bg-[#006b55]/10 text-[#006b55] rounded-full text-[12px] font-semibold">Emprendimiento</span>
-                <span className="px-3 py-1 bg-[#006874]/10 text-[#006874] rounded-full text-[12px] font-semibold">Liderazgo</span>
-                <span className="px-3 py-1 bg-[#994700]/10 text-[#994700] rounded-full text-[12px] font-semibold">Innovación</span>
+              
+              {/* Contenedor controlado para evitar desbordes del componente interactivo */}
+              <div className="w-full max-w-2xl h-24 my-2 flex items-center justify-start select-none">
+                <TextPressure 
+                  text="ELIGE 2026"
+                  fontFamily="Sora"
+                  textColor={tokens.secondary}
+                  minFontSize={36}
+                  scale={false}
+                />
+                
               </div>
-              <p className="text-[18px] text-[#3c4a44] mb-12 max-w-xl leading-relaxed">
-                Un espacio internacional de aprendizaje, inspiración y conexión para transformar ideas en soluciones que generen valor y desarrollo sostenible.
+
+              <div className="flex flex-wrap gap-2.5 mb-8 mt-4">
+                <span className="px-3.5 py-1.5 bg-[#0B2545]/5 text-[#0B2545] rounded-lg text-[12px] font-bold border border-[#0B2545]/10">Emprendimiento</span>
+                <span className="px-3.5 py-1.5 bg-[#00B4D8]/10 text-[#00B4D8] rounded-lg text-[12px] font-bold">Liderazgo</span>
+                <span className="px-3.5 py-1.5 bg-[#D95D26]/10 text-[#D95D26] rounded-lg text-[12px] font-bold">Innovación</span>
+                <span className="px-3.5 py-1.5 bg-[#006B55]/10 text-[#006B55] rounded-lg text-[12px] font-bold border border-[#006B55]/20">Sostenibilidad</span>
+              </div>
+              
+              <p className="text-[18px] text-[#4A5E78] mb-10 max-w-xl leading-relaxed font-normal">
+                Un espacio internacional de transferencia tecnológica e inspiración, conectando el ecosistema de la región centro de Veracruz con el mundo.
               </p>
-              <div className="flex flex-wrap gap-6">
-                <button className="bg-[#00b894] text-white text-[14px] font-semibold px-12 py-4 rounded-lg shadow-lg shadow-[#00b894]/20 hover:brightness-110 active:scale-95 transition-all">
+              
+              <div className="flex flex-wrap gap-5">
+                <button 
+                  style={{ backgroundColor: tokens.tertiary }}
+                  className="text-white text-[15px] font-bold px-10 py-4 rounded-xl shadow-lg shadow-orange-600/20 hover:brightness-110 active:scale-95 transition-all"
+                >
                   Registrar Ahora
                 </button>
                 <button 
-                  onClick={(e) => handleSmoothScroll(e, 'schedule')}
-                  className="flex items-center gap-2 text-[14px] font-semibold text-[#161d1a] hover:text-[#006b55] transition-colors py-4"
+                  style={{ color: tokens.primary }}
+                  onClick={(e) => handleSmoothScroll(e, 'schedule')} className="flex items-center gap-2 text-[15px] font-bold hover:text-[#00B4D8] transition-colors py-4"
                 >
-                  <span className="material-symbols-outlined" style={styles.iconSettings}>play_circle</span>
+                  <span className="material-symbols-outlined text-2xl" style={styles.iconSettings}>play_circle</span>
                   Ver Programa
                 </button>
               </div>
             </div>
             
-            <div className="md:col-span-5 relative hidden md:block">
-              <div className="relative w-full aspect-square rounded-full border border-[#dde4df] p-12">
-                <div className="absolute inset-0 border border-[#00b894]/20 rounded-full animate-pulse"></div>
-                <div className="w-full h-full rounded-full overflow-hidden shadow-2xl flex items-center justify-center bg-[#00b894]/10">
-                  <div className="text-center p-12">
-                    <span className="text-7xl block mb-6">🚀</span>
-                    <p className="text-[24px] font-bold text-[#006b55] leading-normal">EMPRENDE</p>
-                    <p className="text-[24px] font-bold text-[#006874] leading-normal">LIDERA</p>
-                    <p className="text-[24px] font-bold text-[#994700] leading-normal">INNOVA</p>
-                    <p className="text-[24px] font-bold text-[#161d1a] leading-normal">TRANSFORMA</p>
+            {/* Escudo Geométrico de Acento (Inspirado directamente en la estructura simétrica del logo) */}
+            <div className="md:col-span-4 relative hidden md:block">
+              <div className="relative w-full aspect-square rounded-3xl border border-[#0B2545]/10 p-8 bg-white/40 backdrop-blur-sm shadow-xl">
+                <div style={{ borderColor: `${tokens.secondary}33` }} className="absolute inset-0 border rounded-3xl animate-pulse"></div>
+                <div className="w-full h-full rounded-2xl overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#0B2545] to-[#0A192F] p-6 text-center border border-white/10 relative">
+                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#00B4D8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                  
+                  {/* Iconografía de los tres pilares del logo */}
+                  <span className="material-symbols-outlined text-5xl mb-4 text-[#00B4D8] animate-pulse" style={styles.iconSettings}>engineering</span>
+                  <p className="text-[22px] font-extrabold tracking-tight text-white uppercase">Sinergia</p>
+                  <p style={{ color: tokens.secondary }} className="text-[14px] font-bold tracking-wide uppercase mb-4">Empresarial</p>
+                  
+                  <div className="flex gap-2 mt-2">
+                    <span className="w-2 h-2 rounded-full bg-[#D95D26]"></span>
+                    <span className="w-2 h-2 rounded-full bg-[#00B4D8]"></span>
+                    <span className="w-2 h-2 rounded-full bg-[#006B55]"></span>
                   </div>
                 </div>
               </div>
@@ -164,35 +289,142 @@ export default function CongresoPage() {
           </div>
         </section>
 
-        {/* Stats Bento Grid */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-16 max-md:px-4">
+       {/* MAGISTRALES */}
+        <section className="w-full bg-transparent pt-20 pb-12 border-t border-[#0B2545]/5">
+          <div className="max-w-7xl mx-auto px-16 max-md:px-6">
             <TabTime />
+          </div>
+          <div className="max-w-7xl mx-auto px-16 max-md:px-6 mt-6">
+            <SpeakersMagistralesSection />
           </div>
         </section>
 
-        <section id="schedule" className="py-20 bg-[#f4fbf6]">
-          <div className="max-w-7xl mx-auto px-16 max-md:px-4">
-            <SpeakerCardSection />
-          </div>
-        </section> 
-      
+        {/* MAGISTRALES */}
+       <section id="schedule" className="min-h-[450px] bg-[#0B2545] text-white relative overflow-hidden flex flex-col justify-between p-6 border border-[#0B2545]/10 rounded-3xl shadow-2xl">
+      {/* Decoración de fondo (Glows institucionales) */}
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#00B4D8]/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-[#D95D26]/10 blur-[90px] rounded-full pointer-events-none" />
 
-        {/* CTA Section */}
-        <section className="py-20 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
-            <div style={styles.glassCard} className="p-12 rounded-xl shadow-2xl">
-              <h2 className="text-[32px] font-bold text-[#161d1a] mb-6">¡Sé parte del cambio!</h2>
-              <p className="text-[18px] text-[#3c4a44] mb-12 leading-relaxed">
-                Únete al 1er Congreso Internacional en Gestión Empresarial. <br />
-                <strong>18 y 19 de Noviembre de 2026</strong> en Orizaba, Veracruz.
+      {/* CONTENIDO PRINCIPAL SUPERIOR (Distribución Horizontal) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center z-10 w-full bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10">
+        
+        {/* 1. Sección ELIGE (Logo/Identidad Izquierda) */}
+        <div className="lg:col-span-4 border-r border-white/10 pr-4 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-[10px] bg-[#D95D26] text-white font-extrabold px-2 py-0.5 rounded tracking-wider uppercase">
+              1er Congreso Internacional
+            </span>
+            <span className="text-xs font-bold text-[#00B4D8] tracking-widest">TecNM Zongolica</span>
+          </div>
+          <h2 className="text-4xl font-black tracking-tighter text-white mb-1">
+            Gesti&oacute;n Empresarial <span className="text-[#00B4D8]">ELiGE</span>
+          </h2>
+          <p className="text-[10px] font-medium tracking-widest uppercase text-gray-300">
+            Emprendimiento &bull; Liderazgo &bull; Innovaci&oacute;n
+          </p>
+        </div>
+
+        {/* 2. Sección Central: Temazate Tank & Concurso de Pitch */}
+        <div className="lg:col-span-5 border-r border-white/10 px-4 grid grid-cols-2 gap-4">
+          {/* Temazate Tank */}
+          <div className="flex flex-col justify-center border-r border-white/5 pr-2">
+            <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-1">
+              TEMAZATE <span className="text-[#00B4D8] font-extrabold">TANK</span>
+            </h3>
+            <p className="text-[10px] text-gray-400 font-mono mt-1">
+              Innovar. Emprender. Transformar.
+            </p>
+          </div>
+          
+          {/* Impulso Emprendedor */}
+          <div className="flex flex-col justify-center pl-2">
+            <h3 className="text-sm font-bold tracking-wider text-[#D95D26] uppercase">
+              Concurso de Pitch
+            </h3>
+            <h4 className="text-base font-black text-white tracking-tight">
+              IMPULSO EMPRENDEDOR
+            </h4>
+            <p className="text-[9px] text-gray-400 mt-0.5">
+              Presenta tu idea. Transforma tu futuro.
+            </p>
+          </div>
+        </div>
+
+        {/* 3. Sección Derecha: Proyecto Bosque Vivo */}
+        <div className="lg:col-span-3 pl-4 flex flex-col justify-center">
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+            <span className="text-[9px] font-bold text-[#006B55] uppercase tracking-widest block mb-1">
+              Nuestro Proyecto Destacado
+            </span>
+            <h4 className="text-md font-black text-white flex items-center gap-1">
+              BOSQUE VIVO <span className="text-xs">🍃</span>
+            </h4>
+            <p className="text-[11px] text-gray-300 leading-tight mt-1">
+              Restauraci&oacute;n ecol&oacute;gica con impacto social, reforestaci&oacute;n y econom&iacute;a sustentable.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* BARRA INFORMATIVA INFERIOR (Footer del Banner Recreado) */}
+      <div className="w-full bg-[#0B2545]/80 border-t border-white/10 mt-6 pt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center z-10">
+        
+        {/* Convocatoria */}
+        <div className="flex flex-col justify-center items-center p-2 border-r border-white/10 last:border-0">
+          <span className="material-symbols-outlined text-2xl text-[#D95D26]" style={styles.iconSettings}>lightbulb</span>
+          <h5 className="text-[11px] font-black uppercase tracking-wider text-white mt-1">¡Convocatoria Abierta!</h5>
+          <p className="text-[9px] text-gray-400">Impulsa tu Emprendimiento 2026</p>
+        </div>
+
+        {/* Fecha y Hora */}
+        <div className="flex flex-col justify-center items-center p-2 border-r border-white/10 last:border-0">
+          <span className="material-symbols-outlined text-2xl text-[#00B4D8]" style={styles.iconSettings}>calendar_month</span>
+          <h5 className="text-[11px] font-black uppercase text-white mt-1">18 de Noviembre, 2026</h5>
+          <p className="text-[9px] text-gray-400">Horario: 15:00 a 17:00 HRS</p>
+        </div>
+
+        {/* Lugar */}
+        <div className="flex flex-col justify-center items-center p-2 border-r border-white/10 last:border-0">
+          <span className="material-symbols-outlined text-2xl text-[#006B55]" style={styles.iconSettings}>location_on</span>
+          <h5 className="text-[11px] font-black uppercase text-white mt-1">Auditorio Metropolitano</h5>
+          <p className="text-[9px] text-gray-400">Orizaba, Veracruz</p>
+        </div>
+
+        {/* Premios */}
+        <div className="flex flex-col justify-center items-center p-2 border-r border-white/10 last:border-0">
+          <span className="material-symbols-outlined text-2xl text-yellow-500" style={styles.iconSettings}>emoji_events</span>
+          <h5 className="text-[11px] font-black uppercase text-white mt-1">Premios en Efectivo</h5>
+          <p className="text-[9px] text-gray-300 font-semibold">1&deg; $15K MXN | 2&deg; $5K MXN</p>
+        </div>
+
+        {/* Selección Finalistas */}
+        <div className="flex flex-col justify-center items-center p-2 last:border-0 col-span-2 md:col-span-1">
+          <span className="material-symbols-outlined text-2xl text-red-400" style={styles.iconSettings}>crisis_alert</span>
+          <h5 className="text-[11px] font-black uppercase text-white mt-1">Filtro de Finalistas</h5>
+          <p className="text-[9px] text-gray-400">Cierre: 06 de Noviembre, 2026</p>
+        </div>
+
+      </div>
+    </section>
+        {/* CTA Section — Colores Coherentes */}
+        <section className="py-24 bg-white">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <div style={{ backgroundColor: '#0B2545' }} className="animate-on-scroll p-12 rounded-3xl shadow-xl text-white relative overflow-hidden">
+              <div style={{ backgroundColor: `${tokens.secondary}15` }} className="absolute -right-16 -top-16 w-48 h-48 rounded-full blur-2xl"></div>
+              <h2 className="text-[36px] font-extrabold mb-4 max-md:text-[28px]">Impulsa el desarrollo tecnológico</h2>
+              <p className="text-[17px] text-[#A9C2E0] mb-10 max-w-2xl mx-auto leading-relaxed">
+                Asegura tu lugar en el encuentro empresarial e institucional más robusto de 2026.
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <button className="bg-[#00b894] text-white text-[14px] font-semibold px-12 py-4 rounded-lg active:scale-95 transition-all shadow-lg shadow-[#00b894]/20">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+                <button 
+                  style={{ backgroundColor: tokens.tertiary }}
+                  className="text-white text-[15px] font-bold px-10 py-4 rounded-xl active:scale-95 transition-all shadow-md shadow-orange-950/20"
+                >
                   Registrarme Ahora
                 </button>
-                <button className="bg-white border border-[#dde4df] text-[#161d1a] text-[14px] font-semibold px-12 py-4 rounded-lg hover:bg-[#eef5f0] transition-all">
-                  Más Información
+                <button className="bg-white/10 border border-white/20 text-white text-[15px] font-bold px-10 py-4 rounded-xl hover:bg-white/20 transition-all">
+                  Convocatorias
                 </button>
               </div>
             </div>
@@ -202,25 +434,7 @@ export default function CongresoPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#f4fbf6] border-t border-[#dde4df] w-full py-20">
-        <div className="max-w-7xl mx-auto px-16 flex flex-col md:flex-row justify-between items-center gap-6 max-md:px-4">
-          <div className="flex flex-col gap-1 items-center md:items-start">
-            <div className="text-[48px] font-extrabold text-[#006b55] leading-none max-md:text-[36px]">Congreso 2026</div>
-            <p className="text-[14px] font-semibold text-[#3c4a44] mt-2">© 2026 1er Congreso Internacional en Gestión Empresarial.</p>
-          </div>
-          <div className="flex flex-wrap gap-6 justify-center text-[14px] font-semibold">
-            <a className="text-[#3c4a44] hover:text-[#994700] transition-colors duration-200 cursor-pointer">Política de Privacidad</a>
-            <a className="text-[#3c4a44] hover:text-[#994700] transition-colors duration-200 cursor-pointer">Términos de Servicio</a>
-            <a className="text-[#3c4a44] hover:text-[#994700] transition-colors duration-200 cursor-pointer">Contacto</a>
-            <a className="text-[#3c4a44] hover:text-[#994700] transition-colors duration-200 cursor-pointer">Patrocinios</a>
-          </div>
-          <div className="flex gap-6">
-            <span className="material-symbols-outlined text-[#3c4a44] hover:text-[#006b55] transition-all cursor-pointer" style={styles.iconSettings}>share</span>
-            <span className="material-symbols-outlined text-[#3c4a44] hover:text-[#006b55] transition-all cursor-pointer" style={styles.iconSettings}>linked_camera</span>
-            <span className="material-symbols-outlined text-[#3c4a44] hover:text-[#006b55] transition-all cursor-pointer" style={styles.iconSettings}>alternate_email</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
