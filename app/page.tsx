@@ -130,7 +130,7 @@ export default function TalentLandInspiredPage() {
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-congreso-dark">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-congreso-teal border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(0,151,167,0.4)]"></div>
-          <p className="font-mono text-xs text-congreso-teal uppercase tracking-[0.3em] animate-pulse">Validando credenciales...</p>
+          <p className="font-mono text-xs text-congreso-teal uppercase tracking-[0.3em] animate-pulse">ELIGE...</p>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ export default function TalentLandInspiredPage() {
         <div className="mt-12 w-full max-w-6xl mx-auto px-4 mb-16">
           <TeatroMap 
             color={
-              LANDS.find(l => l.preset === currentPreset)?.color || '#0097A7'
+              LANDS.find(l => l.preset === currentPreset)?.color || '#a12fa5'
             }
             asientosSeleccionados={asientosSeleccionados}
             setAsientosSeleccionados={setAsientosSeleccionados}
@@ -240,9 +240,9 @@ function HeroSection() {
         </div>
 
         {/* Subtítulo con teal */}
-        <p className="text-lg md:text-xl text-congreso-teal font-light tracking-wide max-w-2xl mx-auto mb-6">
-          Emprendimiento · Liderazgo · Innovación en la Gestión Empresarial
-        </p>
+        <p className="text-lg md:text-xl text-[#00F0FF] font-medium tracking-wide max-w-2xl mx-auto mb-6 drop-shadow-[0_0_12px_rgba(0,240,255,0.6)]">
+  Emprendimiento · Liderazgo · Innovación en la Gestión Empresarial
+</p>
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center my-8">
           {/* Botón Día 1 - Naranja Vibrante */}
