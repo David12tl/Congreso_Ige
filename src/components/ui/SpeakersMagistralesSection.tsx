@@ -139,7 +139,7 @@ export default function SpeakersMagistrales() {
           <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-congreso-navy dark:text-congreso-navy mb-4">
             Speakers Magistrales
           </h3>
-          <h4 className="text-lg md:text-xl font-semibold text-slate-800 mb-6 italic">
+          <h4 className="text-lg md:text-xl text-slate-800 mb-6 italic">
             La revolución del talento y la innovación.
           </h4>
           

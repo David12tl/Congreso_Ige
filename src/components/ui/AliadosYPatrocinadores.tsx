@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { InfiniteSliderBasic as InfiniteSlider } from "@/components/ui/infinite-slider";
+
 
 interface Partner {
   id: number;
@@ -71,13 +71,6 @@ export default function AliadosYPatrocinadores() {
             ))}
           </div>
         </div>
-      </div>
-      {/* CONTENEDOR DE PATROCINADORES PRINCIPALES (GOLD) - AHORA A PANTALLA COMPLETA */}
-      <div className="w-full text-center mt-24">
-        <h3 className="text-center text-xs font-semibold tracking-[0.2em] uppercase mb-8 text-gray-500">
-          Patrocinadores Principales
-        </h3>
-        <InfiniteSlider />
       </div>
     </section>
   );

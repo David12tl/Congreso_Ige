@@ -8,7 +8,7 @@ import {
 } from '@/config/auditorioConfig'
 import { AuditorioSeatMap } from '@/components/asientos/AuditorioSeatMap'
 import { getMiPerfilCompleto, crearPreRegistro, getMiTicketExistente } from './actions'
-import { getOccupiedSeatKeys } from '@/app/monitoreo-mapa/actions'
+import { getOccupiedSeatKeys } from '@/app/dashboard/monitoreo-mapa/actions'
 import type { PerfilUsuarioCompleto } from '@/components/asientos/types'
 import {
   HiOutlineExclamationCircle,

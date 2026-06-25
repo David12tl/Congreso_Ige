@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import Confetti from 'react-confetti';
 
 const calculateTimeLeft = () => {
@@ -61,15 +61,13 @@ export default function TabTime() {
   const [timeLeft, setTimeLeft] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0, isFinished: false });
   const [isMounted, setIsMounted] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setTimeLeft(calculateTimeLeft());
+    startTransition(() => {
       setIsMounted(true);
-    }, 0);
+    });
 
-    timerRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
@@ -79,18 +77,16 @@ export default function TabTime() {
         height: window.document.body.scrollHeight,
       });
     };
-    
+
     window.addEventListener('resize', handleResize);
     handleResize();
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      clearTimeout(timeoutId);
+      clearInterval(timer);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  // Paleta familiar basada en tu Logotipo
   const brandColors = {
     primary: '#0B2545',   // Azul Marino (Estructura base)
     secondary: '#00B4D8', // Azul Turquesa (Crecimiento tecnológico)
@@ -122,15 +118,12 @@ export default function TabTime() {
   }
 
   return (
-    // 🛠️ Añadimos suppressHydrationWarning aquí para que Next.js ignore de forma segura la milésima de segundo de diferencia inicial entre servidor/cliente
     <div className="w-full flex flex-col justify-center items-center p-4" suppressHydrationWarning>
-      {/* Subtítulo indicativo opcional con diseño minimalista */}
       <span className="text-[11px] font-extrabold tracking-widest uppercase text-[#5C6E85] mb-4 flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[#D95D26] animate-ping"></span>
         Cuenta regresiva para el magno evento
       </span>
 
-      {/* Grid del Contador */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
         <TimeBlock value={timeLeft.dias} label="Días" accentColor={brandColors.tertiary} />
         <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>

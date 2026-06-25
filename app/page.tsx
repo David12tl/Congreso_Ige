@@ -6,6 +6,7 @@ import TextPressure from '@/components/ui/TextPressure';
 import Image from 'next/image';
 import Footer from '@/components/ui/Footer';
 import TabTime from '@/components/ui/tabtime';
+import Navbar from '@/components/ui/navbar';
 import SpeakersMagistralesSection from '@/components/ui/SpeakersMagistralesSection';
 
 export default function CongresoPage() {
@@ -147,71 +148,13 @@ export default function CongresoPage() {
   return (
     <div className={`${tokens.bg} ${tokens.text} font-['Sora'] overflow-x-hidden min-h-screen antialiased`}>
       
-      {/* TopNavBar — Adaptado para integrar el Logo Familiarizado */}
-      <header className="fixed top-0 w-full z-50 bg-[#F4F7FA]/80 backdrop-blur-md border-b border-[#0B2545]/10">
-        <nav className="max-w-7xl mx-auto px-16 flex justify-between items-center h-20 max-md:px-6">
-          
-          {/* Bloque del Logo & Título Combinado */}
-          <div className="flex items-center gap-4 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="relative w-12 h-12 flex items-center justify-center rounded-xl p-1.5 shadow-md border border-[#00B4D8]/20 group hover:border-[#D95D26]/40 transition-colors duration-300">
-              {/* Espacio reservado optimizado para logo.jpg, usando next/image */}
-              <Image 
-                src="/logo.png"
-                alt="Logo Congreso" 
-                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  // Fallback elegante en caso de que la ruta de la imagen cambie localmente
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    const fallback = document.createElement('span');
-                    fallback.className = 'text-white font-black text-xs';
-                    fallback.innerText = 'C2026';
-                    parent.appendChild(fallback);
-                  }
-                }}
-                width={48}
-                height={48}
-              />
-            </div>
-            <div className="flex flex-col">
-              <span style={{ color: tokens.primary }} className="text-[20px] font-extrabold tracking-tight leading-none">
-                ELIGE <span style={{ color: tokens.secondary }}>2026</span>
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#5C6E85] mt-0.5">Gestión Empresarial</span>
-            </div>
-          </div>
-
-          {/* Menú de Navegación */}
-          <div className="hidden md:flex gap-10 items-center">
-            {navLinks.map(link => (
-              <a
-                key={link.text}
-                href={link.href}
-                onClick={(e) => handleSmoothScroll(e, link.href.substring(1))}
-                style={link.isPrimary ? { color: tokens.primary, borderColor: tokens.primary } : {}}
-                className={link.isPrimary
-                  ? "font-bold border-b-2 pb-1 text-[15px]"
-                  : "text-[#5C6E85] text-[15px] font-medium hover:text-[#00B4D8] transition-colors duration-200"
-                }
-              >{link.text}</a>
-            ))}
-          </div>
-
-          {/* Botón de Registro M3 con el Naranja del logotipo */}
-          <button 
-            style={{ backgroundColor: tokens.tertiary }}
-            className="text-white text-[14px] font-bold tracking-wide px-6 py-3 rounded-xl active:scale-95 duration-100 transition-transform shadow-md hover:brightness-110 shadow-orange-600/10"
-          >
-            Registrarse
-          </button>
-        </nav>
-      </header>
+      {/* Navbar responsiva y consistente */}
+      <Navbar />
 
       <main className="pt-20">
 
         {/* Hero Section — Incorporando TextPressure Dinámico */}
-        <section style={styles.heroGradient} className="relative min-h-[820px] flex items-center overflow-hidden">
+        <section style={styles.heroGradient} className="relative min-h-[600px] md:min-h-[820px] flex items-center overflow-hidden">
           <div className="max-w-7xl mx-auto px-16 grid grid-cols-1 md:grid-cols-12 gap-16 items-center relative z-10 max-md:px-6 max-md:py-16">
             
             <div className="md:col-span-8 flex flex-col justify-center">
@@ -245,7 +188,7 @@ export default function CongresoPage() {
                 <span className="px-3.5 py-1.5 bg-[#006B55]/10 text-[#006B55] rounded-lg text-[12px] font-bold border border-[#006B55]/20">Sostenibilidad</span>
               </div>
               
-              <p className="text-[18px] text-[#4A5E78] mb-10 max-w-xl leading-relaxed font-normal">
+              <p className="text-base md:text-lg text-[#4A5E78] mb-10 max-w-xl leading-relaxed font-normal">
                 Un espacio internacional de transferencia tecnológica e inspiración, conectando el ecosistema de la región centro de Veracruz con el mundo.
               </p>
               
@@ -300,7 +243,7 @@ export default function CongresoPage() {
         </section>
 
         {/* MAGISTRALES */}
-       <section id="schedule" className="min-h-[450px] bg-[#0B2545] text-white relative overflow-hidden flex flex-col justify-between p-6 border border-[#0B2545]/10 rounded-3xl shadow-2xl">
+       <section id="schedule" className="min-h-[450px] bg-[#0B2545] text-white relative overflow-hidden flex flex-col justify-between p-4 md:p-6 border border-[#0B2545]/10 rounded-3xl shadow-2xl">
       {/* Decoración de fondo (Glows institucionales) */}
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#00B4D8]/10 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-[#D95D26]/10 blur-[90px] rounded-full pointer-events-none" />
@@ -316,7 +259,7 @@ export default function CongresoPage() {
             </span>
             <span className="text-xs font-bold text-[#00B4D8] tracking-widest">TecNM Zongolica</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tighter text-white mb-1">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-1">
             Gesti&oacute;n Empresarial <span className="text-[#00B4D8]">ELiGE</span>
           </h2>
           <p className="text-[10px] font-medium tracking-widest uppercase text-gray-300">
@@ -327,7 +270,7 @@ export default function CongresoPage() {
         {/* 2. Sección Central: Temazate Tank & Concurso de Pitch */}
         <div className="lg:col-span-5 border-r border-white/10 px-4 grid grid-cols-2 gap-4">
           {/* Temazate Tank */}
-          <div className="flex flex-col justify-center border-r border-white/5 pr-2">
+          <div className="flex flex-col justify-center border-r border-white/5 pr-2 text-center md:text-left">
             <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-1">
               TEMAZATE <span className="text-[#00B4D8] font-extrabold">TANK</span>
             </h3>
@@ -337,7 +280,7 @@ export default function CongresoPage() {
           </div>
           
           {/* Impulso Emprendedor */}
-          <div className="flex flex-col justify-center pl-2">
+          <div className="flex flex-col justify-center pl-2 text-center md:text-left">
             <h3 className="text-sm font-bold tracking-wider text-[#D95D26] uppercase">
               Concurso de Pitch
             </h3>
@@ -352,7 +295,7 @@ export default function CongresoPage() {
 
         {/* 3. Sección Derecha: Proyecto Bosque Vivo */}
         <div className="lg:col-span-3 pl-4 flex flex-col justify-center">
-          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+          <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center md:text-left">
             <span className="text-[9px] font-bold text-[#006B55] uppercase tracking-widest block mb-1">
               Nuestro Proyecto Destacado
             </span>
@@ -412,7 +355,7 @@ export default function CongresoPage() {
           <div className="max-w-4xl mx-auto px-6 text-center">
             <div style={{ backgroundColor: '#0B2545' }} className="animate-on-scroll p-12 rounded-3xl shadow-xl text-white relative overflow-hidden">
               <div style={{ backgroundColor: `${tokens.secondary}15` }} className="absolute -right-16 -top-16 w-48 h-48 rounded-full blur-2xl"></div>
-              <h2 className="text-[36px] font-extrabold mb-4 max-md:text-[28px]">Impulsa el desarrollo tecnológico</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Impulsa el desarrollo tecnológico</h2>
               <p className="text-[17px] text-[#A9C2E0] mb-10 max-w-2xl mx-auto leading-relaxed">
                 Asegura tu lugar en el encuentro empresarial e institucional más robusto de 2026.
               </p>
