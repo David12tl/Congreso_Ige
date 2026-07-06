@@ -1,150 +1,185 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import Navbar from '../../src/components/ui/navbar';
 import Footer from '../../src/components/ui/Footer';
-import { FiShield, FiDatabase, FiTarget, FiLock } from 'react-icons/fi';
 
+/**
+ * Página de Aviso de Privacidad
+ * Estética: Línea Clara, Tipografía Sora y Bloques Bento-Clean Integrados
+ */
 export default function PrivacidadPage() {
   const lastUpdate = "27 de mayo de 2026";
 
+  useEffect(() => {
+    // Inyección dinámica de tipografía Sora y Material Symbols
+    const linkSora = document.createElement('link');
+    linkSora.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap';
+    linkSora.rel = 'stylesheet';
+    document.head.appendChild(linkSora);
+
+    const linkIcons = document.createElement('link');
+    linkIcons.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
+    linkIcons.rel = 'stylesheet';
+    document.head.appendChild(linkIcons);
+
+    // Intersection Observer para transiciones de scroll fluidas
+    const observerOptions = { threshold: 0.05 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('translate-y-10', 'opacity-0');
+        }
+      });
+    }, observerOptions);
+
+    const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
+    elementsToAnimate.forEach((el) => {
+      el.classList.add('transition-all', 'duration-700', 'translate-y-10', 'opacity-0');
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const styles = {
+    iconSettings: {
+      fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-congreso-whiteSmoke dark:bg-congreso-bgDark text-congreso-dark dark:text-slate-100 selection:bg-congreso-teal/30 font-sans overflow-x-hidden">
-      <div className="relative z-50">
-        <Navbar />
-      </div>
+    <div className="bg-[#f4fbf6] text-[#161d1a] font-['Sora'] overflow-x-hidden min-h-screen antialiased selection:bg-[#006b55] selection:text-white">
+      <Navbar />
 
-      <div className="relative pt-40 pb-24 px-4 min-h-[calc(100vh-80px)]">
-        {/* Luces de ambiente */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-congreso-teal/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-congreso-blue/5 rounded-full blur-[120px] pointer-events-none" />
+      <main className="max-w-4xl mx-auto px-6 md:px-16 pt-36 pb-24">
         
-        <div className="max-w-4xl mx-auto relative z-10">
-          {/* Header de Sección */}
-          <header className="mb-16 text-center animate-fadeIn">
-            <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-[10px] font-bold tracking-[0.3em] text-congreso-teal uppercase border border-congreso-teal/20 rounded-full bg-congreso-teal/5 backdrop-blur-sm">
-              <FiShield className="w-3 h-3" /> Protección de Datos
+        {/* ─── HEADER DE LA PÁGINA ─── */}
+        <header className="mb-16 text-center animate-on-scroll">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 text-xs font-bold tracking-wider text-[#006874] uppercase border border-[#bbcac3] rounded-full bg-white shadow-sm">
+            <span className="material-symbols-outlined text-sm" style={styles.iconSettings}>shield</span> 
+            Protección de Datos
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tighter text-[#161d1a] uppercase mb-4 leading-tight">
+            Aviso de <span className="text-[#006b55]">Privacidad</span>
+          </h1>
+          <p className="text-[#6c7a74] text-xs font-bold uppercase tracking-widest">
+            Última actualización: {lastUpdate}
+          </p>
+        </header>
+
+        {/* ─── CONTENIDO ESTRUCTURADO BENTO-CLEAN ─── */}
+        <div className="grid gap-8">
+          
+          {/* 01. Responsable */}
+          <section className="animate-on-scroll group relative bg-white border border-[#bbcac3] rounded-xl p-8 transition-all duration-300 hover:border-[#006b55] hover:shadow-lg hover:shadow-[#006b55]/5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#eef5f0] border border-[#bbcac3] flex items-center justify-center text-[#006b55] group-hover:bg-[#006b55] group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                <span className="material-symbols-outlined text-2xl" style={styles.iconSettings}>admin_panel_settings</span>
+              </div>
+              <div className="space-y-2 flex-1">
+                <h2 className="text-base md:text-lg font-bold text-[#161d1a] tracking-tight flex items-center gap-2">
+                  01. Responsable del Tratamiento de Datos
+                </h2>
+                <p className="text-sm md:text-base text-[#3c4a44] leading-relaxed text-justify">
+                  El comité organizador del Congreso IGE de Campus Zongolica es el responsable del resguardo y uso de la información recolectada en esta plataforma, garantizando que el tratamiento de los datos personales se realice estrictamente de acuerdo con los principios de licitud y transparencia institucionales.
+                </p>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-congreso-dark dark:text-slate-100 uppercase mb-6 leading-tight">
-              Aviso de <span className="text-transparent bg-clip-text bg-gradient-to-r from-congreso-dark to-congreso-teal">Privacidad</span>
-            </h1>
-            <p className="text-congreso-dark/40 dark:text-slate-500 text-sm font-mono uppercase tracking-[0.2em]">
-              Última actualización: {lastUpdate}
-            </p>
-          </header>
+          </section>
 
-          {/* Contenido Estructurado */}
-          <div className="grid gap-6 md:gap-8">
-            
-            {/* 01. Responsable */}
-            <section className="group relative bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-2xl p-8 hover:border-congreso-teal/30 transition-all duration-500 shadow-xl">
-              <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-congreso-teal/10 border border-congreso-teal/20 flex items-center justify-center text-congreso-teal group-hover:scale-110 transition-transform duration-500">
-                  <FiShield className="w-6 h-6" />
-                </div>
-                <div className="space-y-3">
-                  <h2 className="text-xl font-bold text-congreso-dark dark:text-slate-200 tracking-tight flex items-center gap-2">
-                    01. Responsable del Tratamiento de Datos
-                  </h2>
-                  <p className="text-congreso-dark/70 dark:text-slate-400 leading-relaxed">
-                    El comité organizador del Congreso IGE de Campus Zongolica es el responsable del resguardo y uso de la información recolectada en esta plataforma, garantizando que el tratamiento de los datos personales se realice de acuerdo con los principios de licitud y transparencia.
-                  </p>
+          {/* 02. Datos Recabados */}
+          <section className="animate-on-scroll group relative bg-white border border-[#bbcac3] rounded-xl p-8 transition-all duration-300 hover:border-[#00b894] hover:shadow-lg hover:shadow-[#00b894]/5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#eef5f0] border border-[#bbcac3] flex items-center justify-center text-[#00b894] group-hover:bg-[#00b894] group-hover:text-[#002018] group-hover:border-transparent transition-all duration-300">
+                <span className="material-symbols-outlined text-2xl" style={styles.iconSettings}>database</span>
+              </div>
+              <div className="space-y-4 flex-1">
+                <h2 className="text-base md:text-lg font-bold text-[#161d1a] tracking-tight">
+                  02. Datos Recabados
+                </h2>
+                <p className="text-sm md:text-base text-[#3c4a44] leading-relaxed text-justify">
+                  Para el funcionamiento óptimo del sistema y la gestión operativa interna del evento, recolectamos únicamente la siguiente información básica:
+                </p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#f4fbf6] p-4 rounded-lg border border-[#bbcac3]/40">
+                  {['Nombre completo', 'Correo electrónico (Google Auth)', 'Unidad Académica', 'Estado del pago'].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-xs md:text-sm text-[#161d1a] font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-[#006b55]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center gap-2 text-xs font-bold text-[#994700] uppercase tracking-wider bg-[#994700]/5 px-3 py-2 rounded border border-[#994700]/20">
+                  <span className="material-symbols-outlined text-sm" style={styles.iconSettings}>lock</span> 
+                  No se almacena ni procesa ninguna información bancaria o crediticia en este servidor.
                 </div>
               </div>
-            </section>
+            </div>
+          </section>
 
-            {/* 02. Datos Recabados */}
-            <section className="group relative bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-2xl p-8 hover:border-congreso-blue/30 transition-all duration-500 shadow-xl">
-              <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-congreso-blue/10 border border-congreso-blue/20 flex items-center justify-center text-congreso-blue group-hover:scale-110 transition-transform duration-500">
-                  <FiDatabase className="w-6 h-6" />
-                </div>
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-congreso-dark dark:text-slate-200 tracking-tight">
-                    02. Datos Recabados
-                  </h2>
-                  <p className="text-congreso-dark/70 dark:text-slate-400 leading-relaxed">
-                    Para el funcionamiento óptimo del sistema y la gestión operativa del evento, recolectamos únicamente la siguiente información:
-                  </p>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {['Nombre completo', 'Correo electrónico (Google Auth)', 'Unidad Académica', 'Estado del pago'].map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm text-congreso-dark/80 dark:text-slate-400 font-mono">
-                        <span className="w-1.5 h-1.5 rounded-full bg-congreso-teal" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-xs text-congreso-orange/80 font-mono mt-4 flex items-center gap-2 italic">
-                    <FiLock className="w-3 h-3" /> No se almacena ninguna información bancaria o crediticia.
-                  </p>
-                </div>
+          {/* 03. Finalidad */}
+          <section className="animate-on-scroll group relative bg-white border border-[#bbcac3] rounded-xl p-8 transition-all duration-300 hover:border-[#006b55] hover:shadow-lg hover:shadow-[#006b55]/5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#eef5f0] border border-[#bbcac3] flex items-center justify-center text-[#006b55] group-hover:bg-[#006b55] group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                <span className="material-symbols-outlined text-2xl" style={styles.iconSettings}>target</span>
               </div>
-            </section>
-
-            {/* 03. Finalidad */}
-            <section className="group relative bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-2xl p-8 hover:border-congreso-teal/30 transition-all duration-500 shadow-xl">
-              <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-congreso-teal/10 border border-congreso-teal/20 flex items-center justify-center text-congreso-teal group-hover:scale-110 transition-transform duration-500">
-                  <FiTarget className="w-6 h-6" />
-                </div>
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-congreso-dark dark:text-slate-200 tracking-tight">
-                    03. Finalidad del Tratamiento
-                  </h2>
-                  <p className="text-congreso-dark/70 dark:text-slate-400 leading-relaxed">
-                    Sus datos serán utilizados estrictamente para los siguientes propósitos operativos:
-                  </p>
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-lg bg-congreso-teal/5 border border-congreso-teal/10">
-                      <p className="text-sm text-congreso-dark/80 dark:text-slate-400 leading-relaxed">
-                        <strong className="text-congreso-teal">Acceso Físico:</strong> Validar su entrada a las conferencias en el Teatro Metropolitano de Orizaba mediante el código QR.
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-congreso-teal/5 border border-congreso-teal/10">
-                      <p className="text-sm text-congreso-dark/80 dark:text-slate-400 leading-relaxed">
-                        <strong className="text-congreso-teal">Gestión de Pagos:</strong> Permitir a los Encargados identificar los pagos pendientes de su respectiva sede asignada.
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-congreso-teal/5 border border-congreso-teal/10">
-                      <p className="text-sm text-congreso-dark/80 dark:text-slate-400 leading-relaxed">
-                        <strong className="text-congreso-teal">Métricas:</strong> Generar gráficas estadísticas en tiempo real para el uso exclusivo del Administrador global.
-                      </p>
-                    </div>
+              <div className="space-y-4 flex-1">
+                <h2 className="text-base md:text-lg font-bold text-[#161d1a] tracking-tight">
+                  03. Finalidad del Tratamiento
+                </h2>
+                <p className="text-sm md:text-base text-[#3c4a44] leading-relaxed text-justify">
+                  Sus datos personales serán utilizados única y exclusivamente para los siguientes propósitos operativos de control:
+                </p>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="p-4 rounded-lg bg-white border border-[#bbcac3] hover:border-[#006b55] transition-colors">
+                    <p className="text-sm text-[#3c4a44] leading-relaxed">
+                      <strong className="text-[#006b55] font-bold">Acceso Físico:</strong> Validar su entrada a las ponencias en el Teatro Metropolitano de Orizaba mediante la lectura del código QR.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-white border border-[#bbcac3] hover:border-[#006b55] transition-colors">
+                    <p className="text-sm text-[#3c4a44] leading-relaxed">
+                      <strong className="text-[#006b55] font-bold">Gestión de Pagos:</strong> Permitir a los Encargados de Sede identificar de forma precisa los pagos pendientes de su respectiva unidad.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-white border border-[#bbcac3] hover:border-[#006b55] transition-colors">
+                    <p className="text-sm text-[#3c4a44] leading-relaxed">
+                      <strong className="text-[#006b55] font-bold">Métricas Globales:</strong> Generar analíticas y gráficas estadísticas agregadas en tiempo real para el uso exclusivo del Administrador general.
+                    </p>
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
+          </section>
 
-            {/* 04. Seguridad */}
-            <section className="group relative bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 rounded-2xl p-8 hover:border-congreso-blue/30 transition-all duration-500 shadow-xl">
-              <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-congreso-blue/10 border border-congreso-blue/20 flex items-center justify-center text-congreso-blue group-hover:scale-110 transition-transform duration-500">
-                  <FiLock className="w-6 h-6" />
-                </div>
-                <div className="space-y-3">
-                  <h2 className="text-xl font-bold text-congreso-dark dark:text-slate-200 tracking-tight">
-                    04. Seguridad y Almacenamiento
-                  </h2>
-                  <p className="text-congreso-dark/70 dark:text-slate-400 leading-relaxed">
-                    Los datos están protegidos mediante las políticas de seguridad <strong className="text-congreso-dark dark:text-slate-200">RLS (Row Level Security)</strong> directamente en la infraestructura en la nube de <strong className="text-congreso-teal">Supabase</strong>, impidiendo que usuarios de nivel básico o externos intercepten la información de los otros sistemas o perfiles ajenos.
-                  </p>
-                </div>
+          {/* 04. Seguridad */}
+          <section className="animate-on-scroll group relative bg-white border border-[#bbcac3] rounded-xl p-8 transition-all duration-300 hover:border-[#00b894] hover:shadow-lg hover:shadow-[#00b894]/5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-5">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#eef5f0] border border-[#bbcac3] flex items-center justify-center text-[#006874] group-hover:bg-[#006874] group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                <span className="material-symbols-outlined text-2xl" style={styles.iconSettings}>encrypted</span>
               </div>
-            </section>
+              <div className="space-y-2 flex-1">
+                <h2 className="text-base md:text-lg font-bold text-[#161d1a] tracking-tight">
+                  04. Seguridad y Almacenamiento
+                </h2>
+                <p className="text-sm md:text-base text-[#3c4a44] leading-relaxed text-justify">
+                  Los registros informáticos están fuertemente protegidos mediante políticas activas de seguridad <strong className="text-[#161d1a] font-bold">RLS (Row Level Security)</strong> directamente configuradas en la infraestructura en la nube de <strong className="text-[#006b55] font-semibold">Supabase</strong>. Esto impide de forma absoluta que usuarios externos o perfiles de nivel básico intercepten o extraigan información ajena a su cuenta.
+                </p>
+              </div>
+            </div>
+          </section>
 
-          </div>
-
-          {/* Footer de sección */}
-          <div className="mt-20 text-center border-t border-congreso-teal/10 dark:border-slate-800 pt-12">
-            <p className="text-congreso-dark/30 dark:text-slate-500 text-xs font-mono tracking-widest uppercase">
-              Protocolo de Privacidad Congreso IGE 2026
-            </p>
-          </div>
         </div>
-      </div>
 
-      <div className="relative z-10">
-        <Footer />
-      </div>
-    </main>
+        {/* ─── NOTA AL PIE DEL DOCUMENTO ─── */}
+        <div className="mt-20 text-center border-t border-[#bbcac3]/60 pt-10 animate-on-scroll">
+          <p className="text-[#6c7a74] text-xs font-bold uppercase tracking-widest">
+            Protocolo de Privacidad Congreso IGE 2026
+          </p>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }

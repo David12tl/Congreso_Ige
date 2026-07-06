@@ -1,3 +1,5 @@
+'use client';
+
 import { InfiniteSlider } from '../../../components/motion-primitives/infinite-slider';
 
 /* eslint-disable @next/next/no-img-element */

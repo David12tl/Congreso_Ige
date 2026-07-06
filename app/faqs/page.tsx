@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import Navbar from '../../src/components/ui/navbar';
-import Footer from '../../src/components/ui/Footer';
-import { FiChevronDown } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import Navbar from '@/components/ui/navbar';
+import Footer from '@/components/ui/Footer';
+
+interface Tokens {
+  bg: string;
+  text: string;
+  primary: string;
+  secondary: string;
+  slate400: string;
+}
 
 const faqs = [
   {
@@ -29,91 +36,133 @@ const faqs = [
 ];
 
 export default function FAQsPage() {
+  
+  useEffect(() => {
+    // Inyección dinámica de tipografía Sora y Material Symbols
+    const linkSora = document.createElement('link');
+    linkSora.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap';
+    linkSora.rel = 'stylesheet';
+    document.head.appendChild(linkSora);
+
+    const linkIcons = document.createElement('link');
+    linkIcons.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
+    linkIcons.rel = 'stylesheet';
+    document.head.appendChild(linkIcons);
+
+    // Intersection Observer para transiciones fluidas de scroll
+    const observerOptions = { threshold: 0.05 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('opacity-100', 'translate-y-0');
+          entry.target.classList.remove('translate-y-10', 'opacity-0');
+        }
+      });
+    }, observerOptions);
+
+    const elementsToAnimate = document.querySelectorAll('.animate-on-scroll');
+    elementsToAnimate.forEach((el) => {
+      el.classList.add('transition-all', 'duration-700', 'translate-y-10', 'opacity-0');
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Sincronización estricta con la paleta de ProgramaPage
+  const tokens = {
+    bg: 'bg-[#F4F7FA]', 
+    text: 'text-[#0A192F]',
+    primary: '#0B2545',
+    secondary: '#00B4D8',
+    slate400: '#5C6E85'
+  };
+
   return (
-    <main className="min-h-screen bg-congreso-whiteSmoke dark:bg-congreso-bgDark text-congreso-dark dark:text-slate-100 selection:bg-congreso-teal/30 font-sans overflow-x-hidden">
-      <div className="relative z-50">
-        <Navbar />
-      </div>
+    <div className={`${tokens.bg} ${tokens.text} font-['Sora'] overflow-x-hidden min-h-screen antialiased flex flex-col justify-between`}>
+      <Navbar />
       
-      <div className="relative pt-40 pb-24 px-4 min-h-[calc(100vh-80px)]">
-        {/* Luces de Fondo (Glow) */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-congreso-teal/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-congreso-blue/5 rounded-full blur-[120px] pointer-events-none" />
+      {/* Ajuste de pt-32 para evitar colisiones con el Navbar */}
+      <main className="max-w-3xl mx-auto px-6 w-full pt-32 pb-24 flex-grow relative z-10">
         
-        {/* Grid de fondo sutil */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+        {/* ─── HEADER DE LA PÁGINA ─── */}
+        <header className="text-center mb-12 animate-on-scroll">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-[#00B4D8] uppercase border border-slate-200 rounded-full bg-white shadow-sm">
+            Soporte & Ayuda
+          </span>
+          <h1 style={{ color: tokens.primary }} className="text-3xl md:text-5xl font-extrabold tracking-tighter uppercase mb-4 leading-tight">
+            Preguntas <span style={{ color: tokens.secondary }}>Frecuentes</span>
+          </h1>
+          <p className="text-[#4A5E78] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+            Resolvemos tus dudas sobre el proceso de registro, validación de pagos físicos y acceso al evento empresarial.
+          </p>
+        </header>
 
-        <div className="max-w-3xl mx-auto relative z-10">
-          <header className="text-center mb-16 animate-fadeIn">
-            <span className="inline-block px-3 py-1 mb-4 text-[10px] font-bold tracking-[0.3em] text-congreso-teal uppercase border border-congreso-teal/30 rounded-full bg-congreso-teal/5 backdrop-blur-sm">
-              Soporte & Ayuda
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-congreso-dark dark:text-slate-100 mb-6 uppercase leading-tight">
-              Preguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-congreso-dark via-congreso-blue to-congreso-teal">Frecuentes</span>
-            </h1>
-            <p className="text-congreso-dark/60 dark:text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-              Resolvemos tus dudas sobre el proceso de registro, pagos y acceso al evento tecnológico del año.
-            </p>
-          </header>
-
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <FAQItem key={index} faq={faq} index={index} />
-            ))}
-          </div>
-
-          {/* Call to action sutil */}
-          <div className="mt-20 text-center p-8 rounded-2xl bg-white dark:bg-slate-900/60 dark:border-slate-800 border border-congreso-teal/10 backdrop-blur-sm animate-fadeIn opacity-0 [animation-fill-mode:forwards] [animation-delay:600ms]">
-            <p className="text-congreso-dark/60 dark:text-slate-400 mb-4">¿Aún tienes dudas?</p>
-            <a 
-              href="mailto:soporte@congresoige.com" 
-              className="text-congreso-teal font-bold hover:text-congreso-blue transition-colors underline underline-offset-4"
-            >
-              Contacta con nuestro equipo de soporte
-            </a>
-          </div>
+        {/* ─── LISTA DE ACORDEONES CORREGIDA ─── */}
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <FAQItem key={index} faq={faq} tokens={tokens} />
+          ))}
         </div>
-      </div>
 
-      <div className="relative z-10">
-        <Footer />
-      </div>
-    </main>
+        {/* ─── CALL TO ACTION TONAL ─── */}
+        <div className="mt-16 text-center p-8 rounded-2xl bg-white border border-slate-200 shadow-sm animate-on-scroll">
+          <p className="text-sm font-semibold text-[#4A5E78] mb-2">¿Aún tienes dudas técnicas o administrativas?</p>
+          <a 
+            href="mailto:soporte@congresoige.com" 
+            style={{ color: tokens.primary }}
+            className="inline-flex items-center gap-2 font-bold hover:opacity-80 transition-all underline underline-offset-4 text-sm md:text-base"
+          >
+            Contacta con nuestro equipo de soporte
+          </a>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 
-function FAQItem({ faq, index }: { faq: typeof faqs[0], index: number }) {
+function FAQItem({ faq, tokens }: { faq: typeof faqs[0]; tokens: Tokens }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div 
-      className={`group bg-white dark:bg-slate-900/60 backdrop-blur-md border transition-all duration-500 rounded-2xl overflow-hidden animate-fadeIn opacity-0 [animation-fill-mode:forwards] ${
+      className={`animate-on-scroll bg-white border transition-all duration-300 rounded-2xl overflow-hidden shadow-sm ${
         isOpen 
-          ? 'border-congreso-teal/50 shadow-[0_0_30px_rgba(0,151,167,0.1)] dark:border-congreso-teal/30' 
-          : 'border-congreso-teal/10 dark:border-slate-800 hover:border-congreso-teal/30'
+          ? 'border-[#00B4D8] shadow-md shadow-[#00B4D8]/5' 
+          : 'border-slate-200 hover:border-slate-400'
       }`}
-      style={{ animationDelay: `${index * 100}ms` }}
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-6 flex items-center justify-between text-left focus:outline-none cursor-pointer"
+        className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer bg-white"
       >
-        <span className={`text-lg font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-congreso-teal' : 'text-congreso-dark dark:text-slate-200 group-hover:text-congreso-dark dark:group-hover:text-slate-200'}`}>
+        <span className={`text-base font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-[#00B4D8]' : 'text-[#0A192F]'}`}>
           {faq.question}
         </span>
-        <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 ${
-          isOpen ? 'bg-congreso-teal/20 border-congreso-teal/50 text-congreso-teal rotate-180' : 'bg-white/5 dark:bg-slate-800/50 border-congreso-teal/20 dark:border-slate-700 text-congreso-dark/40 dark:text-slate-400'
+        <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-300 ${
+          isOpen ? 'bg-[#00B4D8]/10 border-transparent text-[#00B4D8]' : 'bg-white border-slate-200 text-slate-400'
         }`}>
-          <FiChevronDown className="w-5 h-5" />
+          <span 
+            className="material-symbols-outlined text-xl transition-transform duration-300"
+            style={{ 
+              fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}
+          >
+            keyboard_arrow_down
+          </span>
         </div>
       </button>
       
+      {/* Contenedor colapsable optimizado con max-h controlado para transiciones sin saltos */}
       <div 
-        className={`transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden ${
-          isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-6 pb-8 text-congreso-dark/70 dark:text-slate-400 leading-relaxed text-base border-t border-congreso-teal/10 dark:border-slate-800 pt-6 bg-gradient-to-b from-transparent to-congreso-teal/[0.02]">
+        <div className="px-6 pb-6 text-[#4A5E78] text-sm md:text-base leading-relaxed text-justify border-t border-slate-100 pt-4 bg-[#F4F7FA]/40">
           {faq.answer}
         </div>
       </div>
