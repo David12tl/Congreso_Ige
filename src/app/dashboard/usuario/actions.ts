@@ -87,6 +87,38 @@ export async function getResumenAsistente(): Promise<ResumenDashboard> {
   }
 }
 
+export interface AsientoInfo {
+  id: string
+  zona: string
+  bloque: string
+  fila: string
+  numero: number
+  estado: string
+  tipo: string
+}
+
+export async function getMiQR(): Promise<string | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return null
+
+  const { data: ticket, error } = await supabase
+    .from('tickets')
+    .select('id, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
+    .eq('buyer_id', user.id)
+    .maybeSingle()
+
+  if (error || !ticket) return null
+
+  // Generar un código QR simple basado en el ticket ID
+  // En producción, esto debería usar una librería QR real
+  const ticketId = (ticket as { id: string }).id
+  const qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticketId)}`
+
+  return qrCode
+}
+
 export async function actualizarInformacionPerfil(formData: UpdateAsistenteData): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

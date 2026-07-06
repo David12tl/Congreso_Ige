@@ -3,6 +3,16 @@
 import { createClient } from '@/lib/supabase/server'
 import type { PerfilUsuarioCompleto } from '@/components/asientos/types'
 
+export interface AsientoInfo {
+  id: string
+  zona: string
+  bloque: string
+  fila: string
+  numero: number
+  estado: string
+  tipo: string
+}
+
 interface PreRegistroInput {
   zoneId: string
   asientoZona: string
@@ -14,6 +24,17 @@ interface PreRegistroInput {
   carrera: string | null
   empresa: string | null
   puesto: string | null
+}
+
+interface TicketRow {
+  id: string
+  zone_id: string | null
+  asiento_zona: string | null
+  asiento_bloque: string | null
+  asiento_fila: string | null
+  asiento_numero: number | null
+  type: string
+  estatus_pago: string | null
 }
 
 /**
@@ -128,6 +149,36 @@ export async function getMiTicketExistente() {
     console.error('💥 [getMiTicketExistente] Excepción en servidor:', error)
     return null
   }
+}
+
+/**
+ * Obtiene los asientos del usuario autenticado
+ */
+export async function getMisAsientos(): Promise<AsientoInfo[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data: tickets, error } = await (supabase
+    .from('tickets')
+    .select('id, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, estatus_pago')
+    .eq('buyer_id', user.id) as unknown as Promise<{ data: TicketRow[] | null; error: unknown }>)
+
+  if (error) {
+    console.error('[getMisAsientos] Error:', (error as { message: string }).message)
+    return []
+  }
+
+  return (tickets || []).map((t) => ({
+    id: t.id,
+    zona: t.asiento_zona || 'Sin zona',
+    bloque: t.asiento_bloque || 'Sin bloque',
+    fila: t.asiento_fila || 'Sin fila',
+    numero: t.asiento_numero || 0,
+    estado: t.estatus_pago || 'pendiente',
+    tipo: t.type || 'alumno'
+  }))
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, startTransition } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import Confetti from 'react-confetti';
 
 const calculateTimeLeft = () => {

@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 const navLinks = [
   { href: '/', text: 'Inicio' },
-  { href: '/schedule', text: 'Programa' },
+  { href: '/Conferencias', text: 'Conferencias' },
   { href: '/info', text: 'Información' },
   { href: '/aboutme', text: 'Nosotros' },
 ];

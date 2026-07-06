@@ -16,11 +16,6 @@ const ThemeContext = createContext<ThemeContextValue>({
   setTheme: () => {},
 });
 
-function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 function getStorageTheme(): Theme | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('theme') as Theme | null;

@@ -1,11 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import TextPressure from '@/components/ui/TextPressure'; 
 import Footer from '@/components/ui/Footer';
-import TabTime from '@/components/ui/tabtime';
 import Navbar from '@/components/ui/navbar';
-import SpeakersMagistralesSection from '@/components/ui/SpeakersMagistralesSection';
 
 export default function ProgramaPage() {
   const [activeTab, setActiveTab] = useState<'day1' | 'day2'>('day1');

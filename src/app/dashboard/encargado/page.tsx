@@ -18,14 +18,13 @@ function GlassCard({ children, className = '', glowColor = 'cyan' }: {
   glowColor?: 'cyan' | 'emerald' | 'purple'
 }) {
   const glowStyles = {
-    cyan: 'border-congreso-teal/30 shadow-[0_0_20px_rgba(0,151,167,0.15)]',
-    emerald: 'border-congreso-emerald/30 shadow-[0_0_20px_rgba(0,184,148,0.15)]',
-    purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
+    cyan: 'border-cyan-200 shadow-sm',
+    emerald: 'border-emerald-200 shadow-sm',
+    purple: 'border-purple-200 shadow-sm',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-congreso-bgDark/60 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       {children}
     </div>
   )
@@ -65,17 +64,17 @@ export default function EncargadoDashboardPage() {
       {/* 1. Header Dinámico */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">
-            Panel de Control <span className="text-congreso-teal">—</span> 
-            <span className="bg-gradient-to-r from-congreso-teal to-congreso-blue bg-clip-text text-transparent ml-2">
+          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+            Panel de Control <span className="text-[#0B2545]">—</span> 
+            <span className="text-[#0B2545] ml-2">
               {landData.name}
             </span>
           </h1>
-          <p className="text-congreso-greyMed text-xs sm:text-sm font-mono mt-1">STATUS: OPERATIVO // SESIÓN_ACTIVA: STAFF_084</p>
+          <p className="text-slate-500 text-xs font-light mt-1">STATUS: OPERATIVO // SESIÓN_ACTIVA: STAFF_084</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-congreso-emerald/10 border border-congreso-emerald/30 rounded-full self-start md:self-auto">
-          <div className="w-2 h-2 rounded-full bg-congreso-emerald animate-pulse" />
-          <span className="text-congreso-emerald text-xs font-bold uppercase tracking-widest">En Vivo</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full self-start md:self-auto">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">En Vivo</span>
         </div>
       </header>
 
@@ -84,29 +83,28 @@ export default function EncargadoDashboardPage() {
         {/* 2. Simulador de Escáner QR (Área Central) */}
         <section className="lg:col-span-2 space-y-6">
           <GlassCard className="p-8 sm:p-12 flex flex-col items-center justify-center text-center min-h-[350px] sm:min-h-[400px]" glowColor="cyan">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
             
             {/* HUD Decorative Elements */}
-            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-congreso-teal/50" />
-            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-congreso-teal/50" />
+            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-cyan-200" />
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-cyan-200" />
 
             <div className="relative group cursor-pointer" onClick={() => setIsModalOpen(true)}>
               {/* Pulsing scanner ring */}
-              <div className="absolute -inset-4 bg-congreso-teal/20 rounded-full blur-xl group-hover:bg-congreso-teal/30 transition-all duration-500 animate-pulse" />
+              <div className="absolute -inset-4 bg-cyan-100 rounded-full blur-xl group-hover:bg-cyan-200 transition-all duration-500 animate-pulse" />
               
-              <button className="relative w-24 h-24 sm:w-32 sm:h-32 bg-congreso-dark border-2 border-congreso-teal rounded-2xl flex items-center justify-center text-congreso-teal group-hover:scale-110 transition-transform duration-300">
+              <button className="relative w-24 h-24 sm:w-32 sm:h-32 bg-white border-2 border-cyan-200 rounded-[24px] flex items-center justify-center text-cyan-700 group-hover:scale-110 transition-transform duration-300">
                 <HiOutlineQrcode className="w-12 h-12 sm:w-16 sm:h-16" />
               </button>
             </div>
 
             <div className="mt-8 space-y-2">
-              <h2 className="text-lg sm:text-xl font-bold text-white uppercase tracking-widest">Simulador de Escaneo</h2>
-              <p className="text-congreso-greyMed text-xs sm:text-sm max-w-xs">Haz clic para simular la lectura del código QR de un asistente y registrar su entrada.</p>
+              <h2 className="text-lg font-bold text-[#0f172a] uppercase tracking-widest">Simulador de Escaneo</h2>
+              <p className="text-slate-500 text-xs max-w-xs font-light">Haz clic para simular la lectura del código QR de un asistente y registrar su entrada.</p>
             </div>
 
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="mt-8 px-6 sm:px-8 py-3 bg-congreso-teal text-congreso-dark font-black rounded-lg uppercase tracking-tighter hover:bg-congreso-teal/90 transition-colors shadow-[0_0_20px_rgba(0,151,167,0.4)] text-sm sm:text-base"
+              className="mt-8 px-6 sm:px-8 py-3 bg-[#0B2545] text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-[#11355e] transition shadow-sm"
             >
               Simular Escaneo de Asistente
             </button>
@@ -114,7 +112,7 @@ export default function EncargadoDashboardPage() {
             {/* Notificación de último escaneo */}
             {lastScanned && (
               <div className="absolute bottom-10 left-0 right-0 animate-bounce">
-                <span className="bg-congreso-emerald/20 text-congreso-emerald border border-congreso-emerald/50 px-4 py-1.5 rounded-full text-xs font-bold uppercase">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-1.5 rounded-full text-xs font-bold uppercase">
                   ✓ Usuario {lastScanned} Registrado
                 </span>
               </div>
@@ -127,58 +125,58 @@ export default function EncargadoDashboardPage() {
           
           {/* Métrica: Visitas Hoy */}
           <GlassCard className="p-6" glowColor="emerald">
-            <div className="flex items-center gap-3 mb-4 text-congreso-emerald">
+            <div className="flex items-center gap-3 mb-4 text-emerald-700">
               <HiOutlineUserGroup className="w-5 h-5" />
               <span className="text-xs font-bold uppercase tracking-widest">Total Visitas Hoy</span>
             </div>
             <div className="relative">
-              <span className="text-5xl sm:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(0,184,148,0.5)]">
+              <span className="text-5xl sm:text-6xl font-black text-[#0f172a]">
                 {visitasHoy}
               </span>
-              <span className="ml-2 text-congreso-emerald text-sm font-bold">+12%</span>
+              <span className="ml-2 text-emerald-700 text-sm font-bold">+12%</span>
             </div>
-            <div className="mt-4 h-1 w-full bg-congreso-emerald/20 rounded-full overflow-hidden">
-              <div className="h-full bg-congreso-emerald w-2/3 animate-shimmer" />
+            <div className="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 w-2/3 animate-shimmer" />
             </div>
           </GlassCard>
 
           {/* Métrica: Capacidad Stand */}
           <GlassCard className="p-6" glowColor="purple">
-            <div className="flex items-center justify-between mb-4 text-purple-400">
+            <div className="flex items-center justify-between mb-4 text-purple-700">
               <div className="flex items-center gap-3">
                 <HiOutlineChartBar className="w-5 h-5" />
                 <span className="text-xs font-bold uppercase tracking-widest">Capacidad Actual</span>
               </div>
-              <span className="text-xs font-mono">{visitasHoy}/{landData.maxCapacity}</span>
+              <span className="text-xs font-light">{visitasHoy}/{landData.maxCapacity}</span>
             </div>
             
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-2xl sm:text-3xl font-black text-white">{currentCapacityPercent}%</span>
-                <span className="text-[10px] text-gray-500 uppercase font-bold pb-1">Ocupación</span>
+                <span className="text-2xl sm:text-3xl font-black text-[#0f172a]">{currentCapacityPercent}%</span>
+                <span className="text-[10px] text-slate-500 uppercase font-bold pb-1">Ocupación</span>
               </div>
               
               {/* Tailwind Progress Bar Estilizada */}
-              <div className="relative w-full h-4 bg-congreso-dark rounded-full border border-white/5 p-1 overflow-hidden">
+              <div className="relative w-full h-4 bg-slate-100 rounded-full border border-slate-200 p-1 overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                    currentCapacityPercent > 90 ? 'bg-red-500 shadow-[0_0_10px_#ef4444]' : 
-                    currentCapacityPercent > 70 ? 'bg-congreso-orange shadow-[0_0_10px_#FF7A00]' : 
-                    'bg-congreso-teal shadow-[0_0_10px_#0097A7]'
+                    currentCapacityPercent > 90 ? 'bg-red-500' : 
+                    currentCapacityPercent > 70 ? 'bg-amber-500' : 
+                    'bg-cyan-500'
                   }`}
                   style={{ width: `${currentCapacityPercent}%` }}
                 />
               </div>
-              <p className="text-[10px] text-congreso-greyMed italic">Actualizado automáticamente cada 30s</p>
+              <p className="text-[10px] text-slate-500 font-light italic">Actualizado automáticamente cada 30s</p>
             </div>
           </GlassCard>
 
-          <div className="p-4 border border-white/5 rounded-xl bg-white/[0.02]">
-            <h4 className="text-[10px] font-bold text-congreso-greyMed uppercase tracking-[0.2em] mb-3">Logs de Actividad</h4>
-            <div className="space-y-2 font-mono text-[10px]">
-              <p className="text-gray-400"><span className="text-congreso-teal">14:20:01</span> User IGE-902 Entrada</p>
-              <p className="text-gray-400"><span className="text-congreso-teal">14:18:45</span> User IGE-112 Entrada</p>
-              <p className="text-gray-600 tracking-tighter"> Esperando nuevos datos...</p>
+          <div className="p-4 border border-slate-200 rounded-xl bg-slate-50">
+            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">Logs de Actividad</h4>
+            <div className="space-y-2 font-light text-[10px]">
+              <p className="text-slate-500"><span className="text-cyan-700">14:20:01</span> User IGE-902 Entrada</p>
+              <p className="text-slate-500"><span className="text-cyan-700">14:18:45</span> User IGE-112 Entrada</p>
+              <p className="text-slate-400 tracking-tighter"> Esperando nuevos datos...</p>
             </div>
           </div>
         </aside>
@@ -186,34 +184,34 @@ export default function EncargadoDashboardPage() {
 
       {/* Modal de Simulación de Escaneo */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-congreso-bgDark/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md animate-scaleIn">
             <GlassCard className="p-8" glowColor="cyan">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <HiOutlineShieldCheck className="text-congreso-teal" />
+                <h3 className="text-xl font-bold text-[#0f172a] flex items-center gap-2">
+                  <HiOutlineShieldCheck className="text-cyan-700" />
                   Validar Asistente
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-[#0f172a] transition-colors">
                   <HiOutlineX className="w-6 h-6" />
                 </button>
               </div>
               
               <form onSubmit={handleScan} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-congreso-teal uppercase tracking-widest mb-1.5 text-left">ID del Usuario (Badge)</label>
+                  <label className="block text-[10px] font-bold text-cyan-700 uppercase tracking-widest mb-1.5 text-left">ID del Usuario (Badge)</label>
                   <input 
                     autoFocus
                     type="text" 
                     placeholder="Ej: IGE-2026-XXXX"
-                    className="w-full bg-congreso-dark border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:border-congreso-teal focus:outline-none focus:ring-1 focus:ring-congreso-teal transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#0f172a] font-light focus:border-cyan-500 focus:bg-white transition-all"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                   />
                 </div>
                 <button 
                   type="submit"
-                  className="w-full py-3 bg-gradient-to-r from-congreso-teal to-congreso-blue text-white font-bold rounded-lg uppercase tracking-widest flex items-center justify-center gap-2 hover:from-congreso-teal/90 hover:to-congreso-blue/90 transition-all shadow-lg"
+                  className="w-full py-3 bg-cyan-600 text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-cyan-500 transition shadow-sm"
                 >
                   <HiOutlineLogin className="w-5 h-5" />
                   Registrar Visita

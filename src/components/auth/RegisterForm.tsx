@@ -9,7 +9,6 @@ export default function RegisterForm() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [landInterest, setLandInterest] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -23,7 +22,7 @@ export default function RegisterForm() {
       email,
       password,
       fullName,
-      landInterest,
+      landInterest: '',
     });
 
     setIsLoading(false);
@@ -47,7 +46,7 @@ export default function RegisterForm() {
     try {
       const url = await signInWithGoogle();
       if (url) window.location.href = url;
-    } catch (err) {
+    } catch {
       setError('Error al conectar con Google. Revisa tu conexión.');
       setIsLoading(false);
     }
@@ -151,17 +150,6 @@ export default function RegisterForm() {
             disabled={isLoading}
             className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-lg text-white placeholder-white/30 text-sm outline-none transition-all duration-300 focus:border-[#D856BF] focus:shadow-[0_0_12px_rgba(216,86,191,0.25)] focus:ring-1 focus:ring-[#D856BF]/30 disabled:opacity-50"
           />
-        </div>
-
-        {/* Select: Land de Interés */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="reg-land"
-            className="text-xs font-semibold text-white/60 uppercase tracking-widest"
-          >
-            Land de Interés
-          </label>
-          
         </div>
 
         {/* Botón de registro */}

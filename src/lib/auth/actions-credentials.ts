@@ -48,7 +48,7 @@ export async function generateAndSendCredential(
 
     if (!ticket.asiento_numero) {
       // El usuario aún no tiene asiento asignado
-      assignedSeat = await assignSeatToUser(userId);
+      assignedSeat = await assignSeatToUser();
 
       if (!assignedSeat) {
         return {

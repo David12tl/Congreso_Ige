@@ -1,6 +1,5 @@
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
-import { Readable } from "stream";
 
 export interface CredentialData {
   nombre: string;

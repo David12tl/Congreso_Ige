@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { auditorioConfig, ZoneCode } from "@/config/auditorioConfig";
+import { auditorioConfig } from "@/config/auditorioConfig";
 
 export interface AssignedSeat {
   asiento_zona: string;
@@ -14,9 +14,7 @@ export interface AssignedSeat {
  * Estrategia: Busca el primer asiento libre en orden de preferencia
  * (Preferente → Luneta → Palcos → General)
  */
-export async function assignSeatToUser(
-  userId: string
-): Promise<AssignedSeat | null> {
+export async function assignSeatToUser(): Promise<AssignedSeat | null> {
   const supabase = await createClient();
 
   // Recorrer las zonas en orden de preferencia
@@ -66,7 +64,7 @@ export async function assignSeatToUser(
  * Asigna un asiento específico al usuario (útil para cambios manuales)
  */
 export async function assignSpecificSeat(
-  userId: string,
+  _userId: string,
   seatData: AssignedSeat
 ): Promise<void> {
   const supabase = await createClient();
@@ -78,7 +76,6 @@ export async function assignSpecificSeat(
     .eq("asiento_zona", seatData.asiento_zona)
     .eq("asiento_fila", seatData.asiento_fila)
     .eq("asiento_numero", seatData.asiento_numero)
-    .eq("buyer_id", userId)
     .not("asiento_numero", "is", null)
     .maybeSingle();
 
@@ -96,7 +93,7 @@ export async function assignSpecificSeat(
       asiento_bloque: seatData.asiento_bloque,
       zone_id: seatData.zone_id,
     })
-    .eq("buyer_id", userId)
+    .eq("buyer_id", _userId)
     .is("asiento_numero", null);
 
   if (error) {

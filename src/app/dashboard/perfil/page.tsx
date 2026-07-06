@@ -45,16 +45,15 @@ function GlassCard({ children, className = '', glowColor = 'cyan' }: {
   glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
 }) {
   const glowStyles: Record<string, string> = {
-    blue: 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
-    purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    cyan: 'border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]',
-    emerald: 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    blue: 'border-blue-200 shadow-sm',
+    purple: 'border-purple-200 shadow-sm',
+    amber: 'border-amber-200 shadow-sm',
+    cyan: 'border-cyan-200 shadow-sm',
+    emerald: 'border-emerald-200 shadow-sm',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       {children}
     </div>
   )
@@ -95,8 +94,8 @@ export default function PerfilPage() {
       if (dataPerfil?.unidadAcademicaId) {
         setSelectedUA(dataPerfil.unidadAcademicaId)
       }
-    } catch (err) {
-      console.error("Error al sincronizar datos del asistente:", err)
+    } catch {
+      console.error("Error al sincronizar datos del asistente")
     }
   }
 
@@ -125,8 +124,8 @@ export default function PerfilPage() {
             setSelectedUA(dataPerfil.unidadAcademicaId)
           }
         }
-      } catch (err) {
-        console.error("Error al sincronizar datos del asistente:", err)
+      } catch {
+        console.error("Error al sincronizar datos del asistente")
       } finally {
         if (activo) {
           setLoading(false)
@@ -156,7 +155,7 @@ export default function PerfilPage() {
       } else {
         setUaError(res.message)
       }
-    } catch (err) {
+    } catch {
       setUaError('Error crítico al guardar. Intenta de nuevo.')
     } finally {
       setSavingUA(false)
@@ -166,8 +165,8 @@ export default function PerfilPage() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Leyendo bases de datos encriptadas...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-cyan-200 border-t-cyan-500 animate-spin" />
+        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Leyendo bases de datos...</p>
       </div>
     )
   }
@@ -176,19 +175,19 @@ export default function PerfilPage() {
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">
-            <HiOutlineIdentification className="inline-block w-8 h-8 mr-3 text-cyan-400" />
+          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+            <HiOutlineIdentification className="inline-block w-8 h-8 mr-3 text-cyan-700" />
             Mi{' '}
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            <span className="text-cyan-700">
               Perfil
             </span>
           </h1>
-          <p className="text-gray-500 text-sm font-mono mt-1">USUARIO // INFORMACIÓN_PERSONAL_Y_CREDENCIALES</p>
+          <p className="text-slate-500 text-sm font-light mt-1">USUARIO // INFORMACIÓN_PERSONAL_Y_CREDENCIALES</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
+          <div className="flex items-center gap-2 px-4 py-2 bg-cyan-50 border border-cyan-200 rounded-full">
             <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-            <span className="text-cyan-400 text-xs font-bold uppercase tracking-widest">
+            <span className="text-cyan-700 text-xs font-bold uppercase tracking-widest">
               {resumen?.ticketType ? `Perfil ${resumen.ticketType}` : 'Perfil Activo'}
             </span>
           </div>
@@ -199,12 +198,12 @@ export default function PerfilPage() {
       {requiereCompletarUA && (
         <GlassCard className="p-5" glowColor="amber">
           <div className="flex items-start gap-4">
-            <HiOutlineExclamationCircle className="w-8 h-8 text-amber-400 shrink-0 mt-0.5" />
+            <HiOutlineExclamationCircle className="w-8 h-8 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-base font-bold text-amber-300 uppercase tracking-wider">
+              <h3 className="text-base font-bold text-amber-700 uppercase tracking-wider">
                 Unidad Académica Obligatoria
               </h3>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-slate-500 mt-1 font-light">
                 Para poder tramitar tu solicitud de registro al congreso, primero debes asignar tu Unidad Académica en el panel Datos del Perfil abajo. Una vez guardado, se desbloqueará tu formulario de pre-ticket.
               </p>
             </div>
@@ -216,60 +215,60 @@ export default function PerfilPage() {
         
         {/* Panel Izquierdo: Avatar Dinámico */}
         <GlassCard className="p-8 flex flex-col items-center justify-center text-center" glowColor="cyan">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-[0_0_30px_rgba(34,211,238,0.3)]">
+          <div className="w-24 h-24 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 shadow-sm">
             {perfil?.email ? perfil.email.substring(0, 2).toUpperCase() : <HiOutlineUser className="w-12 h-12" />}
           </div>
-          <h2 className="text-xl font-bold text-white mt-4 truncate max-w-full">
+          <h2 className="text-xl font-bold text-[#0f172a] mt-4 truncate max-w-full">
             {perfil?.email || 'Asistente Anónimo'}
           </h2>
-          <span className="px-3 py-1 mt-2 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-bold uppercase tracking-wider">
+          <span className="px-3 py-1 mt-2 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-xs font-bold uppercase tracking-wider">
             {perfil?.rolNombre || 'Asistente'}
           </span>
-          <p className="text-[10px] text-gray-500 font-mono mt-4">MIEMBRO_DESDE: {perfil?.createdAt || '—'}</p>
+          <p className="text-[10px] text-slate-500 font-light mt-4">MIEMBRO_DESDE: {perfil?.createdAt || '—'}</p>
         </GlassCard>
 
         {/* Panel Derecho: Datos de Registro */}
         <GlassCard className="p-8 lg:col-span-2 flex flex-col justify-between" glowColor="purple">
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-white uppercase tracking-widest">Datos del Perfil</h3>
+              <h3 className="text-lg font-bold text-[#0f172a] uppercase tracking-widest">Datos del Perfil</h3>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <HiOutlineUser className="w-6 h-6 text-cyan-400" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <HiOutlineUser className="w-6 h-6 text-cyan-700" />
                 <div className="flex-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Nombre Completo</p>
-                  <p className="text-white font-medium">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Nombre Completo</p>
+                  <p className="text-[#0f172a] font-light">
                     {resumen?.hasTicket ? 'Revisa tu credencial en el módulo Pase' : '—'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <HiOutlineMail className="w-6 h-6 text-purple-400" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <HiOutlineMail className="w-6 h-6 text-purple-700" />
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Correo Electrónico</p>
-                  <p className="text-white font-medium">{perfil?.email || '—'}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Correo Electrónico</p>
+                  <p className="text-[#0f172a] font-light">{perfil?.email || '—'}</p>
                 </div>
               </div>
 
               {/* Selector de Unidad Académica */}
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <HiOutlineAcademicCap className="w-6 h-6 text-cyan-400 mt-1" />
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <HiOutlineAcademicCap className="w-6 h-6 text-cyan-700 mt-1" />
                 <div className="flex-1">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
-                    Unidad Académica <span className="text-amber-400">*</span>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    Unidad Académica <span className="text-amber-700">*</span>
                   </p>
                   {perfil?.unidadAcademicaNombre ? (
-                    <p className="text-white font-medium flex items-center gap-2">
+                    <p className="text-[#0f172a] font-light flex items-center gap-2">
                       {perfil.unidadAcademicaNombre}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <HiOutlineCheckCircle className="w-3 h-3" /> Asignada
                       </span>
                     </p>
                   ) : (
-                    <p className="text-amber-400 font-medium text-sm">No asignada</p>
+                    <p className="text-amber-700 font-light text-sm">No asignada</p>
                   )}
 
                   <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -279,13 +278,13 @@ export default function PerfilPage() {
                         setSelectedUA(e.target.value ? Number(e.target.value) : '')
                         setUaError(null)
                       }}
-                      className="flex-1 bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono"
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-[#0f172a] focus:border-cyan-500 outline-none font-light"
                     >
-                      <option value="" className="bg-slate-900">
+                      <option value="" className="bg-white">
                         -- Seleccionar Unidad Académica --
                       </option>
                       {unidadesAcademicas.map((ua) => (
-                        <option key={ua.id} value={ua.id} className="bg-slate-900">
+                        <option key={ua.id} value={ua.id} className="bg-white">
                           {ua.nombre} ({ua.tipo === 'interno' ? 'Interna' : 'Externa'})
                         </option>
                       ))}
@@ -293,7 +292,7 @@ export default function PerfilPage() {
                     <button
                       onClick={handleSaveUA}
                       disabled={savingUA || selectedUA === ''}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all"
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-light uppercase tracking-wider rounded-xl transition-all"
                     >
                       <HiOutlineSave className="w-4 h-4" />
                       {savingUA ? 'Guardando...' : 'Guardar'}
@@ -301,38 +300,38 @@ export default function PerfilPage() {
                   </div>
 
                   {uaSaved && (
-                    <p className="text-emerald-400 text-xs font-mono mt-2 flex items-center gap-1">
+                    <p className="text-emerald-700 text-xs font-light mt-2 flex items-center gap-1">
                       <HiOutlineCheckCircle className="w-4 h-4" /> Unidad Académica guardada correctamente.
                     </p>
                   )}
                   {uaError && (
-                    <p className="text-red-400 text-xs font-mono mt-2">{uaError}</p>
+                    <p className="text-red-700 text-xs font-light mt-2">{uaError}</p>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                <HiOutlineBadgeCheck className="w-6 h-6 text-emerald-400" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <HiOutlineBadgeCheck className="w-6 h-6 text-emerald-700" />
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Nivel de Seguridad Acceso</p>
-                  <p className="text-white font-mono tracking-wider">LEVEL_0{perfil?.nivelAcceso ?? 1}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Nivel de Seguridad Acceso</p>
+                  <p className="text-[#0f172a] font-light">LEVEL_0{perfil?.nivelAcceso ?? 1}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
-            <div className="font-mono text-xs text-gray-400">
+          <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div className="font-light text-xs text-slate-500">
               STATUS_DB: {resumen?.hasTicket ? (
-                <span className="text-emerald-400 font-bold uppercase">{"// ACCESO_VINCULADO_OK"}</span>
+                <span className="text-emerald-700 font-bold uppercase">{"// ACCESO_VINCULADO_OK"}</span>
               ) : (
-                <span className="text-amber-400 font-bold uppercase">{"// REQUIERE_ACTIVAR_TOKEN_STRIPE"}</span>
+                <span className="text-amber-700 font-bold uppercase">{"// REQUIERE_ACTIVAR_TOKEN_STRIPE"}</span>
               )}
             </div>
             {!resumen?.hasTicket && (
               <a 
                 href="/dashboard/ingresar-token" 
-                className="text-[10px] font-mono font-bold uppercase bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded hover:bg-amber-500/20 transition-all"
+                className="text-[10px] font-light uppercase bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100 transition-all"
               >
                 Vincular Token →
               </a>
@@ -342,12 +341,12 @@ export default function PerfilPage() {
       </div>
 
       {/* ─── 📦 SECCIÓN CONDICIONAL DEL ONBOARDING DESBLOQUEABLE ─── */}
-      <div className="mt-8 border-t border-white/5 pt-8">
+      <div className="mt-8 border-t border-slate-200 pt-8">
         {requiereCompletarUA ? (
-          <div className="max-w-md mx-auto text-center p-6 bg-slate-900/50 rounded-2xl border border-dashed border-white/10 opacity-60">
-            <HiOutlineClipboardList className="w-10 h-10 text-gray-500 mx-auto mb-2" />
-            <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Onboarding Bloqueado</h4>
-            <p className="text-[11px] text-gray-500 mt-1">
+          <div className="max-w-md mx-auto text-center p-6 bg-slate-50 rounded-[24px] border border-dashed border-slate-200 opacity-60">
+            <HiOutlineClipboardList className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Onboarding Bloqueado</h4>
+            <p className="text-[11px] text-slate-500 mt-1 font-light">
               Asigna tu Unidad Académica arriba para habilitar la solicitud del ticket.
             </p>
           </div>

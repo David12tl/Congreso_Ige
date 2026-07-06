@@ -9,9 +9,9 @@ import { getUserProfile, syncAuthMetadataWithProfile } from "@/db/perfiles";
  *   3 → Usuario      → /dashboard/usuario
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return "/dashboard/admin";
-  if (idRol === 2) return "/dashboard/encargado";
-  return "/dashboard/perfil"; 
+  if (idRol === 1) return "../../../src/app/dashboard/admin";
+  if (idRol === 2) return "../../../src/app/dashboard/encargado";
+  return "../../../src/app/dashboard/perfil";
 }
 
 export async function GET(request: Request) {

@@ -41,7 +41,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-congreso-bgDark">
+    <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar para escritorio: visible solo en md+ */}
       <div className="hidden md:block">
         <Sidebar user={userNav} />

@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useEffect } from 'react';
-// Asegúrate de ajustar la ruta de importación de TextPressure según tu estructura de carpetas
 import TextPressure from '@/components/ui/TextPressure'; 
-import Image from 'next/image';
 import Footer from '@/components/ui/Footer';
 import TabTime from '@/components/ui/tabtime';
 import Navbar from '@/components/ui/navbar';
-import SpeakersMagistralesSection from '@/components/ui/SpeakersMagistralesSection';
+import SpeakersMagistralesSection from '@/components/ui/Speakers/SpeakersMagistralesSection';
 
 export default function CongresoPage() {
   
@@ -82,6 +80,7 @@ export default function CongresoPage() {
   };
 
   // Datos para la navegación
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const navLinks = [
     { href: "#", text: 'Inicio', isPrimary: true },
     { href: "#schedule", text: 'Programa' },
@@ -89,6 +88,7 @@ export default function CongresoPage() {
   ];
 
   // Datos para la comunidad destino
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const communityTags = [
     { name: 'Estudiantes', style: 'bg-[#0B2545]/5 text-[#0B2545]' },
     { name: 'Docentes', style: 'bg-[#00B4D8]/10 text-[#00B4D8]' },
@@ -97,6 +97,7 @@ export default function CongresoPage() {
   ];
 
   // Datos del programa para hacer el código más declarativo
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const scheduleDay1 = {
     dayTitle: 'Miércoles 18 de Noviembre',
     daySubtitle: 'Emprendimiento y Sinergias Tecnológicas',
@@ -110,6 +111,7 @@ export default function CongresoPage() {
     ]
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const scheduleDay2 = {
     dayTitle: 'Jueves 19 de Noviembre',
     daySubtitle: 'Desarrollo Sostenible y Competitividad',
@@ -124,6 +126,7 @@ export default function CongresoPage() {
   };
 
   // Datos para las tarjetas de información
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const infoCardsData = [
     {
       icon: 'location_on',

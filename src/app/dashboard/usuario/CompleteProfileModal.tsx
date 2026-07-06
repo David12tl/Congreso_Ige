@@ -58,7 +58,7 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
       } else {
         alert(res.message)
       }
-    } catch (err) {
+    } catch {
       alert('Error crítico al procesar la actualización del perfil.')
     } finally {
       setLoading(false)
@@ -66,166 +66,168 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl transition-all">
-        
-        {/* Encabezado */}
-        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-          <h2 className="text-xl font-black text-white uppercase tracking-tighter font-mono">
-            SISTEMA_ONBOARDING // REGISTRO
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
-            <HiOutlineX className="w-6 h-6" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="w-full max-w-lg animate-scaleIn">
+        <div className="relative rounded-[24px] border border-slate-200 bg-white overflow-hidden shadow-sm">
+          
+          {/* Encabezado */}
+          <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <h2 className="text-xl font-black text-slate-700 uppercase tracking-tight font-sora">
+              SISTEMA_ONBOARDING // REGISTRO
+            </h2>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors rounded-xl hover:bg-slate-100 p-1.5">
+              <HiOutlineX className="w-6 h-6" />
+            </button>
+          </div>
 
-        {/* Cuerpo del Modal */}
-        <div className="p-6">
-          {step === 'choice' ? (
-            <div className="space-y-4 text-center">
-              <p className="text-gray-400 text-xs font-mono uppercase tracking-widest mb-6">
-                Selecciona tu tipo de credencial de acceso
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  type="button"
-                  onClick={() => { setTipo('alumno'); setStep('form') }}
-                  className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-2xl hover:border-cyan-400 transition-all group text-center"
-                >
-                  <HiOutlineAcademicCap className="w-10 h-10 text-cyan-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                  <span className="block text-white font-bold uppercase text-xs tracking-widest font-mono">Alumno</span>
-                  <span className="text-[10px] text-cyan-500 font-mono">Comunidad Interna</span>
-                </button>
-                
-                <button 
-                  type="button"
-                  onClick={() => { setTipo('empresa'); setStep('form') }}
-                  className="p-6 border border-purple-500/20 bg-purple-500/5 rounded-2xl hover:border-purple-400 transition-all group text-center"
-                >
-                  <HiOutlineBriefcase className="w-10 h-10 text-purple-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                  <span className="block text-white font-bold uppercase text-xs tracking-widest font-mono">Externo</span>
-                  <span className="text-[10px] text-purple-500 font-mono">Visitante General</span>
-                </button>
+          {/* Cuerpo del Modal */}
+          <div className="p-6">
+            {step === 'choice' ? (
+              <div className="space-y-4 text-center">
+                <p className="text-slate-500 text-xs font-light uppercase tracking-widest mb-6">
+                  Selecciona tu tipo de credencial de acceso
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    type="button"
+                    onClick={() => { setTipo('alumno'); setStep('form') }}
+                    className="p-6 border border-cyan-200 bg-cyan-50 rounded-[24px] hover:border-cyan-300 transition-all group text-center"
+                  >
+                    <HiOutlineAcademicCap className="w-10 h-10 text-cyan-700 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                    <span className="block text-slate-700 font-bold uppercase text-xs tracking-widest font-sora">Alumno</span>
+                    <span className="text-[10px] text-cyan-700 font-light font-sora">Comunidad Interna</span>
+                  </button>
+                  
+                  <button 
+                    type="button"
+                    onClick={() => { setTipo('empresa'); setStep('form') }}
+                    className="p-6 border border-purple-200 bg-purple-50 rounded-[24px] hover:border-purple-300 transition-all group text-center"
+                  >
+                    <HiOutlineBriefcase className="w-10 h-10 text-purple-700 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                    <span className="block text-slate-700 font-bold uppercase text-xs tracking-widest font-sora">Externo</span>
+                    <span className="text-[10px] text-purple-700 font-light font-sora">Visitante General</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="space-y-3">
-                
-                {/* Campos Universales */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Nombre Completo</label>
-                  <input 
-                    required 
-                    type="text"
-                    value={formData.nombre} 
-                    onChange={e => setFormData({...formData, nombre: e.target.value})} 
-                    className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono" 
-                  />
-                </div>
+            ) : (
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="space-y-3">
+                  
+                  {/* Campos Universales */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Nombre Completo</label>
+                    <input 
+                      required 
+                      type="text"
+                      value={formData.nombre} 
+                      onChange={e => setFormData({...formData, nombre: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora" 
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">
-                    {tipo === 'alumno' ? 'Correo Institucional' : 'Correo Electrónico de Contacto'}
-                  </label>
-                  <input 
-                    required 
-                    type="email"
-                    value={formData.email} 
-                    onChange={e => setFormData({...formData, email: e.target.value})} 
-                    className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono" 
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">
+                      {tipo === 'alumno' ? 'Correo Institucional' : 'Correo Electrónico de Contacto'}
+                    </label>
+                    <input 
+                      required 
+                      type="email"
+                      value={formData.email} 
+                      onChange={e => setFormData({...formData, email: e.target.value})} 
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora" 
+                    />
+                  </div>
 
-                {/* Formulario Específico para Alumnos */}
-                {tipo === 'alumno' ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Num. de Control</label>
-                        <input 
-                          required 
-                          type="text"
-                          value={formData.matricula} 
-                          onChange={e => setFormData({...formData, matricula: e.target.value})} 
-                          className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono" 
-                        />
+                  {/* Formulario Específico para Alumnos */}
+                  {tipo === 'alumno' ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Num. de Control</label>
+                          <input 
+                            required 
+                            type="text"
+                            value={formData.matricula} 
+                            onChange={e => setFormData({...formData, matricula: e.target.value})} 
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Semestre</label>
+                          <select 
+                            value={formData.semestre} 
+                            onChange={e => setFormData({...formData, semestre: e.target.value})} 
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora"
+                          >
+                            {[1,2,3,4,5,6,7,8,9,10,11,12].map(s => (
+                              <option key={s} value={s} className="bg-white">{s}° Semestre</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
+
                       <div className="space-y-1">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Semestre</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Unidad Académica</label>
                         <select 
-                          value={formData.semestre} 
-                          onChange={e => setFormData({...formData, semestre: e.target.value})} 
-                          className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono"
+                          value={formData.unidad} 
+                          onChange={e => setFormData({...formData, unidad: e.target.value})} 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora"
                         >
-                          {[1,2,3,4,5,6,7,8,9,10,11,12].map(s => (
-                            <option key={s} value={s} className="bg-slate-900">{s}° Semestre</option>
+                          {UNIDADES_ACADEMICAS.map(u => (
+                            <option key={u} value={u} className="bg-white">{u}</option>
                           ))}
                         </select>
                       </div>
-                    </div>
 
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Carrera</label>
+                        <input 
+                          required 
+                          type="text"
+                          value={formData.carrera} 
+                          placeholder="Ej. Ingeniería en Gestión Empresarial"
+                          onChange={e => setFormData({...formData, carrera: e.target.value})} 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora placeholder-slate-400" 
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    /* Formulario Específico para Externos */
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Unidad Académica</label>
-                      <select 
-                        value={formData.unidad} 
-                        onChange={e => setFormData({...formData, unidad: e.target.value})} 
-                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono"
-                      >
-                        {UNIDADES_ACADEMICAS.map(u => (
-                          <option key={u} value={u} className="bg-slate-900">{u}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Carrera</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sora">Teléfono Móvil / Fijo</label>
                       <input 
                         required 
-                        type="text"
-                        value={formData.carrera} 
-                        placeholder="Ej. Ingeniería en Gestión Empresarial"
-                        onChange={e => setFormData({...formData, carrera: e.target.value})} 
-                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono placeholder-gray-700" 
+                        type="tel"
+                        value={formData.telefono} 
+                        onChange={e => setFormData({...formData, telefono: e.target.value})} 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:border-cyan-500 outline-none font-light font-sora" 
                       />
                     </div>
-                  </>
-                ) : (
-                  /* Formulario Específico para Externos */
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider block">Teléfono Móvil / Fijo</label>
-                    <input 
-                      required 
-                      type="tel"
-                      value={formData.telefono} 
-                      onChange={e => setFormData({...formData, telefono: e.target.value})} 
-                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none font-mono" 
-                    />
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Botones de Acción */}
-              <div className="flex gap-3 pt-4 border-t border-white/5 mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setStep('choice')} 
-                  className="border border-white/10 hover:bg-white/5 text-gray-400 hover:text-white font-mono text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all"
-                >
-                  ← Regresar
-                </button>
-                <button 
-                  disabled={loading} 
-                  type="submit" 
-                  className="flex-[2] py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-mono font-bold uppercase tracking-widest rounded-xl shadow-lg transition-all disabled:opacity-40"
-                >
-                  {loading ? 'Sincronizando...' : 'Guardar Información'}
-                </button>
-              </div>
-            </form>
-          )}
+                {/* Botones de Acción */}
+                <div className="flex gap-3 pt-4 border-t border-slate-200 mt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setStep('choice')} 
+                    className="border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-700 font-light text-xs uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all font-sora"
+                  >
+                    ← Regresar
+                  </button>
+                  <button 
+                    disabled={loading} 
+                    type="submit" 
+                    className="flex-[2] py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-light uppercase tracking-widest rounded-xl shadow-sm transition-all disabled:opacity-40 font-sora"
+                  >
+                    {loading ? 'Sincronizando...' : 'Guardar Información'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
         </div>
-
       </div>
     </div>
   )

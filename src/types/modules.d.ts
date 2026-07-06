@@ -2,7 +2,7 @@
 declare module 'qrcode' {
   export function toDataURL(
     text: string,
-    options?: any
+    options?: Record<string, unknown>
   ): Promise<string>;
   export namespace QRCode {
     interface QRCodeToStringOptions {

@@ -27,6 +27,57 @@ export interface MetricasFinancieras {
   montoTotalProyectado: number
 }
 
+export interface AsistenteTicket {
+  id: string
+  nombre: string | null
+  email: string
+  matricula: string | null
+  carrera: string | null
+  semestre: string | null
+  unidad_academica: string | null
+  type: string
+}
+
+/**
+ * Obtiene los asistentes por unidad académica para el encargado
+ */
+export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  // Verificar permisos de encargado/admin
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('id_rol, unidad_academica_id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!perfil || (perfil as { id_rol: number }).id_rol !== 2) {
+    return []
+  }
+
+  const unidadId = (perfil as { unidad_academica_id: number | null }).unidad_academica_id
+
+  if (!unidadId) {
+    return []
+  }
+
+  const { data: tickets, error } = await (supabase
+    .from('tickets')
+    .select('id, nombre, email, matricula, carrera, semestre, unidad_academica, type')
+    .eq('unidad_academica_id', unidadId)
+    .order('created_at', { ascending: false }) as unknown as Promise<{ data: AsistenteTicket[] | null; error: unknown }>)
+
+  if (error) {
+    console.error('[getAsistentesPorUA] Error:', (error as { message: string }).message)
+    return []
+  }
+
+  return tickets || []
+}
+
 export async function obtenerTicketsPorRol() {
   const supabase = await createClient()
   

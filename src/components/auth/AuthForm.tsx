@@ -43,8 +43,8 @@ export default function AuthForm() {
     try {
       const url = await signInWithGoogle();
       if (url) window.location.href = url;
-    } catch (err) {
-      setError('Error al conectar con Google. Revisa tu conexión.');
+    } catch {
+      setError('Error al conectar con Google. Revisa tu conexión.')
       setGoogleLoading(false);
     }
   };

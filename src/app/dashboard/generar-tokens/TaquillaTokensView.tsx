@@ -8,7 +8,7 @@ import {
   cobrarAsientoYGenerarToken,
   liquidarRestoAsiento,
   getApartadoInfo,
-} from './tokenActions'
+} from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
 import {
   HiExclamationCircle,
@@ -338,14 +338,15 @@ export function TaquillaTokensView({
       setModalMode('liquidar')
 
       try {
-        const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
           .from('tickets')
           .select('id, nombre, email, buyer_id')
-          .eq('asiento_zona' as 'id', seat.zoneCode)
-          .eq('asiento_bloque' as 'id', seat.bloque)
-          .eq('asiento_fila' as 'id', seat.fila)
-          .eq('asiento_numero' as 'id', String(seat.numero))
-          .order('purchased_at' as 'id', { ascending: false })
+          .eq('asiento_zona', seat.zoneCode)
+          .eq('asiento_bloque', seat.bloque)
+          .eq('asiento_fila', seat.fila)
+          .eq('asiento_numero', String(seat.numero))
+          .order('purchased_at', { ascending: false })
           .limit(1)
           .maybeSingle()
 

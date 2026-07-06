@@ -19,17 +19,16 @@ function GlassCard({ children, className = '', glowColor = 'blue' }: {
   glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald' | 'rose'
 }) {
   const glowStyles: Record<string, string> = {
-    blue: 'border-congreso-blue/30 shadow-[0_0_20px_rgba(13,71,161,0.15)]',
-    purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-congreso-orange/30 shadow-[0_0_20px_rgba(255,122,0,0.15)]',
-    cyan: 'border-congreso-teal/30 shadow-[0_0_20px_rgba(0,151,167,0.15)]',
-    emerald: 'border-congreso-emerald/30 shadow-[0_0_20px_rgba(0,184,148,0.15)]',
-    rose: 'border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.15)]',
+    blue: 'border-blue-200 shadow-sm',
+    purple: 'border-purple-200 shadow-sm',
+    amber: 'border-amber-200 shadow-sm',
+    cyan: 'border-cyan-200 shadow-sm',
+    emerald: 'border-emerald-200 shadow-sm',
+    rose: 'border-rose-200 shadow-sm',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-congreso-bgDark/60 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       {children}
     </div>
   )
@@ -42,14 +41,14 @@ const ROLE_LABELS: Record<number, string> = {
 }
 
 const ROLE_BADGES: Record<number, string> = {
-  1: 'bg-congreso-orange/10 text-congreso-orange border-congreso-orange/30',
-  2: 'bg-congreso-teal/10 text-congreso-teal border-congreso-teal/30',
-  3: 'bg-congreso-blue/10 text-congreso-blue border-congreso-blue/30',
+  1: 'bg-amber-50 text-amber-700 border-amber-200',
+  2: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  3: 'bg-blue-50 text-blue-700 border-blue-200',
 }
 
 const TYPE_BADGES: Record<string, string> = {
-  alumno: 'bg-congreso-teal/10 text-congreso-teal border-congreso-teal/30',
-  empresa: 'bg-congreso-orange/10 text-congreso-orange border-congreso-orange/30',
+  alumno: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  empresa: 'bg-amber-50 text-amber-700 border-amber-200',
 }
 
 export default function AdminDashboardPage() {
@@ -77,8 +76,8 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-congreso-blue/20 border-t-congreso-blue animate-spin" />
-        <p className="text-congreso-greyMed font-mono text-xs uppercase tracking-widest">Cargando panel de control...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
+        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando panel de control...</p>
       </div>
     )
   }
@@ -88,92 +87,92 @@ export default function AdminDashboardPage() {
       {/* Header Estilo Centro de Comando */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">
+          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
             Centro de Mando{' '}
-            <span className="bg-gradient-to-r from-congreso-teal to-congreso-emerald bg-clip-text text-transparent ml-2">
+            <span className="text-[#0B2545]">
               General
             </span>
           </h1>
-          <p className="text-congreso-greyMed text-xs sm:text-sm font-mono mt-1">ADMIN // PANEL_DE_CONTROL // MÉTRICAS_GLOBALES</p>
+          <p className="text-slate-500 text-xs font-light mt-1">ADMIN // PANEL_DE_CONTROL // MÉTRICAS_GLOBALES</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-congreso-emerald/10 border border-congreso-emerald/30 rounded-full self-start md:self-auto">
-          <div className="w-2 h-2 rounded-full bg-congreso-emerald animate-pulse" />
-          <span className="text-congreso-emerald text-xs font-bold uppercase tracking-widest">DB Conectada</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full self-start md:self-auto">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">DB Conectada</span>
         </div>
       </header>
 
       {/* ─── Fila 1: KPIs Globales ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <GlassCard className="p-6" glowColor="blue">
-          <div className="flex items-center gap-3 mb-4 text-congreso-blue">
+          <div className="flex items-center gap-3 mb-4 text-blue-700">
             <HiOutlineUsers className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-congreso-blue/80">Usuarios Registrados</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Usuarios Registrados</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(13,71,161,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
             {data?.totalUsuarios ?? '—'}
           </span>
-          <p className="text-[10px] text-congreso-blue mt-2 font-mono">Total en profiles</p>
+          <p className="text-[10px] text-blue-700 mt-2 font-light">Total en profiles</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="purple">
-          <div className="flex items-center gap-3 mb-4 text-purple-400">
+          <div className="flex items-center gap-3 mb-4 text-purple-700">
             <HiOutlineShieldCheck className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-purple-400/80">Encargados Activos</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-purple-700/80">Encargados Activos</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
             {data?.totalEncargados ?? '—'}
           </span>
-          <p className="text-[10px] text-purple-400 mt-2 font-mono">id_rol = 2</p>
+          <p className="text-[10px] text-purple-700 mt-2 font-light">id_rol = 2</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="emerald">
-          <div className="flex items-center gap-3 mb-4 text-congreso-emerald">
+          <div className="flex items-center gap-3 mb-4 text-emerald-700">
             <HiOutlineOfficeBuilding className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-congreso-emerald/80">Unidades Académicas</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-700/80">Unidades Académicas</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(0,184,148,0.4)]">
+          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
             {data?.totalUnidadesAcademicas ?? '—'}
           </span>
-          <p className="text-[10px] text-congreso-emerald mt-2 font-mono">Registradas en el sistema</p>
+          <p className="text-[10px] text-emerald-700 mt-2 font-light">Registradas en el sistema</p>
         </GlassCard>
       </div>
 
       {/* ─── Fila 2: KPIs de Tickets ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <GlassCard className="p-6" glowColor="cyan">
-          <div className="flex items-center gap-3 mb-4 text-congreso-teal">
+          <div className="flex items-center gap-3 mb-4 text-cyan-700">
             <HiOutlineTicket className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-congreso-teal/80">Total Tickets</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-cyan-700/80">Total Tickets</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalTickets ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalTickets ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="blue">
-          <div className="flex items-center gap-3 mb-4 text-congreso-blue">
+          <div className="flex items-center gap-3 mb-4 text-blue-700">
             <HiOutlineAcademicCap className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-congreso-blue/80">Alumnos</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Alumnos</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalAlumnos ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalAlumnos ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="rose">
-          <div className="flex items-center gap-3 mb-4 text-rose-400">
+          <div className="flex items-center gap-3 mb-4 text-rose-700">
             <HiOutlineBriefcase className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-rose-400/80">Empresas</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-rose-700/80">Empresas</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-white">{data?.totalEmpresas ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalEmpresas ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="amber">
-          <div className="flex items-center gap-3 mb-4 text-congreso-orange">
+          <div className="flex items-center gap-3 mb-4 text-amber-700">
             <HiOutlineTicket className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-congreso-orange/80">Zona Top</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-700/80">Zona Top</span>
           </div>
           <div className="relative">
-            <span className="text-lg sm:text-xl font-black text-white drop-shadow-[0_0_15px_rgba(255,122,0,0.4)] uppercase tracking-tighter block truncate">
+            <span className="text-lg sm:text-xl font-black text-[#0f172a] uppercase tracking-tight block truncate">
               {data?.topZone ?? 'Ninguna'}
             </span>
-            <p className="text-[10px] text-congreso-orange mt-1 font-mono">{data?.topZoneTickets ?? 0} boletos</p>
+            <p className="text-[10px] text-amber-700 mt-1 font-light">{data?.topZoneTickets ?? 0} boletos</p>
           </div>
         </GlassCard>
       </div>
@@ -182,46 +181,46 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Últimos Usuarios Registrados */}
         <GlassCard className="overflow-hidden" glowColor="blue">
-          <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <HiOutlineUsers className="w-4 h-4 text-congreso-blue" />
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <HiOutlineUsers className="w-4 h-4 text-blue-700" />
               Últimos usuarios registrados
             </span>
           </div>
           <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-white/[0.02] border-b border-white/5">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Email</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rol</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Registro</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rol</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registro</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200">
                 {data && data.usuariosRecientes.length > 0 ? (
                   data.usuariosRecientes.map((u) => (
-                    <tr key={u.id} className="hover:bg-white/[0.01] transition-colors">
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-congreso-dark border border-white/10 flex items-center justify-center">
-                            <HiOutlineUserCircle className="w-4 h-4 text-gray-500" />
+                          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+                            <HiOutlineUserCircle className="w-4 h-4 text-slate-500" />
                           </div>
-                          <span className="text-xs font-mono text-gray-300 truncate max-w-[180px] block">{u.email ?? 'Sin email'}</span>
+                          <span className="text-xs font-light text-slate-700 truncate max-w-[180px] block">{u.email ?? 'Sin email'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES[u.id_rol] || 'border-gray-500 text-gray-400'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES[u.id_rol] || 'border-slate-300 text-slate-500'}`}>
                           {ROLE_LABELS[u.id_rol] || 'Desconocido'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[11px] text-gray-400 font-mono">
+                      <td className="px-4 py-3 text-[11px] text-slate-500 font-light">
                         {u.created_at ? new Date(u.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-gray-500 font-mono">
+                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 font-light">
                       Sin actividad reciente.
                     </td>
                   </tr>
@@ -233,39 +232,39 @@ export default function AdminDashboardPage() {
 
         {/* Últimos Tickets Comprados */}
         <GlassCard className="overflow-hidden" glowColor="cyan">
-          <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <HiOutlineTicket className="w-4 h-4 text-congreso-teal" />
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <HiOutlineTicket className="w-4 h-4 text-cyan-700" />
               Últimos tickets vendidos
             </span>
           </div>
           <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-white/[0.02] border-b border-white/5">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Comprador</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tipo</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">UA / Fecha</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Comprador</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">UA / Fecha</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200">
                 {data && data.ticketsRecientes.length > 0 ? (
                   data.ticketsRecientes.map((t) => (
-                    <tr key={t.id} className="hover:bg-white/[0.01] transition-colors">
+                    <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-xs font-semibold text-gray-200">{t.nombre ?? 'Anónimo'}</span>
-                          <span className="text-[10px] font-mono text-gray-500">{t.email}</span>
+                          <span className="text-xs font-light text-slate-700">{t.nombre ?? 'Anónimo'}</span>
+                          <span className="text-[10px] font-light text-slate-500">{t.email}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES[t.type] || 'border-gray-500 text-gray-400'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES[t.type] || 'border-slate-300 text-slate-500'}`}>
                           {t.type === 'alumno' ? 'Alumno' : 'Empresa'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[11px]">
-                        <span className="text-gray-300 block">{t.unidad_academica ?? 'Externa'}</span>
-                        <span className="text-gray-500 font-mono text-[10px]">
+                        <span className="text-slate-700 block">{t.unidad_academica ?? 'Externa'}</span>
+                        <span className="text-slate-500 font-light text-[10px]">
                           {t.purchased_at ? new Date(t.purchased_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '—'}
                         </span>
                       </td>
@@ -273,7 +272,7 @@ export default function AdminDashboardPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-gray-500 font-mono">
+                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 font-light">
                       Sin ventas recientes.
                     </td>
                   </tr>

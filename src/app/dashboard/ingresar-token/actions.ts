@@ -28,6 +28,41 @@ export interface DatosTicketCanjeado {
  * 4. Asocia el ticket del asiento al buyer_id del alumno
  * 5. Retorna los datos del ticket para generar QR y PDF
  */
+export interface ValidarTokenResult {
+  success: boolean
+  message: string
+}
+
+export async function validarToken(tokenCode: string): Promise<ValidarTokenResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { success: false, message: 'Debes iniciar sesión para validar un token.' }
+  }
+
+  // Buscar el token en la base de datos
+  const { data: token, error: tokenError } = await supabase
+    .from('tokens_canje')
+    .select('id, status, token_code')
+    .eq('token_code', tokenCode)
+    .maybeSingle()
+
+  if (tokenError || !token) {
+    return { success: false, message: 'Token inválido o no existe.' }
+  }
+
+  const t = token as { id: string; status: string; token_code: string }
+
+  // Verificar que esté disponible
+  if (t.status !== 'disponible') {
+    return { success: false, message: 'Token inválido o ya canjeado.' }
+  }
+
+  // Canjear el token usando la función existente
+  return canjearTokenPorCodigo(tokenCode)
+}
+
 export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionResult & { ticket?: DatosTicketCanjeado }> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()

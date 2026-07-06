@@ -16,16 +16,15 @@ function GlassCard({ children, className = '', glowColor = 'purple' }: {
   glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
 }) {
   const glowStyles: Record<string, string> = {
-    blue: 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]',
-    purple: 'border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)]',
-    amber: 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    cyan: 'border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]',
-    emerald: 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    blue: 'border-blue-200 shadow-sm',
+    purple: 'border-purple-200 shadow-sm',
+    amber: 'border-amber-200 shadow-sm',
+    cyan: 'border-cyan-200 shadow-sm',
+    emerald: 'border-emerald-200 shadow-sm',
   }
 
   return (
-    <div className={`relative rounded-2xl border bg-slate-900/40 backdrop-blur-xl overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       {children}
     </div>
   )
@@ -56,8 +55,8 @@ export default function EncargadosPage() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin" />
-        <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Cargando encargados desde Supabase...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-purple-200 border-t-purple-500 animate-spin" />
+        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando encargados desde Supabase...</p>
       </div>
     )
   }
@@ -67,107 +66,107 @@ export default function EncargadosPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tighter uppercase">
-            <HiOutlineShieldCheck className="inline-block w-8 h-8 mr-3 text-purple-400" />
+          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+            <HiOutlineShieldCheck className="inline-block w-8 h-8 mr-3 text-purple-700" />
             Gestión de{' '}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <span className="text-purple-700">
               Encargados
             </span>
           </h1>
-          <p className="text-gray-500 text-sm font-mono mt-1">ADMIN // CONTROL_DE_PERMISOS_Y_ROL_2</p>
+          <p className="text-slate-500 text-sm font-light mt-1">ADMIN // CONTROL_DE_PERMISOS_Y_ROL_2</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full">
+        <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-          <span className="text-purple-400 text-xs font-bold uppercase tracking-widest">{data?.totalEncargados ?? 0} encargados en DB</span>
+          <span className="text-purple-700 text-xs font-bold uppercase tracking-widest">{data?.totalEncargados ?? 0} encargados en DB</span>
         </div>
       </header>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <GlassCard className="p-6" glowColor="purple">
-          <div className="flex items-center gap-3 mb-4 text-purple-400">
+          <div className="flex items-center gap-3 mb-4 text-purple-700">
             <HiOutlineUserGroup className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-purple-400/80">Total Encargados</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-purple-700/80">Total Encargados</span>
           </div>
-          <span className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+          <span className="text-6xl font-black text-[#0f172a]">
             {data?.totalEncargados ?? '—'}
           </span>
-          <p className="text-[10px] text-purple-400 mt-2 font-mono">id_rol = 2 en profiles</p>
+          <p className="text-[10px] text-purple-700 mt-2 font-light">id_rol = 2 en profiles</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="emerald">
-          <div className="flex items-center gap-3 mb-4 text-emerald-400">
+          <div className="flex items-center gap-3 mb-4 text-emerald-700">
             <HiOutlineShieldCheck className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400/80">UAs Asignadas</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-700/80">UAs Asignadas</span>
           </div>
-          <span className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+          <span className="text-6xl font-black text-[#0f172a]">
             {data?.uasAsignadas ?? '—'}
           </span>
-          <p className="text-[10px] text-emerald-400 mt-2 font-mono">Unidades Académicas</p>
+          <p className="text-[10px] text-emerald-700 mt-2 font-light">Unidades Académicas</p>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="amber">
-          <div className="flex items-center gap-3 mb-4 text-amber-400">
+          <div className="flex items-center gap-3 mb-4 text-amber-700">
             <HiOutlineUserGroup className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-400/80">Sin UA Asignada</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-700/80">Sin UA Asignada</span>
           </div>
-          <span className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+          <span className="text-6xl font-black text-[#0f172a]">
             {data?.encargados.filter((e) => e.unidad_academica_id === null).length ?? '—'}
           </span>
-          <p className="text-[10px] text-amber-400 mt-2 font-mono">Pendientes de asignación</p>
+          <p className="text-[10px] text-amber-700 mt-2 font-light">Pendientes de asignación</p>
         </GlassCard>
       </div>
 
-      {/* Tabla de Encargados con UA */}
+      {/* Tabla de Encargados con UA - Usando tarjetas blancas con bordes redondeados */}
       <GlassCard className="overflow-hidden" glowColor="purple">
-        <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center justify-between">
-          <span className="text-xs font-mono text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <HiOutlineOfficeBuilding className="w-4 h-4 text-purple-400" />
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+            <HiOutlineOfficeBuilding className="w-4 h-4 text-purple-700" />
             Listado de Encargados y sus Unidades Académicas
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-white/[0.02] border-b border-white/5">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">ID / Email</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rol</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Unidad Académica</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Registro</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">ID / Email</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rol</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unidad Académica</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registro</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-200">
               {data && data.encargados.length > 0 ? (
                 data.encargados.map((enc) => (
-                  <tr key={enc.id} className="hover:bg-white/[0.01] transition-colors group">
+                  <tr key={enc.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 border border-white/10 flex items-center justify-center text-gray-500 group-hover:border-purple-500/50 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 group-hover:border-purple-200 transition-colors">
                           <HiOutlineUserCircle className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-mono text-cyan-400 font-bold">{enc.id.slice(0, 12)}...</span>
-                          <span className="text-gray-300 text-sm">{enc.email ?? 'Sin email'}</span>
+                          <span className="text-xs font-light text-purple-700 font-bold">{enc.id.slice(0, 12)}...</span>
+                          <span className="text-slate-700 text-sm">{enc.email ?? 'Sin email'}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
+                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-purple-200 bg-purple-50 text-purple-700">
                         Encargado
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-200 font-medium">{enc.nombre_ua ?? 'No asignada'}</span>
+                      <span className="text-sm text-slate-700 font-light">{enc.nombre_ua ?? 'No asignada'}</span>
                     </td>
-                    <td className="px-6 py-4 text-xs text-gray-400 font-mono">
+                    <td className="px-6 py-4 text-xs text-slate-500 font-light">
                       {enc.created_at ? new Date(enc.created_at).toLocaleDateString('es-MX') : '—'}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-sm text-gray-500 font-mono">
+                  <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500 font-light">
                     No hay encargados registrados con id_rol = 2.
                   </td>
                 </tr>

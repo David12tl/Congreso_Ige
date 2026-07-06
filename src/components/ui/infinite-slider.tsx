@@ -1,5 +1,6 @@
 import { InfiniteSlider } from '../../../components/motion-primitives/infinite-slider';
 
+/* eslint-disable @next/next/no-img-element */
 export function InfiniteSliderBasic() {
   return (
     <InfiniteSlider gap={24} reverse>

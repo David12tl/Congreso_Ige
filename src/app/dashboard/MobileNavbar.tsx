@@ -171,23 +171,23 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
   return (
     <>
       {/* Mobile Top Navbar */}
-      <div className="flex md:hidden items-center justify-between px-4 h-16 bg-congreso-bgDark border-b border-white/5 shrink-0">
+      <div className="flex md:hidden items-center justify-between px-4 h-16 bg-white border-b border-slate-200 shrink-0">
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 text-white hover:text-congreso-teal transition-colors"
+          className="p-2 text-[#0f172a] hover:text-[#0B2545] transition-colors"
           aria-label="Abrir menú"
         >
           <HiMenu className="w-6 h-6" />
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-congreso-teal to-congreso-emerald flex items-center justify-center">
+          <div className="w-7 h-7 rounded-[24px] bg-[#0B2545] flex items-center justify-center">
             <span className="text-white font-bold text-[10px]">IGE</span>
           </div>
-          <span className="text-white font-semibold text-sm">ELIGE 2026</span>
+          <span className="text-[#0f172a] font-semibold text-sm">ELIGE 2026</span>
         </div>
 
-        <div className="w-8 h-8 rounded-full bg-congreso-dark flex items-center justify-center text-[10px] font-bold text-congreso-pastel uppercase">
+        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-[#0f172a] uppercase">
           {user.name.charAt(0)}
         </div>
       </div>
@@ -204,18 +204,18 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
           />
 
           {/* Drawer Panel */}
-          <div className="absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-congreso-bgDark border-r border-white/5 flex flex-col animate-fadeIn shadow-2xl">
+          <div className="absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col animate-fadeIn shadow-sm">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-5 h-16 border-b border-white/5 shrink-0">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-slate-200 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-congreso-teal to-congreso-emerald flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[24px] bg-[#0B2545] flex items-center justify-center">
                   <span className="text-white font-bold text-xs">IGE</span>
                 </div>
-                <span className="text-white font-semibold text-base">ELIGE 2026</span>
+                <span className="text-[#0f172a] font-semibold text-base">ELIGE 2026</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                className="p-1.5 text-slate-400 hover:text-[#0f172a] transition-colors rounded-xl hover:bg-slate-50"
                 aria-label="Cerrar menú"
               >
                 <HiX className="w-5 h-5" />
@@ -223,10 +223,10 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
             </div>
 
             {/* User info */}
-            <div className="px-5 py-3 border-b border-white/5">
-              <p className="text-white text-sm font-medium truncate">{user.name}</p>
-              <p className="text-gray-400 text-xs truncate mt-0.5">{user.email}</p>
-              <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-congreso-teal/10 text-congreso-teal border border-congreso-teal/20">
+            <div className="px-5 py-3 border-b border-slate-200">
+              <p className="text-[#0f172a] text-sm font-medium truncate">{user.name}</p>
+              <p className="text-slate-500 text-xs truncate mt-0.5">{user.email}</p>
+              <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                 {roleLabels[user.role]}
               </span>
             </div>
@@ -240,16 +240,16 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
                     key={item.href}
                     href={item.href}
                     onClick={closeDrawer}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                       isActive
-                        ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        ? 'bg-slate-50 text-[#0B2545]'
+                        : 'text-slate-500 hover:text-[#0f172a] hover:bg-slate-50'
                     }`}
                   >
                     <span className="shrink-0">{item.icon}</span>
                     <span className="text-sm font-medium">{item.label}</span>
                     {isActive && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-congreso-teal shadow-[0_0_6px_rgba(0,151,167,0.5)]" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#0B2545]" />
                     )}
                   </Link>
                 )
@@ -257,10 +257,10 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
             </nav>
 
             {/* Sign Out */}
-            <div className="border-t border-white/5 p-3">
+            <div className="border-t border-slate-200 p-3">
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all duration-300 text-left cursor-pointer group"
+                className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 text-left cursor-pointer group"
               >
                 <HiOutlineLogout className="w-5 h-5 shrink-0" />
                 <span className="text-sm font-medium">Cerrar Sesión</span>

@@ -1,4 +1,4 @@
-import type { ActionResult, UnidadAcademicaOption } from '@/components/asientos/types'
+import type { UnidadAcademicaOption } from '@/components/asientos/types'
 
 export const PRECIO_POR_BOLETO = 650
 
