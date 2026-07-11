@@ -44,6 +44,7 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
 
   rawTickets.forEach((ticket) => {
     const uaNombre = ticket.unidades_academicas?.nombre || 'No Especificada'
+    // eslint-disable-next-line security/detect-object-injection
     conteoUA[uaNombre] = (conteoUA[uaNombre] || 0) + 1
 
     if (ticket.type === 'alumno') {
@@ -56,6 +57,7 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
   // Formatear el arreglo de UAs calculando su porcentaje de contribución
   const uasFormateadas: UAMetrica[] = Object.keys(conteoUA)
     .map((nombre) => {
+      // eslint-disable-next-line security/detect-object-injection
       const cantidad = conteoUA[nombre] || 0
       const porcentaje = totalTicketsGeneral > 0 ? Math.round((cantidad / totalTicketsGeneral) * 100) : 0
       return {

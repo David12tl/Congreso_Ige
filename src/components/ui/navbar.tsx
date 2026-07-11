@@ -98,12 +98,14 @@ export default function Navbar() {
 
         {/* Botón de Registro y Menú Móvil */}
         <div className="flex items-center gap-4">
-          <button
-            style={{ backgroundColor: tokens.tertiary }}
-            className="hidden sm:block text-white text-sm font-bold px-5 py-2.5 rounded-lg shadow-md hover:brightness-110 transition-transform active:scale-95"
-          >
-            Registrarse
-          </button>
+          <Link href="/login">
+            <button
+              style={{ backgroundColor: tokens.tertiary }}
+              className="hidden sm:block text-white text-sm font-bold px-5 py-2.5 rounded-lg shadow-md hover:brightness-110 transition-transform active:scale-95"
+            >
+              Registrarse
+            </button>
+          </Link>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"

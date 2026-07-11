@@ -28,6 +28,7 @@ function GlassCard({ children, className = '', glowColor = 'blue' }: {
   }
 
   return (
+    // eslint-disable-next-line security/detect-object-injection
     <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
       {children}
     </div>

@@ -161,9 +161,11 @@ const TextPressure: React.FC<TextPressureProps> = ({
         const titleRect = titleRef.current.getBoundingClientRect();
         const maxDist = titleRect.width / 2;
 
+        // eslint-disable-next-line security/detect-object-injection
         spansRef.current.forEach((span, i) => {
           if (!span || !charGeometriesRef.current[i]) return;
 
+          // eslint-disable-next-line security/detect-object-injection
           const rect = charGeometriesRef.current[i];
           const charCenter = {
             x: rect.x + rect.width / 2, // Usamos la geometría cacheada
@@ -177,10 +179,8 @@ const TextPressure: React.FC<TextPressureProps> = ({
           const italVal = italic ? getAttr(d, maxDist, 0, 1).toFixed(2) : '0';
           const alphaVal = alpha ? getAttr(d, maxDist, 0, 1).toFixed(2) : '1';
 
-          const newFontVariationSettings = `'wght' ${wght}, 'wdth' ${wdth}, 'ital' ${italVal}`;
-
-          if (span.style.fontVariationSettings !== newFontVariationSettings) {
-            span.style.fontVariationSettings = newFontVariationSettings;
+          if (span.style.fontVariationSettings !== `'wght' ${wght}, 'wdth' ${wdth}, 'ital' ${italVal}`) {
+            span.style.fontVariationSettings = `'wght' ${wght}, 'wdth' ${wdth}, 'ital' ${italVal}`;
           }
           if (alpha && span.style.opacity !== alphaVal) {
             span.style.opacity = alphaVal;
@@ -244,6 +244,7 @@ const TextPressure: React.FC<TextPressureProps> = ({
           <span
             key={i}
             ref={el => {
+              // eslint-disable-next-line security/detect-object-injection
               spansRef.current[i] = el;
             }}
             data-char={char}

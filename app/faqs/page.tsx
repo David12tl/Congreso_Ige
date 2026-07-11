@@ -4,14 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/ui/navbar';
 import Footer from '@/components/ui/Footer';
 
-interface Tokens {
-  bg: string;
-  text: string;
-  primary: string;
-  secondary: string;
-  slate400: string;
-}
-
 const faqs = [
   {
     question: "¿Cómo me registro al Congreso IGE?",
@@ -69,17 +61,8 @@ export default function FAQsPage() {
     return () => observer.disconnect();
   }, []);
 
-  // Sincronización estricta con la paleta de ProgramaPage
-  const tokens = {
-    bg: 'bg-[#F4F7FA]', 
-    text: 'text-[#0A192F]',
-    primary: '#0B2545',
-    secondary: '#00B4D8',
-    slate400: '#5C6E85'
-  };
-
   return (
-    <div className={`${tokens.bg} ${tokens.text} font-['Sora'] overflow-x-hidden min-h-screen antialiased flex flex-col justify-between`}>
+    <div className="bg-[#F4F7FA] text-[#0A192F] font-['Sora'] overflow-x-hidden min-h-screen antialiased flex flex-col justify-between">
       <Navbar />
       
       {/* Ajuste de pt-32 para evitar colisiones con el Navbar */}
@@ -90,8 +73,8 @@ export default function FAQsPage() {
           <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-[#00B4D8] uppercase border border-slate-200 rounded-full bg-white shadow-sm">
             Soporte & Ayuda
           </span>
-          <h1 style={{ color: tokens.primary }} className="text-3xl md:text-5xl font-extrabold tracking-tighter uppercase mb-4 leading-tight">
-            Preguntas <span style={{ color: tokens.secondary }}>Frecuentes</span>
+          <h1 style={{ color: '#0B2545' }} className="text-3xl md:text-5xl font-extrabold tracking-tighter uppercase mb-4 leading-tight">
+            Preguntas <span style={{ color: '#00B4D8' }}>Frecuentes</span>
           </h1>
           <p className="text-[#4A5E78] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
             Resolvemos tus dudas sobre el proceso de registro, validación de pagos físicos y acceso al evento empresarial.
@@ -101,7 +84,7 @@ export default function FAQsPage() {
         {/* ─── LISTA DE ACORDEONES CORREGIDA ─── */}
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <FAQItem key={index} faq={faq} tokens={tokens} />
+            <FAQItem key={index} faq={faq} />
           ))}
         </div>
 
@@ -110,7 +93,7 @@ export default function FAQsPage() {
           <p className="text-sm font-semibold text-[#4A5E78] mb-2">¿Aún tienes dudas técnicas o administrativas?</p>
           <a 
             href="mailto:soporte@congresoige.com" 
-            style={{ color: tokens.primary }}
+            style={{ color: '#0B2545' }}
             className="inline-flex items-center gap-2 font-bold hover:opacity-80 transition-all underline underline-offset-4 text-sm md:text-base"
           >
             Contacta con nuestro equipo de soporte
@@ -123,7 +106,7 @@ export default function FAQsPage() {
   );
 }
 
-function FAQItem({ faq, tokens }: { faq: typeof faqs[0]; tokens: Tokens }) {
+function FAQItem({ faq }: { faq: typeof faqs[0] }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

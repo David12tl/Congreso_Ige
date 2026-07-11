@@ -9,9 +9,9 @@ import { getUserProfile, syncAuthMetadataWithProfile } from "@/db/perfiles";
  *   3 → Usuario      → /dashboard/usuario
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return "../../../src/app/dashboard/admin";
-  if (idRol === 2) return "../../../src/app/dashboard/encargado";
-  return "../../../src/app/dashboard/perfil";
+  if (idRol === 1) return '/dashboard/admin';
+  if (idRol === 2) return '/dashboard/encargado';
+  return '/dashboard/usuario';
 }
 
 export async function GET(request: Request) {
@@ -46,5 +46,5 @@ export async function GET(request: Request) {
   }
 
   // Si algo falla o no hay código, mándalo al login con un mensaje de error
-  return NextResponse.redirect(`${origin}/Login?error=auth-callback-failed`);
+  return NextResponse.redirect(`${origin}/login?error=auth-callback-failed`);
 }
