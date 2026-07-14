@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 
 // ─── Esquemas de validación ───────────────────────────────────────────────────
 const UnidadAcademicaIdSchema = z.coerce
-  .number({ invalid_type_error: 'ID de Unidad Académica inválido.' })
+  .number({ error: 'ID de Unidad Académica inválido.' })
   .int('El ID debe ser un entero.')
   .positive('El ID debe ser un número positivo.')
 
@@ -84,7 +84,7 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
   // ── Validación de entrada con Zod ────────────────────────────────────────
   const parsed = UnidadAcademicaIdSchema.safeParse(unidadAcademicaId)
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0]?.message ?? 'ID inválido.' }
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'ID inválido.' }
   }
   const safeId = parsed.data
 

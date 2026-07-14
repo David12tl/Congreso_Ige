@@ -47,7 +47,7 @@ export async function validarToken(tokenCode: string): Promise<ValidarTokenResul
   // ── Validación de entrada con Zod ────────────────────────────────────────
   const parsed = TokenSchema.safeParse(tokenCode)
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0]?.message ?? 'Token inválido.' }
+    return { success: false, message: parsed.error.issues[0]?.message ?? 'Token inválido.' }
   }
   const safeToken = parsed.data
 
