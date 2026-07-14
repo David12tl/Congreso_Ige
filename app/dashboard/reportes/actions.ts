@@ -37,15 +37,14 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
 
   const totalTicketsGeneral = rawTickets.length
 
-  // Agrupación manual por nombre de UA (usando el nombre real desde la relación FK)
-  const conteoUA: Record<string, number> = {}
+  // Agrupación por nombre de UA usando Map para evitar "security/detect-object-injection"
+  const conteoUA = new Map<string, number>()
   let totalAlumnos = 0
   let totalEmpresas = 0
 
   rawTickets.forEach((ticket) => {
     const uaNombre = ticket.unidades_academicas?.nombre || 'No Especificada'
-    // eslint-disable-next-line security/detect-object-injection
-    conteoUA[uaNombre] = (conteoUA[uaNombre] || 0) + 1
+    conteoUA.set(uaNombre, (conteoUA.get(uaNombre) ?? 0) + 1)
 
     if (ticket.type === 'alumno') {
       totalAlumnos++
@@ -55,10 +54,8 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
   })
 
   // Formatear el arreglo de UAs calculando su porcentaje de contribución
-  const uasFormateadas: UAMetrica[] = Object.keys(conteoUA)
-    .map((nombre) => {
-      // eslint-disable-next-line security/detect-object-injection
-      const cantidad = conteoUA[nombre] || 0
+  const uasFormateadas: UAMetrica[] = Array.from(conteoUA.entries())
+    .map(([nombre, cantidad]) => {
       const porcentaje = totalTicketsGeneral > 0 ? Math.round((cantidad / totalTicketsGeneral) * 100) : 0
       return {
         nombre,

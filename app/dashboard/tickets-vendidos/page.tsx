@@ -2,27 +2,7 @@
 
 import React from 'react'
 import { HiOutlineTicket, HiOutlineChartBar } from 'react-icons/hi'
-
-// ─── GlassCard Component ─────────────────────────────────────────────────────
-function GlassCard({ children, className = '', glowColor = 'amber' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-  }
-
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
+import { GlassCard } from '@/components/ui/GlassCard'
 
 export default function TicketsVendidosPage() {
   return (

@@ -7,28 +7,8 @@ import {
   HiOutlineOfficeBuilding,
   HiOutlineUserCircle,
 } from 'react-icons/hi'
+import { GlassCard } from '@/components/ui/GlassCard'
 import { getEncargadosData, EncargadosDashboardData } from './actions'
-
-// ─── GlassCard Component ─────────────────────────────────────────────────────
-function GlassCard({ children, className = '', glowColor = 'purple' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-  }
-
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
 
 export default function EncargadosPage() {
   const [data, setData] = useState<EncargadosDashboardData | null>(null)

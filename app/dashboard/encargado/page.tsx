@@ -9,26 +9,7 @@ import {
   HiOutlineX,
   HiOutlineShieldCheck,
 } from 'react-icons/hi'
-
-// ─── Components ─────────────────────────────────────────────────────────────
-
-function GlassCard({ children, className = '', glowColor = 'cyan' }: { 
-  children: React.ReactNode; 
-  className?: string;
-  glowColor?: 'cyan' | 'emerald' | 'purple'
-}) {
-  const glowStyles = {
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-  }
-
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
+import { GlassCard } from '@/components/ui/GlassCard'
 
 export default function EncargadoDashboardPage() {
   // Mock State para la Land (esto vendría de una DB/Metadata)

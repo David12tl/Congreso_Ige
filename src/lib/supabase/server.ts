@@ -19,6 +19,8 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
+            // Las cookies solo pueden escribirse desde Server Components durante una solicitud activa.
+            // Este catch silencia el error esperado cuando se llama desde un Route Handler o middleware.
           }
         },
       },

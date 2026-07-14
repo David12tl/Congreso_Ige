@@ -160,20 +160,16 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   )
 
   const handleSignOut = async () => {
-    console.log("🔄 [DEBUG LOGOUT 1/3]: Iniciando proceso de cierre de sesión...")
     try {
       const { error } = await supabase.auth.signOut()
       if (error) {
-        console.error("❌ [ERROR SUPABASE LOGOUT]: Error devuelto por Supabase:", error.message)
         alert(`No se pudo cerrar la sesión: ${error.message}`)
         return
       }
-      console.log("✅ [DEBUG LOGOUT 2/3]: Sesión destruida con éxito en Supabase.")
       router.refresh()
-      console.log("🚀 [DEBUG LOGOUT 3/3]: Redirigiendo limpiamente a la raíz del sitio...")
       router.push('/')
     } catch (catchError) {
-      console.error("💥 [CRASH CRÍTICO EN LOGOUT]: Ocurrió un error inesperado al cerrar sesión:", catchError)
+      console.error('Error inesperado al cerrar sesión:', catchError)
     }
   }
 

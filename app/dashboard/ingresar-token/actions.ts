@@ -1,8 +1,18 @@
 'use server'
 
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult } from '@/components/asientos/types'
+
+// ─── Esquemas de validación ───────────────────────────────────────────────────
+// El token sigue el patrón IGE-2026-XXXX-XXXX (alfanumérico, guiones, 4-64 chars)
+const TokenSchema = z
+  .string()
+  .trim()
+  .min(4, 'El token es demasiado corto.')
+  .max(64, 'El token es demasiado largo.')
+  .regex(/^[A-Z0-9\-]+$/i, 'El token contiene caracteres no permitidos.')
 
 export interface DatosTicketCanjeado {
   ticketId: string
@@ -34,6 +44,13 @@ export interface ValidarTokenResult {
 }
 
 export async function validarToken(tokenCode: string): Promise<ValidarTokenResult> {
+  // ── Validación de entrada con Zod ────────────────────────────────────────
+  const parsed = TokenSchema.safeParse(tokenCode)
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.errors[0]?.message ?? 'Token inválido.' }
+  }
+  const safeToken = parsed.data
+
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -45,7 +62,7 @@ export async function validarToken(tokenCode: string): Promise<ValidarTokenResul
   const { data: token, error: tokenError } = await supabase
     .from('tokens_canje')
     .select('id, status, token_code')
-    .eq('token_code', tokenCode)
+    .eq('token_code', safeToken)
     .maybeSingle()
 
   if (tokenError || !token) {
@@ -60,7 +77,7 @@ export async function validarToken(tokenCode: string): Promise<ValidarTokenResul
   }
 
   // Canjear el token usando la función existente
-  return canjearTokenPorCodigo(tokenCode)
+  return canjearTokenPorCodigo(safeToken)
 }
 
 export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionResult & { ticket?: DatosTicketCanjeado }> {

@@ -77,8 +77,7 @@ export async function procesarLecturaQR(decodedText: string): Promise<ResultadoV
       message: respuesta.message || 'El boleto no pudo ser verificado.'
     }
 
-  } catch (error) {
-    console.error('Error crítico en el puente de escaneo:', error)
+  } catch {
     return {
       success: false,
       message: 'Error de comunicación con el servidor. Inténtalo nuevamente.'

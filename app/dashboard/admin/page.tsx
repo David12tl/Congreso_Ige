@@ -10,47 +10,29 @@ import {
   HiOutlineBriefcase,
   HiOutlineUserCircle,
 } from 'react-icons/hi'
+import { GlassCard } from '@/components/ui/GlassCard'
 import { getAdminDashboardData, AdminDashboardData } from './actions'
 
-// ─── GlassCard Component ───────────────────────────────────────────────────
-function GlassCard({ children, className = '', glowColor = 'blue' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald' | 'rose'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-    rose: 'border-rose-200 shadow-sm',
-  }
+// ─── Mapas de estilos por rol y tipo ─────────────────────────────────────────
+// Se usa Map en lugar de Record<K, V>[key] para evitar advertencias de
+// "security/detect-object-injection" del linter de seguridad.
 
-  return (
-    // eslint-disable-next-line security/detect-object-injection
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
+const ROLE_LABELS = new Map<number, string>([
+  [1, 'Administrador'],
+  [2, 'Encargado'],
+  [3, 'Asistente'],
+])
 
-const ROLE_LABELS: Record<number, string> = {
-  1: 'Administrador',
-  2: 'Encargado',
-  3: 'Asistente',
-}
+const ROLE_BADGES = new Map<number, string>([
+  [1, 'bg-amber-50 text-amber-700 border-amber-200'],
+  [2, 'bg-emerald-50 text-emerald-700 border-emerald-200'],
+  [3, 'bg-blue-50 text-blue-700 border-blue-200'],
+])
 
-const ROLE_BADGES: Record<number, string> = {
-  1: 'bg-amber-50 text-amber-700 border-amber-200',
-  2: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  3: 'bg-blue-50 text-blue-700 border-blue-200',
-}
-
-const TYPE_BADGES: Record<string, string> = {
-  alumno: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  empresa: 'bg-amber-50 text-amber-700 border-amber-200',
-}
+const TYPE_BADGES = new Map<string, string>([
+  ['alumno',  'bg-emerald-50 text-emerald-700 border-emerald-200'],
+  ['empresa', 'bg-amber-50 text-amber-700 border-amber-200'],
+])
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null)
@@ -210,8 +192,8 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES[u.id_rol] || 'border-slate-300 text-slate-500'}`}>
-                          {ROLE_LABELS[u.id_rol] || 'Desconocido'}
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES.get(u.id_rol) ?? 'border-slate-300 text-slate-500'}`}>
+                          {ROLE_LABELS.get(u.id_rol) ?? 'Desconocido'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[11px] text-slate-500 font-light">
@@ -259,7 +241,7 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES[t.type] || 'border-slate-300 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES.get(t.type) ?? 'border-slate-300 text-slate-500'}`}>
                           {t.type === 'alumno' ? 'Alumno' : 'Empresa'}
                         </span>
                       </td>

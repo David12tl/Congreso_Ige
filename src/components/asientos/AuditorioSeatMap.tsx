@@ -129,7 +129,7 @@ export function AuditorioSeatMap({
                             const key = getSeatKey(seat)
                             const occupied = occupiedSeatKeys.has(key)
                             const selected = selectedSeatKey === key
-                            const status = seatStatusMap?.[key]
+                            const status = seatStatusMap?.[key] // eslint-disable-line security/detect-object-injection -- seatStatusMap es un Record de índice controlado por getSeatKey
                             const isApartado = status === 'apartado' || status === 'pendiente'
                             const isPagado = status === 'pagado' || status === 'completo'
                             const isPreRegistro = status === 'pre-registro'

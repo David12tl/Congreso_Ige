@@ -48,13 +48,10 @@ export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | nul
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.error('❌ [getMiPerfilCompleto] No hay una sesión válida en las cookies:', authError?.message)
       return null
     }
 
-    console.log(`👤 [getMiPerfilCompleto] Usuario autenticado detectado: ${user.email} (${user.id})`)
-
-    // 2. Consultar el perfil según las columnas existentes en tu base de datos
+    // 2. Consultar el perfil según las columnas existentes en la base de datos
     const { data: perfil, error: dbError } = await supabase
       .from('profiles') 
       .select('id, id_rol, unidad_academica_id')
@@ -62,7 +59,6 @@ export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | nul
       .maybeSingle()
 
     if (dbError) {
-      console.error('❌ [getMiPerfilCompleto] Error al consultar la tabla de perfiles:', dbError.message)
       return {
         id: user.id,
         email: user.email || '',
@@ -72,17 +68,15 @@ export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | nul
       } as unknown as PerfilUsuarioCompleto
     }
 
-    // 3. Escenario: El usuario está logueado en Auth, pero no tiene una fila en la tabla 'profiles'
+    // 3. Usuario en Auth sin fila en profiles — se intenta auto-insertar
     if (!perfil) {
-      console.warn('⚠️ [getMiPerfilCompleto] El usuario existe en Auth pero no tiene fila en la tabla de perfiles. Intentando inserción...')
-      
       try {
         await supabase.from('profiles').insert({
           id: user.id,
           email: user.email
         })
-      } catch (insertErr) {
-        console.error('No se pudo auto-insertar el perfil:', insertErr)
+      } catch {
+        // Auto-inserción fallida: se continúa con datos de Auth
       }
 
       return {
@@ -94,7 +88,7 @@ export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | nul
       } as unknown as PerfilUsuarioCompleto
     }
 
-    // 4. Mapear y calcular el perfil usando la metadata de Auth al no existir columnas en profiles
+    // 4. Mapear y calcular el perfil usando la metadata de Auth
     const nombreUsuario = user.user_metadata?.nombre || user.user_metadata?.full_name || ''
     const completo = !!nombreUsuario.trim()
 
@@ -106,8 +100,7 @@ export async function getMiPerfilCompleto(): Promise<PerfilUsuarioCompleto | nul
       completo
     } as unknown as PerfilUsuarioCompleto
 
-  } catch (error) {
-    console.error('💥 [getMiPerfilCompleto] Excepción catastrófica en el servidor:', error)
+  } catch {
     return null
   }
 }

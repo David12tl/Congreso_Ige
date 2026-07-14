@@ -172,7 +172,7 @@ export async function obtenerTicketsPorRol() {
   const { data: metricasRaw, error: metricasError } = await metricasQuery
 
   if (metricasError) {
-    console.error('Error calculando finanzas:', metricasError)
+    console.error('Error calculando métricas financieras:', metricasError.message)
   }
 
   // Inicialización de la estructura de métricas financieras

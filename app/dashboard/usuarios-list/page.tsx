@@ -2,37 +2,22 @@
 
 import React, { useEffect, useState } from 'react'
 import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineGlobeAlt, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi'
+import { GlassCard } from '@/components/ui/GlassCard'
 import { getTodosLosAsistentes, AsistenteGlobal } from './actions'
 
-function GlassCard({ children, className = '', glowColor = 'blue' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-  }
+// ─── Mapa de estilos para badges de estatus ──────────────────────────────────
+// Map en lugar de Record para evitar "security/detect-object-injection"
+const STATUS_BADGE_MAP = new Map<string, { bg: string; text: string; border: string; label: string }>([
+  ['completado',    { bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-200',   label: 'Completado' }],
+  ['pre-registro',  { bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',   label: 'Pre-registro' }],
+  ['pendiente',     { bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',   label: 'Pendiente de pago' }],
+  ['pagado',        { bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', label: 'Pagado' }],
+])
 
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
-
-const STATUS_BADGES: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  completado: { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200', label: 'Completado' },
-  'pre-registro': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Pre-registro' },
-  pendiente: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Pendiente de pago' },
-  pagado: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Pagado' },
-}
+const STATUS_BADGE_FALLBACK = STATUS_BADGE_MAP.get('completado')!
 
 function getStatusBadge(estatus: string | null) {
-  const info = STATUS_BADGES[estatus ?? ''] ?? STATUS_BADGES['completado']
+  const info = STATUS_BADGE_MAP.get(estatus ?? '') ?? STATUS_BADGE_FALLBACK
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${info.bg} ${info.text} ${info.border}`}>
       {estatus === 'pagado' && <HiOutlineCheckCircle className="w-3 h-3" />}

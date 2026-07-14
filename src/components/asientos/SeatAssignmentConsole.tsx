@@ -131,9 +131,7 @@ export function SeatAssignmentConsole({
 
   const handleSeatClick = async (seat: SeatIdentity) => {
     const key = getSeatKey(seat)
-    const status = seatStatusMap[key]
-
-    // Si el asiento está ocupado con estatus (pre-registro o pendiente), mostrar modal de pago
+    const status = seatStatusMap[key] // eslint-disable-line security/detect-object-injection -- seatStatusMap es un Record de índice controlado por getSeatKey
     if (status === 'pre-registro' || status === 'pendiente') {
       setIsPaymentMode(true)
       setMessage(null)

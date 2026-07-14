@@ -53,7 +53,6 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
       const { error } = await ticketsTable.insert([payload])
 
       if (error) {
-        console.error(error)
         setErrorMsg('Error al procesar tu pre-registro. Es posible que ya tengas un ticket asignado.')
       } else {
         setStep('success')

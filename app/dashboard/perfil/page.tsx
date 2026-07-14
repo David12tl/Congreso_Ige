@@ -13,9 +13,9 @@ import {
   HiOutlineClipboardList
 } from 'react-icons/hi'
 
-// Importamos las funciones del servidor
 import { getMiPerfil, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
 import { getResumenAsistente } from '../usuario/actions'
+import { GlassCard } from '@/components/ui/GlassCard'
 
 // Definición manual y limpia de tipos locales basados en las promesas
 interface PerfilUsuarioConId {
@@ -38,26 +38,6 @@ type ResumenDashboard = Awaited<ReturnType<typeof getResumenAsistente>>
 
 // IMPORTAMOS EL COMPONENTE DE ONBOARDING 
 import { PreTicketOnboarding } from './PreTicketOnboarding'
-
-function GlassCard({ children, className = '', glowColor = 'cyan' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-  }
-
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
 
 export default function PerfilPage() {
   const [perfil, setPerfil] = useState<PerfilUsuarioConId | null>(null)
@@ -94,8 +74,8 @@ export default function PerfilPage() {
       if (dataPerfil?.unidadAcademicaId) {
         setSelectedUA(dataPerfil.unidadAcademicaId)
       }
-    } catch {
-      console.error("Error al sincronizar datos del asistente")
+    } catch (err) {
+      console.error('Error al sincronizar datos del perfil:', err)
     }
   }
 
@@ -124,8 +104,8 @@ export default function PerfilPage() {
             setSelectedUA(dataPerfil.unidadAcademicaId)
           }
         }
-      } catch {
-        console.error("Error al sincronizar datos del asistente")
+      } catch (err) {
+        console.error('Error al sincronizar datos del perfil:', err)
       } finally {
         if (activo) {
           setLoading(false)

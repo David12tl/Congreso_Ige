@@ -14,38 +14,19 @@ import {
   HiOutlineUserCircle,
   HiOutlineMail,
 } from 'react-icons/hi'
+import { GlassCard } from '@/components/ui/GlassCard'
 import { getUsuariosConUA, getUnidadesAcademicas, UsuarioConUA, UnidadAcademica } from './actions'
 
-// ─── GlassCard Component ─────────────────────────────────────────────────────
-function GlassCard({ children, className = '', glowColor = 'cyan' }: {
-  children: React.ReactNode
-  className?: string
-  glowColor?: 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald'
-}) {
-  const glowStyles: Record<string, string> = {
-    blue: 'border-blue-200 shadow-sm',
-    purple: 'border-purple-200 shadow-sm',
-    amber: 'border-amber-200 shadow-sm',
-    cyan: 'border-cyan-200 shadow-sm',
-    emerald: 'border-emerald-200 shadow-sm',
-  }
-
-  return (
-    <div className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${glowStyles[glowColor]} ${className}`}>
-      {children}
-    </div>
-  )
-}
-
 // ─── Badge de Rol ────────────────────────────────────────────────────────────
-const ROLE_BADGES: Record<number, { color: string; label: string }> = {
-  1: { color: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Administrador' },
-  2: { color: 'bg-purple-50 text-purple-700 border-purple-200', label: 'Encargado' },
-  3: { color: 'bg-cyan-50 text-cyan-700 border-cyan-200', label: 'Usuario' },
-}
+// Map en lugar de Record para evitar "security/detect-object-injection"
+const ROLE_BADGE_MAP = new Map<number, { color: string; label: string }>([
+  [1, { color: 'bg-amber-50 text-amber-700 border-amber-200',   label: 'Administrador' }],
+  [2, { color: 'bg-purple-50 text-purple-700 border-purple-200', label: 'Encargado' }],
+  [3, { color: 'bg-cyan-50 text-cyan-700 border-cyan-200',       label: 'Usuario' }],
+])
 
 function RoleBadge({ idRol }: { idRol: number }) {
-  const badge = ROLE_BADGES[idRol] || { color: 'border-slate-300 text-slate-500', label: 'Desconocido' }
+  const badge = ROLE_BADGE_MAP.get(idRol) ?? { color: 'border-slate-300 text-slate-500', label: 'Desconocido' }
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${badge.color}`}>
       <HiOutlineShieldCheck className="w-3 h-3" />
@@ -324,32 +305,29 @@ export default function ListasUAPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {grupo.usuarios.filter((user) => {
-                      if (!search.trim()) return true
-                      const q = search.toLowerCase()
-                      return (
-                        (user.email?.toLowerCase() || '').includes(q) ||
-                        (user.rol?.toLowerCase() || '').includes(q)
-                      )
-                    }).length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500 font-light">
-                          {search.trim()
-                            ? 'No se encontraron usuarios con ese criterio de búsqueda.'
-                            : 'No hay usuarios en esta Unidad Académica.'}
-                        </td>
-                      </tr>
-                    ) : (
-                      grupo.usuarios
-                        .filter((user) => {
-                          if (!search.trim()) return true
-                          const q = search.toLowerCase()
-                          return (
-                            (user.email?.toLowerCase() || '').includes(q) ||
-                            (user.rol?.toLowerCase() || '').includes(q)
-                          )
-                        })
-                        .map((user) => (
+                    {(() => {
+                      const usuariosFiltrados = grupo.usuarios.filter((user) => {
+                        if (!search.trim()) return true
+                        const q = search.toLowerCase()
+                        return (
+                          (user.email?.toLowerCase() || '').includes(q) ||
+                          (user.rol?.toLowerCase() || '').includes(q)
+                        )
+                      })
+
+                      if (usuariosFiltrados.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500 font-light">
+                              {search.trim()
+                                ? 'No se encontraron usuarios con ese criterio de búsqueda.'
+                                : 'No hay usuarios en esta Unidad Académica.'}
+                            </td>
+                          </tr>
+                        )
+                      }
+
+                      return usuariosFiltrados.map((user) => (
                           <tr key={user.id} className="hover:bg-slate-50 transition-colors group">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
@@ -381,7 +359,7 @@ export default function ListasUAPage() {
                             </td>
                           </tr>
                         ))
-                    )}
+                    })()}
                   </tbody>
                 </table>
               </div>

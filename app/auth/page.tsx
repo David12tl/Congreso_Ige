@@ -5,18 +5,21 @@ import { redirect } from "next/navigation";
 import { signOut } from "./actions";
 import React, { Suspense } from "react";
 
-// Mapeo de colores basado en la Land de Interés
-const THEME_MAP: Record<string, { color: string; label: string; shadow: string }> = {
-  'dev': { color: "#03B3C3", label: "Developer Land", shadow: "rgba(3,179,195,0.3)" },
-  'creative': { color: "#D856BF", label: "Creative Land", shadow: "rgba(216,86,191,0.3)" },
-  'blockchain': { color: "#ff102a", label: "Blockchain Land", shadow: "rgba(255,16,42,0.3)" },
-  'business': { color: "#f1eece", label: "Business Land", shadow: "rgba(241,238,206,0.3)" },
+// Mapa de colores basado en la Land de Interés
+// Se usa Map en lugar de Record para evitar "security/detect-object-injection"
+const THEME_MAP = new Map<string, { color: string; label: string; shadow: string }>([
+  ['dev',              { color: '#03B3C3', label: 'Developer Land',  shadow: 'rgba(3,179,195,0.3)' }],
+  ['creative',         { color: '#D856BF', label: 'Creative Land',   shadow: 'rgba(216,86,191,0.3)' }],
+  ['blockchain',       { color: '#ff102a', label: 'Blockchain Land', shadow: 'rgba(255,16,42,0.3)' }],
+  ['business',         { color: '#f1eece', label: 'Business Land',   shadow: 'rgba(241,238,206,0.3)' }],
   // Fallbacks por si el string guardado es el nombre completo de la land
-  'Developer Land': { color: "#03B3C3", label: "Developer Land", shadow: "rgba(3,179,195,0.3)" },
-  'Creative Land': { color: "#D856BF", label: "Creative Land", shadow: "rgba(216,86,191,0.3)" },
-  'Blockchain Land': { color: "#ff102a", label: "Blockchain Land", shadow: "rgba(255,16,42,0.3)" },
-  'Business Land': { color: "#f1eece", label: "Business Land", shadow: "rgba(241,238,206,0.3)" },
-};
+  ['Developer Land',   { color: '#03B3C3', label: 'Developer Land',  shadow: 'rgba(3,179,195,0.3)' }],
+  ['Creative Land',    { color: '#D856BF', label: 'Creative Land',   shadow: 'rgba(216,86,191,0.3)' }],
+  ['Blockchain Land',  { color: '#ff102a', label: 'Blockchain Land', shadow: 'rgba(255,16,42,0.3)' }],
+  ['Business Land',    { color: '#f1eece', label: 'Business Land',   shadow: 'rgba(241,238,206,0.3)' }],
+])
+
+const THEME_DEFAULT = THEME_MAP.get('dev')!
 
 export default async function AuthPage() {
   const supabase = await createClient();
@@ -30,7 +33,7 @@ export default async function AuthPage() {
   // Extraer metadatos (configurados en el SignUp)
   const fullName = user.user_metadata?.full_name || "Talento IGE";
   const landKey = user.user_metadata?.land_interest || "dev";
-  const theme = THEME_MAP[landKey] || THEME_MAP['dev'];
+  const theme = THEME_MAP.get(landKey) ?? THEME_DEFAULT;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Cargando...</div>}>

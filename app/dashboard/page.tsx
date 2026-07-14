@@ -11,12 +11,13 @@ const MOCK_USERS = [
   { id: 5, name: "Victor Dev", email: "victor@code.com", land: "Developer", status: "Cancelado" },
 ];
 
-const LAND_COLORS: Record<string, string> = {
-  Developer: "#03B3C3",
-  Creative: "#D856BF",
-  Blockchain: "#ff102a",
-  Business: "#f1eece",
-};
+// Map en lugar de Record para evitar "security/detect-object-injection"
+const LAND_COLORS = new Map<string, string>([
+  ["Developer",  "#03B3C3"],
+  ["Creative",   "#D856BF"],
+  ["Blockchain", "#ff102a"],
+  ["Business",   "#f1eece"],
+]);
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -136,7 +137,7 @@ function KpiCard({ label, value, color, trend }: { label: string; value: string;
 }
 
 function LandBadge({ land }: { land: string }) {
-  const color = LAND_COLORS[land] || "#fff";
+  const color = LAND_COLORS.get(land) ?? "#fff";
   return (
     <span 
       className="inline-flex items-center px-3 py-1 rounded-md text-[9px] font-black tracking-widest uppercase border border-opacity-20"
@@ -154,12 +155,13 @@ function LandBadge({ land }: { land: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, string> = {
-    Confirmado: "#10B981",
-    Pendiente: "#F59E0B",
-    Cancelado: "#EF4444",
-  };
-  const color = config[status] || "#aaa";
+  // Map en lugar de Record para evitar "security/detect-object-injection"
+  const statusColors = new Map<string, string>([
+    ["Confirmado", "#10B981"],
+    ["Pendiente",  "#F59E0B"],
+    ["Cancelado",  "#EF4444"],
+  ]);
+  const color = statusColors.get(status) ?? "#aaa";
   
   return (
     <div className="flex items-center gap-2.5">

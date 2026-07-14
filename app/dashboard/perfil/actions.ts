@@ -1,9 +1,16 @@
 'use server'
 
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 
+// ─── Esquemas de validación ───────────────────────────────────────────────────
+const UnidadAcademicaIdSchema = z.coerce
+  .number({ invalid_type_error: 'ID de Unidad Académica inválido.' })
+  .int('El ID debe ser un entero.')
+  .positive('El ID debe ser un número positivo.')
+
 export interface PerfilUsuario {
-  id: string // 👈 AGREGA ESTO EXPLÍCITAMENTE
+  id: string
   email: string | null
   createdAt: string
   rolNombre: string
@@ -47,7 +54,7 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
   const p = data[0] as unknown as SupabaseProfileJoin
 
   return {
-    id: user.id, // 👈 INYECTAMOS EL UUID REAL DESDE EL AUTH DE SUPABASE
+    id: user.id,
     email: p.email,
     createdAt: p.created_at ? new Date(p.created_at).toLocaleDateString() : '—',
     rolNombre: p.roles?.nombre_rol || 'Usuario',
@@ -74,6 +81,13 @@ export async function getUnidadesAcademicas(): Promise<UnidadAcademica[]> {
 }
 
 export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Promise<{ success: boolean; message: string }> {
+  // ── Validación de entrada con Zod ────────────────────────────────────────
+  const parsed = UnidadAcademicaIdSchema.safeParse(unidadAcademicaId)
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.errors[0]?.message ?? 'ID inválido.' }
+  }
+  const safeId = parsed.data
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -83,7 +97,7 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
 
   const { error } = await supabase
     .from('profiles')
-    .update({ unidad_academica_id: unidadAcademicaId })
+    .update({ unidad_academica_id: safeId })
     .eq('id', user.id)
 
   if (error) {
