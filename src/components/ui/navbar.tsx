@@ -178,12 +178,10 @@ export default function Navbar() {
                   onClick={(e) => handleSmoothScroll(e, link.href)}
                   style={{ 
                     color: isActive ? tokens.red : tokens.navy,
-                    backgroundColor: isActive ? `${tokens.gold}15` : 'transparent'
+                    backgroundColor: isActive ? `${tokens.gold}15` : 'transparent',
+                    borderLeft: isActive ? `4px solid ${tokens.gold}` : 'none'
                   }}
-                  className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                    isActive ? 'border-l-4' : ''
-                  }`}
-                  {...(isActive ? { style: { borderLeftColor: tokens.gold, color: tokens.red, backgroundColor: `${tokens.gold}15` } } : {})}
+                  className="block px-4 py-3 rounded-xl text-base font-bold transition-all"
                 >
                   {link.text}
                 </Link>
@@ -216,4 +214,4 @@ export default function Navbar() {
       )}
     </header>
   );
-} 
+}

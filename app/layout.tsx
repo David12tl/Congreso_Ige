@@ -1,5 +1,20 @@
 import "./globals.css";
 import Providers from "./providers";
+import { Metadata } from "next";
+
+// 1. Definimos los metadatos de forma oficial (Next.js se encarga de inyectar el favicon perfectamente)
+export const metadata: Metadata = {
+  title: "ELIGE 2026 - Congreso Internacional de Gestión Empresarial",
+  description: "Congreso Internacional de Gestión Empresarial",
+  icons: {
+    icon: [
+      {
+        url: "/logo.png",
+        href: "/logo.png",
+      },
+    ],
+  },
+};
 
 export default function RootLayout({
   children,
@@ -7,14 +22,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Añadimos clases base de Material Design 3 al HTML/Body para que no haya saltos de color (Flicker) al cargar
     <html lang="es" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <title>ELIGE 2026 - Congreso Internacional de Gestión Empresarial</title>
-        
-        {/* Favicon Actualizado con soporte para PNG */}
-        <link rel="icon" type="image/png" href="/logo.png" />
-        
+        {/* Cargamos las fuentes externas */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
