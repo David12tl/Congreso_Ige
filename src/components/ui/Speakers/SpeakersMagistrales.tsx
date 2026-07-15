@@ -9,10 +9,10 @@ export default function SpeakersMagistrales() {
   const [selectedSpeakerId, setSelectedSpeakerId] = useState<number | null>(null);
 
   useEffect(() => {
-    const linkSora = document.createElement('link');
-    linkSora.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap';
-    linkSora.rel = 'stylesheet';
-    document.head.appendChild(linkSora);
+    const linkMontserrat = document.createElement('link');
+    linkMontserrat.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap';
+    linkMontserrat.rel = 'stylesheet';
+    document.head.appendChild(linkMontserrat);
 
     const linkIcons = document.createElement('link');
     linkIcons.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
@@ -171,7 +171,7 @@ export default function SpeakersMagistrales() {
   const currentSelectedSpeaker = todosLosSpeakers.find(s => s.id === selectedSpeakerId) || null;
 
   return (
-    <section className="w-full bg-white py-20 px-4 md:px-12 relative font-['Sora',sans-serif]">
+    <section className="w-full bg-white py-20 px-4 md:px-12 relative font-['Montserrat',sans-serif]">
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* ENCABEZADO DE LA SECCIÓN */}

@@ -18,7 +18,7 @@ export default function ConferenciaPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white text-[#0f172a] font-['Sora',sans-serif] selection:bg-[#0B2545] selection:text-white">
+    <main className="min-h-screen bg-white text-[#1E2A39] font-['Montserrat',sans-serif] selection:bg-[#8B1E23] selection:text-white">
       <Navbar />
       
       {/* HERO SECTION MINIMALISTA / INDUSTRIAL */}
@@ -27,40 +27,40 @@ export default function ConferenciaPage() {
           
           <div className="max-w-3xl">
             {/* Tag de Contexto del Evento */}
-            <div className="inline-block text-[11px] font-bold tracking-[0.3em] text-[#0B2545] uppercase border border-slate-200 px-3 py-1.5 rounded-md mb-6 bg-slate-50">
+            <div className="inline-block text-[11px] font-bold tracking-[0.3em] text-[#1E2A39] uppercase border border-[#E6E6E6] px-3 py-1.5 rounded-md mb-6 bg-[#E6E6E6]">
               PROGRAMA OFICIAL DE CONFERENCIAS
             </div>
             
             {/* Título Principal Editorial */}
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-[#0f172a] leading-none mb-6">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-[#1E2A39] leading-none mb-6">
               Gestion  Empresarial <br />
-              <span className="text-[#0B2545]">Liderazgo e Inovacion</span>
+              <span className="text-[#1E2A39]">Liderazgo e Inovacion</span>
             </h1>
             
-            <p className="text-base md:text-lg text-slate-600 max-w-xl font-light leading-relaxed">
+            <p className="text-base md:text-lg text-[#7D7D7D] max-w-xl font-light leading-relaxed">
               O ponto de encontro dos líderes e mentes mais brilhantes que estão a moldar o ecossistema corporativo, científico e social.
             </p>
           </div>
 
           {/* Dados Técnicos Laterais (Estilo Planta/Blueprint de Engenharia) */}
-          <div className="border border-slate-200 rounded-2xl p-6 bg-slate-50 min-w-[280px] font-mono text-[11px] text-slate-500 space-y-3 shadow-sm">
-            <div className="flex justify-between border-b border-slate-200 pb-2">
-              <span className="font-bold text-[#0f172a]">EVENTO:</span>
-              <span>ELIGE 2026</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-200 pb-2">
-              <span className="font-bold text-[#0f172a]">DATA:</span>
-              <span>18 E 19 DE NOVEMBRO</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-200 pb-2">
-              <span className="font-bold text-[#0f172a]">LOCALIZAÇÃO:</span>
-              <span>AUDITÓRIO METROPOLITANO</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-bold text-[#0f172a]">STATUS:</span>
-              <span className="text-emerald-600 font-bold animate-pulse">INSCRIPCIONES ABERTAS</span>
-            </div>
-          </div>
+           <div className="border border-[#E6E6E6] rounded-2xl p-6 bg-[#E6E6E6] min-w-[280px] font-mono text-[11px] text-[#7D7D7D] space-y-3 shadow-sm">
+             <div className="flex justify-between border-b border-[#E6E6E6] pb-2">
+               <span className="font-bold text-[#1E2A39]">EVENTO:</span>
+               <span>ELIGE 2026</span>
+             </div>
+             <div className="flex justify-between border-b border-[#E6E6E6] pb-2">
+               <span className="font-bold text-[#1E2A39]">DATA:</span>
+               <span>18 E 19 DE NOVEMBRO</span>
+             </div>
+             <div className="flex justify-between border-b border-[#E6E6E6] pb-2">
+               <span className="font-bold text-[#1E2A39]">LOCALIZAÇÃO:</span>
+               <span>AUDITÓRIO METROPOLITANO</span>
+             </div>
+             <div className="flex justify-between">
+               <span className="font-bold text-[#1E2A39]">STATUS:</span>
+               <span className="text-[#8B1E23] font-bold animate-pulse">INSCRIPCIONES ABERTAS</span>
+             </div>
+           </div>
 
         </div>
       </section>

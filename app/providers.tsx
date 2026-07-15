@@ -11,7 +11,7 @@ const AnimatedBackground = dynamic(
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="light">
       <AnimatedBackground />
       {children}
     </ThemeProvider>

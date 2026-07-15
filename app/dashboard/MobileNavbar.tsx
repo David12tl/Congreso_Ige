@@ -174,20 +174,20 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
       <div className="flex md:hidden items-center justify-between px-4 h-16 bg-white border-b border-slate-200 shrink-0">
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 text-[#0f172a] hover:text-[#0B2545] transition-colors"
+          className="p-2 text-[#1E2A39] hover:text-[#8B1E23] transition-colors"
           aria-label="Abrir menú"
         >
           <HiMenu className="w-6 h-6" />
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-[24px] bg-[#0B2545] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-[24px] bg-[#1E2A39] flex items-center justify-center">
             <span className="text-white font-bold text-[10px]">IGE</span>
           </div>
-          <span className="text-[#0f172a] font-semibold text-sm">ELIGE 2026</span>
+          <span className="text-[#1E2A39] font-semibold text-sm">ELIGE 2026</span>
         </div>
 
-        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-[#0f172a] uppercase">
+        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-[#1E2A39] uppercase">
           {user.name.charAt(0)}
         </div>
       </div>
@@ -208,14 +208,14 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-5 h-16 border-b border-slate-200 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-[24px] bg-[#0B2545] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[24px] bg-[#1E2A39] flex items-center justify-center">
                   <span className="text-white font-bold text-xs">IGE</span>
                 </div>
-                <span className="text-[#0f172a] font-semibold text-base">ELIGE 2026</span>
+                <span className="text-[#1E2A39] font-semibold text-base">ELIGE 2026</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-[#0f172a] transition-colors rounded-xl hover:bg-slate-50"
+                className="p-1.5 text-slate-400 hover:text-[#1E2A39] transition-colors rounded-xl hover:bg-slate-50"
                 aria-label="Cerrar menú"
               >
                 <HiX className="w-5 h-5" />
@@ -224,7 +224,7 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
 
             {/* User info */}
             <div className="px-5 py-3 border-b border-slate-200">
-              <p className="text-[#0f172a] text-sm font-medium truncate">{user.name}</p>
+              <p className="text-[#1E2A39] text-sm font-medium truncate">{user.name}</p>
               <p className="text-slate-500 text-xs truncate mt-0.5">{user.email}</p>
               <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                 {roleLabels[user.role]}
@@ -242,14 +242,14 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
                     onClick={closeDrawer}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                       isActive
-                        ? 'bg-slate-50 text-[#0B2545]'
-                        : 'text-slate-500 hover:text-[#0f172a] hover:bg-slate-50'
+                        ? 'bg-slate-50 text-[#1E2A39]'
+                        : 'text-slate-500 hover:text-[#1E2A39] hover:bg-slate-50'
                     }`}
                   >
                     <span className="shrink-0">{item.icon}</span>
                     <span className="text-sm font-medium">{item.label}</span>
                     {isActive && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#0B2545]" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#8B1E23]" />
                     )}
                   </Link>
                 )

@@ -290,33 +290,9 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <HiOutlineBadgeCheck className="w-6 h-6 text-emerald-700" />
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Nivel de Seguridad Acceso</p>
-                  <p className="text-[#0f172a] font-light">LEVEL_0{perfil?.nivelAcceso ?? 1}</p>
-                </div>
-              </div>
             </div>
           </div>
 
-          <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div className="font-light text-xs text-slate-500">
-              STATUS_DB: {resumen?.hasTicket ? (
-                <span className="text-emerald-700 font-bold uppercase">{"// ACCESO_VINCULADO_OK"}</span>
-              ) : (
-                <span className="text-amber-700 font-bold uppercase">{"// REQUIERE_ACTIVAR_TOKEN_STRIPE"}</span>
-              )}
-            </div>
-            {!resumen?.hasTicket && (
-              <a 
-                href="/dashboard/ingresar-token" 
-                className="text-[10px] font-light uppercase bg-amber-50 border border-amber-200 text-amber-700 px-2.5 py-1 rounded hover:bg-amber-100 transition-all"
-              >
-                Vincular Token →
-              </a>
-            )}
-          </div>
         </GlassCard>
       </div>
 

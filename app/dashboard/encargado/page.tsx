@@ -45,9 +45,9 @@ export default function EncargadoDashboardPage() {
       {/* 1. Header Dinámico */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
-            Panel de Control <span className="text-[#0B2545]">—</span> 
-            <span className="text-[#0B2545] ml-2">
+          <h1 className="font-black tracking-tight text-[#1E2A39] text-2xl md:text-3xl">
+            Panel de Control <span className="text-[#8B1E23]">—</span> 
+            <span className="text-[#8B1E23] ml-2">
               {landData.name}
             </span>
           </h1>
@@ -79,13 +79,13 @@ export default function EncargadoDashboardPage() {
             </div>
 
             <div className="mt-8 space-y-2">
-              <h2 className="text-lg font-bold text-[#0f172a] uppercase tracking-widest">Simulador de Escaneo</h2>
+              <h2 className="text-lg font-bold text-[#1E2A39] uppercase tracking-widest">Simulador de Escaneo</h2>
               <p className="text-slate-500 text-xs max-w-xs font-light">Haz clic para simular la lectura del código QR de un asistente y registrar su entrada.</p>
             </div>
 
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="mt-8 px-6 sm:px-8 py-3 bg-[#0B2545] text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-[#11355e] transition shadow-sm"
+              className="mt-8 px-6 sm:px-8 py-3 bg-[#8B1E23] text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-[#70181D] transition shadow-sm"
             >
               Simular Escaneo de Asistente
             </button>
@@ -111,7 +111,7 @@ export default function EncargadoDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-widest">Total Visitas Hoy</span>
             </div>
             <div className="relative">
-              <span className="text-5xl sm:text-6xl font-black text-[#0f172a]">
+              <span className="text-5xl sm:text-6xl font-black text-[#1E2A39]">
                 {visitasHoy}
               </span>
               <span className="ml-2 text-emerald-700 text-sm font-bold">+12%</span>
@@ -133,7 +133,7 @@ export default function EncargadoDashboardPage() {
             
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-2xl sm:text-3xl font-black text-[#0f172a]">{currentCapacityPercent}%</span>
+                <span className="text-2xl sm:text-3xl font-black text-[#1E2A39]">{currentCapacityPercent}%</span>
                 <span className="text-[10px] text-slate-500 uppercase font-bold pb-1">Ocupación</span>
               </div>
               
@@ -169,11 +169,11 @@ export default function EncargadoDashboardPage() {
           <div className="w-full max-w-md animate-scaleIn">
             <GlassCard className="p-8" glowColor="cyan">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-[#0f172a] flex items-center gap-2">
+                <h3 className="text-xl font-bold text-[#1E2A39] flex items-center gap-2">
                   <HiOutlineShieldCheck className="text-cyan-700" />
                   Validar Asistente
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-[#0f172a] transition-colors">
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-[#1E2A39] transition-colors">
                   <HiOutlineX className="w-6 h-6" />
                 </button>
               </div>
@@ -185,14 +185,14 @@ export default function EncargadoDashboardPage() {
                     autoFocus
                     type="text" 
                     placeholder="Ej: IGE-2026-XXXX"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#0f172a] font-light focus:border-cyan-500 focus:bg-white transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#1E2A39] font-light focus:border-[#8B1E23] focus:bg-white transition-all"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                   />
                 </div>
                 <button 
                   type="submit"
-                  className="w-full py-3 bg-cyan-600 text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-cyan-500 transition shadow-sm"
+                  className="w-full py-3 bg-[#8B1E23] text-white font-bold rounded-xl uppercase tracking-tight flex items-center justify-center gap-2 hover:bg-[#70181D] transition shadow-sm"
                 >
                   <HiOutlineLogin className="w-5 h-5" />
                   Registrar Visita

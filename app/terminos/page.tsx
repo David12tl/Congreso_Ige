@@ -50,21 +50,21 @@ export default function TerminosPage() {
   };
 
   return (
-    <div className="bg-[#f4fbf6] text-[#161d1a] font-['Sora'] overflow-x-hidden min-h-screen antialiased selection:bg-[#006b55] selection:text-white">
+    <div className="bg-white text-[#1E2A39] font-['Montserrat'] overflow-x-hidden min-h-screen antialiased selection:bg-[#8B1E23] selection:text-white">
       <Navbar />
 
       <main className="max-w-4xl mx-auto px-6 md:px-16 pt-36 pb-24">
         
         {/* ─── HEADER DE LA PÁGINA ─── */}
         <header className="mb-12 animate-on-scroll">
-          <span className="text-[#006b55] text-xs font-bold uppercase tracking-[0.25em] block mb-3">
+          <span className="text-[#8B1E23] text-xs font-bold uppercase tracking-[0.25em] block mb-3">
             —— PROTOCOLO LEGAL INSTITUCIONAL
           </span>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tighter text-[#161d1a] uppercase mb-4">
-            Términos y <span className="text-[#006b55]">Condiciones</span>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tighter text-[#1E2A39] uppercase mb-4">
+            Términos y <span className="text-[#8B1E23]">Condiciones</span>
           </h1>
-          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#3c4a44]">
-            <span className="px-3 py-1 border border-[#bbcac3] bg-white rounded uppercase tracking-wider text-[#006874]">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#7D7D7D]">
+            <span className="px-3 py-1 border border-[#E6E6E6] bg-white rounded uppercase tracking-wider text-[#1E2A39]">
               Uso del Sistema
             </span>
             <span>Última actualización: {lastUpdate}</span>
@@ -73,82 +73,82 @@ export default function TerminosPage() {
 
         {/* ─── CONTENEDOR PRINCIPAL BENTO-CLEAN ─── */}
         <div className="animate-on-scroll relative group mb-12">
-          <div className="relative bg-white border border-[#bbcac3] rounded-xl overflow-hidden shadow-sm flex flex-col">
-            
-            {/* Barra superior estética e identificador de documento */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#bbcac3] bg-[#eef5f0]">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#006b55]/30" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#00b894]/40" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#994700]/30" />
-                <span className="ml-2 text-[11px] font-bold text-[#6c7a74] uppercase tracking-wider">
-                  IGE_SYS_DOC_TERMINOS
-                </span>
-              </div>
-              <span className="material-symbols-outlined text-lg text-[#6c7a74]" style={styles.iconSettings}>
-                gavel
-              </span>
-            </div>
+           <div className="relative bg-white border border-[#E6E6E6] rounded-xl overflow-hidden shadow-sm flex flex-col">
+             
+             {/* Barra superior estética e identificador de documento */}
+             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E6E6] bg-[#E6E6E6]">
+               <div className="flex items-center gap-2">
+                 <span className="w-2.5 h-2.5 rounded-full bg-[#8B1E23]/30" />
+                 <span className="w-2.5 h-2.5 rounded-full bg-[#1E2A39]/40" />
+                 <span className="w-2.5 h-2.5 rounded-full bg-[#7D7D7D]/30" />
+                 <span className="ml-2 text-[11px] font-bold text-[#7D7D7D] uppercase tracking-wider">
+                   IGE_SYS_DOC_TERMINOS
+                 </span>
+               </div>
+               <span className="material-symbols-outlined text-lg text-[#7D7D7D]" style={styles.iconSettings}>
+                 gavel
+               </span>
+             </div>
 
             {/* Bloques de Contenido Legal */}
             <div className="p-8 md:p-12 space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar leading-relaxed text-justify">
               
               {/* Sección 1 */}
               <section className="space-y-3">
-                <h2 className="text-base md:text-lg font-bold text-[#161d1a] flex items-center gap-3 tracking-tight">
-                  <span className="text-[#006b55] font-bold text-sm">01.</span>
+                <h2 className="text-base md:text-lg font-bold text-[#1E2A39] flex items-center gap-3 tracking-tight">
+                  <span className="text-[#8B1E23] font-bold text-sm">01.</span>
                   Aceptación de los Términos
                 </h2>
-                <p className="text-sm md:text-base text-[#3c4a44]">
+                <p className="text-sm md:text-base text-[#7D7D7D]">
                   Al registrarse en la plataforma del Congreso IGE, el usuario acepta cumplir plenamente con las normas estipuladas para el correcto desarrollo del evento. El acceso y uso de los servicios digitales proporcionados por este portal están condicionados a la aceptación irrestricta de estos términos.
                 </p>
               </section>
 
-              <hr className="border-[#bbcac3]/50" />
+              <hr className="border-[#E6E6E6]/50" />
 
               {/* Sección 2 */}
               <section className="space-y-3">
-                <h2 className="text-base md:text-lg font-bold text-[#161d1a] flex items-center gap-3 tracking-tight">
-                  <span className="text-[#006b55] font-bold text-sm">02.</span>
+                <h2 className="text-base md:text-lg font-bold text-[#1E2A39] flex items-center gap-3 tracking-tight">
+                  <span className="text-[#8B1E23] font-bold text-sm">02.</span>
                   Mecanismo de Pago y Deslinde Financiero
                 </h2>
-                <p className="text-sm md:text-base text-[#3c4a44]">
-                  El usuario reconoce que esta plataforma es <strong className="text-[#161d1a] font-bold">exclusivamente un sistema de control de accesos e inventario de asientos</strong>. Ninguna transacción monetaria, cobro electrónico o procesamiento de tarjetas bancarias se realiza de manera digital a través de este sitio web.
+                <p className="text-sm md:text-base text-[#7D7D7D]">
+                  El usuario reconoce que esta plataforma es <strong className="text-[#1E2A39] font-bold">exclusivamente un sistema de control de accesos e inventario de asientos</strong>. Ninguna transacción monetaria, cobro electrónico o procesamiento de tarjetas bancarias se realiza de manera digital a través de este sitio web.
                 </p>
                 
                 {/* Cuadro de Advertencia Tonal */}
-                <div className="bg-[#eef5f0] p-5 border-l-4 border-[#006b55] rounded-r-lg flex gap-4 items-start mt-4">
-                  <span className="material-symbols-outlined text-[#006b55] text-xl mt-0.5" style={styles.iconSettings}>
+                <div className="bg-[#E6E6E6] p-5 border-l-4 border-[#8B1E23] rounded-r-lg flex gap-4 items-start mt-4">
+                  <span className="material-symbols-outlined text-[#8B1E23] text-xl mt-0.5" style={styles.iconSettings}>
                     info
                   </span>
-                  <p className="text-xs md:text-sm text-[#3c4a44] font-medium leading-relaxed">
+                  <p className="text-xs md:text-sm text-[#7D7D7D] font-medium leading-relaxed">
                     La entrega del dinero en efectivo y la posterior generación del Token de Acceso es responsabilidad única y exclusiva del Encargado de la Unidad Académica y el Alumno. La plataforma digital actúa meramente como validador de la transacción física previamente realizada.
                   </p>
                 </div>
               </section>
 
-              <hr className="border-[#bbcac3]/50" />
+              <hr className="border-[#E6E6E6]/50" />
 
               {/* Sección 3 */}
               <section className="space-y-3">
-                <h2 className="text-base md:text-lg font-bold text-[#161d1a] flex items-center gap-3 tracking-tight">
-                  <span className="text-[#006b55] font-bold text-sm">03.</span>
+                <h2 className="text-base md:text-lg font-bold text-[#1E2A39] flex items-center gap-3 tracking-tight">
+                  <span className="text-[#8B1E23] font-bold text-sm">03.</span>
                   Uso de Tokens y Boletos Digitales
                 </h2>
-                <p className="text-sm md:text-base text-[#3c4a44]">
-                  Cada Token de Acceso es de un solo uso y queda ligado de forma permanente al perfil único de usuario que lo canjee. Queda estrictamente prohibida la reventa, alteración o duplicación de códigos de acceso. El código QR final generado es <span className="text-[#161d1a] font-semibold underline decoration-[#00b894]/40 decoration-2">intransferible</span> y será escaneado en los puntos de control del Teatro Metropolitano de Orizaba para autorizar el ingreso al recinto.
+                <p className="text-sm md:text-base text-[#7D7D7D]">
+                  Cada Token de Acceso es de un solo uso y queda ligado de forma permanente al perfil único de usuario que lo canjee. Queda estrictamente prohibida la reventa, alteración o duplicación de códigos de acceso. El código QR final generado es <span className="text-[#1E2A39] font-semibold underline decoration-[#8B1E23]/40 decoration-2">intransferible</span> y será escaneado en los puntos de control del Teatro Metropolitano de Orizaba para autorizar el ingreso al recinto.
                 </p>
               </section>
 
-              <hr className="border-[#bbcac3]/50" />
+              <hr className="border-[#E6E6E6]/50" />
 
               {/* Sección 4 */}
               <section className="space-y-3">
-                <h2 className="text-base md:text-lg font-bold text-[#161d1a] flex items-center gap-3 tracking-tight">
-                  <span className="text-[#006b55] font-bold text-sm">04.</span>
+                <h2 className="text-base md:text-lg font-bold text-[#1E2A39] flex items-center gap-3 tracking-tight">
+                  <span className="text-[#8B1E23] font-bold text-sm">04.</span>
                   Cupos y Asignación de Zonas
                 </h2>
-                <p className="text-sm md:text-base text-[#3c4a44]">
+                <p className="text-sm md:text-base text-[#7D7D7D]">
                   La selección de zonas (Planta Baja, Primer Piso, Balcón) está sujeta en todo momento a la capacidad física máxima autorizada del teatro. La organización se reserva el derecho de cerrar el registro de secciones específicas una vez agotado su inventario en la base de datos, garantizando así la seguridad del inmueble y el estricto cumplimiento de las normativas de protección civil vigentes.
                 </p>
               </section>
@@ -159,7 +159,7 @@ export default function TerminosPage() {
 
         {/* ─── NOTA AL PIE DEL DOCUMENTO ─── */}
         <div className="text-center animate-on-scroll">
-          <p className="text-[#6c7a74] text-xs font-bold uppercase tracking-widest">
+          <p className="text-[#7D7D7D] text-xs font-bold uppercase tracking-widest">
             Fin del Documento Legal // IGE Congreso 2026
           </p>
         </div>
@@ -173,14 +173,14 @@ export default function TerminosPage() {
           width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #eef5f0;
+          background: #E6E6E6;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #bbcac3;
+          background: #7D7D7D;
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #006b55;
+          background: #8B1E23;
         }
       `}</style>
     </div>

@@ -70,9 +70,9 @@ export default function AdminDashboardPage() {
       {/* Header Estilo Centro de Comando */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#1E2A39] text-2xl md:text-3xl">
             Centro de Mando{' '}
-            <span className="text-[#0B2545]">
+            <span className="text-[#8B1E23]">
               General
             </span>
           </h1>
@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
             <HiOutlineUsers className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Usuarios Registrados</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
             {data?.totalUsuarios ?? '—'}
           </span>
           <p className="text-[10px] text-blue-700 mt-2 font-light">Total en profiles</p>
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
             <HiOutlineShieldCheck className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-purple-700/80">Encargados Activos</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
             {data?.totalEncargados ?? '—'}
           </span>
           <p className="text-[10px] text-purple-700 mt-2 font-light">id_rol = 2</p>
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
             <HiOutlineOfficeBuilding className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-700/80">Unidades Académicas</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#0f172a]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
             {data?.totalUnidadesAcademicas ?? '—'}
           </span>
           <p className="text-[10px] text-emerald-700 mt-2 font-light">Registradas en el sistema</p>
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
             <HiOutlineTicket className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-cyan-700/80">Total Tickets</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalTickets ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalTickets ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="blue">
@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
             <HiOutlineAcademicCap className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Alumnos</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalAlumnos ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalAlumnos ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="rose">
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
             <HiOutlineBriefcase className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-rose-700/80">Empresas</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#0f172a]">{data?.totalEmpresas ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalEmpresas ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="amber">
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
             <span className="text-xs font-bold uppercase tracking-widest text-amber-700/80">Zona Top</span>
           </div>
           <div className="relative">
-            <span className="text-lg sm:text-xl font-black text-[#0f172a] uppercase tracking-tight block truncate">
+            <span className="text-lg sm:text-xl font-black text-[#1E2A39] uppercase tracking-tight block truncate">
               {data?.topZone ?? 'Ninguna'}
             </span>
             <p className="text-[10px] text-amber-700 mt-1 font-light">{data?.topZoneTickets ?? 0} boletos</p>

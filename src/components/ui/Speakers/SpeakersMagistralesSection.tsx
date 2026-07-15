@@ -15,10 +15,10 @@ interface Speaker {
 }
 
 const brandColors = {
-  navy: '#0B2545',      
-  turquoise: '#00B4D8', 
-  orange: '#D95D26',    
-  emerald: '#06c215',   
+  navy: '#1E2A39',      
+  turquoise: '#8B1E23', 
+  orange: '#8B1E23',    
+  emerald: '#7D7D7D',   
 };
 
 /* ─── SUBCOMPONENTE: TARJETA ESTILO MATERIAL DESIGN 3 (M3) ─── */
@@ -101,7 +101,7 @@ export default function SpeakersMagistrales() {
       compania: "TVEO Canal",
       conferencia: "EL EMPRENDIMIENTO COMO DETONANTE DEL DESARROLLO DE LAS CIUDADES",
       colorTheme: brandColors.orange, 
-      glowClass: "from-[#D95D26]/10 to-transparent",
+      glowClass: "from-[#8B1E23]/10 to-transparent",
       avatarUrl: "/expocitor_1.png",
     },
     {
@@ -111,7 +111,7 @@ export default function SpeakersMagistrales() {
       compania: "Google Cloud Consulting",
       conferencia: "Web3 y la Reconfiguración de la Seguridad Digital Colectiva",
       colorTheme: brandColors.turquoise, 
-      glowClass: "from-[#00B4D8]/10 to-transparent",
+      glowClass: "from-[#8B1E23]/10 to-transparent",
       avatarUrl: "/expocitor_2.png",
     },
     {
@@ -121,7 +121,7 @@ export default function SpeakersMagistrales() {
       compania: "Centro Ericksoniano de México",
       conferencia: "Computación Cuántica: Desafiando los Límites del Silicio",
       colorTheme: brandColors.emerald, 
-      glowClass: "from-[#06c215]/10 to-transparent",
+      glowClass: "from-[#7D7D7D]/10 to-transparent",
       avatarUrl: "/expocitor_3.png",
     }
   ];
@@ -133,10 +133,10 @@ export default function SpeakersMagistrales() {
         
         {/* ENCABEZADO DE LA SECCIÓN */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-sm font-bold uppercase tracking-widest bg-gradient-to-r from-congreso-orange to-congreso-turquoise bg-clip-text text-transparent mb-4">
+          <h2 className="text-sm font-bold uppercase tracking-widest bg-gradient-to-r from-[#8B1E23] to-[#1E2A39] bg-clip-text text-transparent mb-4">
             Main Stage Lineup
           </h2>
-          <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-congreso-navy dark:text-congreso-navy mb-4">
+          <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-[#1E2A39] mb-4">
             Speakers Magistrales
           </h3>
           <h4 className="text-lg md:text-xl text-slate-800 mb-6 italic">
@@ -149,7 +149,7 @@ export default function SpeakersMagistrales() {
             Cada charla en el Main Stage no solo informa: moviliza, impulsa y despierta nuevas posibilidades.
           </p>
           {/* Divisor decorativo */}
-          <div className="w-24 h-1 bg-gradient-to-r from-transparent via-congreso-turquoise/50 to-transparent mx-auto mt-8" />
+          <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#8B1E23]/50 to-transparent mx-auto mt-8" />
         </div>
         {/* REJILLA DE TARJETAS MAGISTRALES */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

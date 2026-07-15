@@ -43,7 +43,7 @@ const TimeBlock = ({ value, label, accentColor }: { value: number; label: string
     className="flex flex-col items-center justify-center border rounded-2xl w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 p-2 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
   >
     <span 
-      style={{ color: '#0B2545' }} 
+      style={{ color: '#1E2A39' }} 
       className="text-4xl sm:text-5xl md:text-5xl font-extrabold tracking-tighter transition-transform duration-300 group-hover:scale-105"
     >
       {String(value).padStart(2, '0')}
@@ -88,10 +88,10 @@ export default function TabTime() {
   }, []);
 
   const brandColors = {
-    primary: '#0B2545',   // Azul Marino (Estructura base)
-    secondary: '#00B4D8', // Azul Turquesa (Crecimiento tecnológico)
-    tertiary: '#D95D26',  // Naranja Quemado (Sinergia humana)
-    emerald: '#006B55',   // Verde Esmeralda (Sostenibilidad)
+    primary: '#1E2A39',   // Azul Marino (Estructura base)
+    secondary: '#8B1E23', // Rojo ELIGE (Acento primario)
+    tertiary: '#8B1E23',  // Rojo ELIGE (Acción)
+    emerald: '#7D7D7D',   // Gris (Texto secundario)
   };
 
   if (!isMounted) {
@@ -102,7 +102,7 @@ export default function TabTime() {
     return (
       <>
         <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={500} />
-        <div className="text-center p-6 bg-[#0B2545]/5 rounded-2xl border border-[#0B2545]/10 max-w-xl mx-auto backdrop-blur-xs">
+        <div className="text-center p-6 bg-[#1E2A39]/5 rounded-2xl border border-[#1E2A39]/10 max-w-xl mx-auto backdrop-blur-xs">
           <h3 
             style={{ color: brandColors.primary }} 
             className="text-2xl md:text-3xl font-extrabold tracking-tight animate-pulse"
@@ -119,23 +119,23 @@ export default function TabTime() {
 
   return (
     <div className="w-full flex flex-col justify-center items-center p-4" suppressHydrationWarning>
-      <span className="text-[11px] font-extrabold tracking-widest uppercase text-[#5C6E85] mb-4 flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#D95D26] animate-ping"></span>
-        Cuenta regresiva para el magno evento
-      </span>
+        <span className="text-[11px] font-extrabold tracking-widest uppercase text-[#7D7D7D] mb-4 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#8B1E23] animate-ping"></span>
+          Cuenta regresiva para el magno evento
+        </span>
 
-      <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
-        <TimeBlock value={timeLeft.dias} label="Días" accentColor={brandColors.tertiary} />
-        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
-        
-        <TimeBlock value={timeLeft.horas} label="Horas" accentColor={brandColors.secondary} />
-        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
-        
-        <TimeBlock value={timeLeft.minutos} label="Minutos" accentColor={brandColors.emerald} />
-        <span className="text-3xl md:text-4xl font-light text-[#0B2545]/30 select-none animate-pulse">:</span>
-        
-        <TimeBlock value={timeLeft.segundos} label="Segundos" accentColor={brandColors.primary} />
-      </div>
+        <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
+          <TimeBlock value={timeLeft.dias} label="Días" accentColor={brandColors.tertiary} />
+          <span className="text-3xl md:text-4xl font-light text-[#1E2A39]/30 select-none animate-pulse">:</span>
+          
+          <TimeBlock value={timeLeft.horas} label="Horas" accentColor={brandColors.secondary} />
+          <span className="text-3xl md:text-4xl font-light text-[#1E2A39]/30 select-none animate-pulse">:</span>
+          
+          <TimeBlock value={timeLeft.minutos} label="Minutos" accentColor={brandColors.emerald} />
+          <span className="text-3xl md:text-4xl font-light text-[#1E2A39]/30 select-none animate-pulse">:</span>
+          
+          <TimeBlock value={timeLeft.segundos} label="Segundos" accentColor={brandColors.primary} />
+        </div>
     </div>
   );
 }

@@ -12,11 +12,14 @@ const navLinks = [
   { href: '/aboutme', text: 'Nosotros' },
 ];
 
+// Paleta de colores ajustada con el Blanco como fondo y detalles en Azul, Vino y Marrón-Dorado
 const tokens = {
-  primary: '#97cafd',
-  secondary: '#00B4D8',
-  tertiary: '#D95D26',
-  emerald: '#06c215',
+  navy: '#1E2A39',          // Azul Marino (Para textos principales y hover)
+  red: '#8B1E23',           // Rojo Vino ELIGE (Para acentos y botones)
+  gold: '#A3704C',          // Marrón-Dorado elegante (Para el año 2026 y detalles)
+  grey: '#7D7D7D',          // Gris
+  greyLight: '#E6E6E6',     // Gris Claro (Para bordes limpios)
+  white: '#FFFFFF',         // Blanco (Fondo base)
 };
 
 export default function Navbar() {
@@ -49,36 +52,47 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm'
-          : 'bg-transparent border-b border-transparent'
-      }`}
+      style={{ 
+        // Fondo blanco sólido al inicio; fondo blanco con 80% de opacidad + desenfoque al hacer scroll
+        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 1)',
+        borderColor: isScrolled ? `${tokens.greyLight}80` : 'transparent'
+      }}
+      className="fixed top-0 w-full z-50 transition-all duration-500 border-b backdrop-blur-md"
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+        
         {/* Logo y Título */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="relative w-12 h-12 flex items-center justify-center rounded-xl p-1.5">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div 
+            style={{ borderColor: tokens.greyLight }}
+            className="relative w-14 h-14 flex items-center justify-center rounded-xl p-1.5 bg-white border shadow-sm transition-transform duration-300 group-hover:scale-105"
+          >
             <Image
               src="/logo.png"
-              alt="Logo Congreso"
-              width={48}
-              height={48}
+              alt="Logo Congreso ELIGE"
+              width={44}
+              height={44}
               className="object-contain"
             />
           </div>
-          <div className="flex flex-col">
-            <span style={{ color: tokens.primary }} className="text-lg font-extrabold tracking-tight leading-none dark:text-white">
-              ELIGE <span style={{ color: tokens.secondary }}>2026</span>
+          <div className="flex flex-col font-sans">
+            <span 
+              style={{ color: tokens.navy }}
+              className="text-xl font-black tracking-tight leading-none"
+            >
+              ELIGE <span style={{ color: tokens.gold }}>2026</span>
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 mt-0.5">
+            <span 
+              style={{ color: tokens.red }}
+              className="text-[9px] uppercase font-bold tracking-widest mt-1 opacity-90"
+            >
               Gestión Empresarial
             </span>
           </div>
         </Link>
 
         {/* Menú de Navegación para Escritorio */}
-        <div className="hidden md:flex gap-8 items-center">
+        <div className="hidden md:flex gap-8 items-center h-full">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -86,11 +100,19 @@ export default function Navbar() {
                 key={link.text}
                 href={link.href}
                 onClick={(e) => handleSmoothScroll(e, link.href)}
-                className={`text-sm font-semibold transition-colors duration-200 hover:text-[#06c215] ${
-                  isActive ? 'text-[#06c215]' : isScrolled ? 'text-[#97cafd]' : 'text-[#D95D26]'
-                }`}
+                style={{ 
+                  color: isActive ? tokens.red : tokens.navy 
+                }}
+                className="relative text-sm font-bold tracking-wide transition-colors duration-300 hover:text-[#8B1E23] py-2 group"
               >
                 {link.text}
+                {/* Línea decorativa inferior con el color Marrón-Dorado */}
+                <span 
+                  style={{ backgroundColor: tokens.gold }}
+                  className={`absolute bottom-0 left-0 w-full h-[2.5px] rounded-full transition-transform duration-300 ${
+                    isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'
+                  }`}
+                />
               </Link>
             );
           })}
@@ -98,28 +120,55 @@ export default function Navbar() {
 
         {/* Botón de Registro y Menú Móvil */}
         <div className="flex items-center gap-4">
-          <Link href="/login">
+          <Link href="/register">
             <button
-              style={{ backgroundColor: tokens.tertiary }}
-              className="hidden sm:block text-white text-sm font-bold px-5 py-2.5 rounded-lg shadow-md hover:brightness-110 transition-transform active:scale-95"
+              style={{ 
+                backgroundColor: tokens.red,
+                boxShadow: `0 4px 12px ${tokens.red}20`
+              }}
+              className="hidden sm:block text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
             >
               Registrarse
             </button>
           </Link>
+           <Link href="/login">
+            <button
+              style={{ 
+                backgroundColor: tokens.red,
+                boxShadow: `0 4px 12px ${tokens.red}20`
+              }}
+              className="hidden sm:block text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            >
+              iniciar Sesión
+            </button>
+          </Link>
+          
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            style={{ 
+              borderColor: tokens.greyLight,
+              color: tokens.navy
+            }}
+            className="md:hidden p-2 rounded-lg hover:bg-black/5 border transition-colors duration-200"
             aria-label="Abrir menú"
           >
-            <span className="material-symbols-outlined">menu</span>
+            <span className="material-symbols-outlined block">
+              {isMenuOpen ? 'close' : 'menu'}
+            </span>
           </button>
         </div>
       </nav>
 
       {/* Panel de Menú Móvil */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+        <div 
+          style={{ 
+            backgroundColor: tokens.white,
+            borderColor: tokens.greyLight
+          }}
+          className="md:hidden border-t shadow-lg animate-in fade-in slide-in-from-top-4 duration-200"
+        >
+          <div className="px-4 pt-3 pb-6 space-y-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -127,17 +176,44 @@ export default function Navbar() {
                   key={link.text}
                   href={link.href}
                   onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium hover:bg-slate-100 dark:hover:bg-slate-800 ${
-                    isActive ? 'text-[#06c215]' : 'text-slate-700 dark:text-slate-200'
+                  style={{ 
+                    color: isActive ? tokens.red : tokens.navy,
+                    backgroundColor: isActive ? `${tokens.gold}15` : 'transparent'
+                  }}
+                  className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
+                    isActive ? 'border-l-4' : ''
                   }`}
+                  {...(isActive ? { style: { borderLeftColor: tokens.gold, color: tokens.red, backgroundColor: `${tokens.gold}15` } } : {})}
                 >
                   {link.text}
                 </Link>
               );
             })}
+            
+            {/* Botón de Registro en Móvil */}
+            <div className="pt-4 border-t border-black/5 sm:hidden">
+              <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                <button
+                  style={{ backgroundColor: tokens.red }}
+                  className="w-full text-white text-sm font-bold py-3 rounded-xl shadow-md"
+                >
+                  Registrarse
+                </button>
+              </Link>
+            </div>
+            <div className="pt-4 border-t border-black/5 sm:hidden">
+              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                <button
+                  style={{ backgroundColor: tokens.red }}
+                  className="w-full text-white text-sm font-bold py-3 rounded-xl shadow-md"
+                >
+                  Iniciar Sesión
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       )}
     </header>
   );
-}
+} 

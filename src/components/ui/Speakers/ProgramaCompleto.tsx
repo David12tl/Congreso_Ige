@@ -22,10 +22,10 @@ export default function ProgramaCompleto() {
   const [diaActivo, setDiaActivo] = useState<number>(1);
 
   useEffect(() => {
-    const linkSora = document.createElement('link');
-    linkSora.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap';
-    linkSora.rel = 'stylesheet';
-    document.head.appendChild(linkSora);
+    const linkMontserrat = document.createElement('link');
+    linkMontserrat.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap';
+    linkMontserrat.rel = 'stylesheet';
+    document.head.appendChild(linkMontserrat);
 
     const linkIcons = document.createElement('link');
     linkIcons.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
@@ -90,7 +90,7 @@ export default function ProgramaCompleto() {
 
   return (
     // Agregamos aislamiento de contexto de bloque claro y desborde controlado
-    <section className="relative w-full bg-slate-50 block clear-both pt-24 pb-20 px-4 md:px-12 font-['Sora',sans-serif] z-10">
+    <section className="relative w-full bg-[#E6E6E6] block clear-both pt-24 pb-20 px-4 md:px-12 font-['Montserrat',sans-serif] z-10">
       <div className="max-w-5xl mx-auto relative z-20">
         
         {/* ENCABEZADO PRINCIPAL RE-ESTRUCTURADO */}
@@ -98,7 +98,7 @@ export default function ProgramaCompleto() {
           <span className="inline-block text-xs font-bold px-4 py-1.5 rounded-full mb-4 tracking-wide bg-blue-100 text-[#1A73E8]">
             Programa Oficial — ELIGE 2026
           </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#0f172a] mb-4 block">
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#1E2A39] mb-4 block">
             Cronograma de Actividades
           </h2>
           <p className="text-sm md:text-base text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
@@ -130,7 +130,7 @@ export default function ProgramaCompleto() {
 
         {/* DETALLE DEL DÍA SELECCIONADO */}
         <div className="text-center mb-12">
-          <h3 className="text-base md:text-lg font-bold text-[#1A73E8] tracking-wide inline-flex items-center gap-2 bg-white px-5 py-2 rounded-full border border-slate-200 shadow-sm">
+          <h3 className="text-base md:text-lg font-bold text-[#8B1E23] tracking-wide inline-flex items-center gap-2 bg-white px-5 py-2 rounded-full border border-slate-200 shadow-sm">
             <span className="material-symbols-outlined text-xl">calendar_today</span>
             {diaSeleccionado.fecha}
           </h3>
@@ -145,7 +145,7 @@ export default function ProgramaCompleto() {
                 
                 {/* Hora Flotante */}
                 <div className="hidden md:block absolute right-full mr-10 top-1 text-right min-w-[120px]">
-                  <p className="text-sm font-bold text-[#0f172a]">{actividad.hora}</p>
+                  <p className="text-sm font-bold text-[#1E2A39]">{actividad.hora}</p>
                   <p className="text-[11px] text-slate-500 font-medium">hrs</p>
                 </div>
 
@@ -169,8 +169,8 @@ export default function ProgramaCompleto() {
                     </span>
                   </div>
 
-                  <h4 className="text-base md:text-xl font-bold text-[#0f172a] tracking-tight mb-1 group-hover:text-[#1A73E8] transition-colors">
-                    &quot;{actividad.titulo}&quot;
+                  <h4 className="text-base md:text-xl font-bold text-[#1E2A39] tracking-tight mb-1 group-hover:text-[#8B1E23] transition-colors">
+                    &#34;{actividad.titulo}&#34;
                   </h4>
 
                   {actividad.subtitulo && (
@@ -186,7 +186,7 @@ export default function ProgramaCompleto() {
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#001A41]">{actividad.ponente}</p>
+                      <p className="text-sm font-bold text-[#1E2A39]">{actividad.ponente}</p>
                       <p className="text-xs text-slate-600 leading-relaxed mt-0.5 font-normal">
                         {actividad.cargo}
                       </p>
@@ -226,9 +226,9 @@ export default function ProgramaCompleto() {
           </div>
           
           <div className="border-t border-slate-100 pt-6 mt-6 text-center">
-            <p className="text-[#1A73E8] text-xs font-bold uppercase tracking-[0.2em]">
-              ¡Sé parte del futuro, emprende, lidera e innova!
-            </p>
+        <p className="text-[#8B1E23] text-xs font-bold uppercase tracking-[0.2em]">
+          ¡Sé parte del futuro, emprende, lidera e innova!
+        </p>
           </div>
         </div>
 

@@ -34,7 +34,7 @@ export default function SpeakerModal({ speaker, onClose }: SpeakerModalProps) {
   if (!speaker) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-['Sora',sans-serif]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-['Montserrat',sans-serif]">
       {/* Fondo del Scrim con desenfoque de cristal */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]" 
@@ -74,8 +74,8 @@ export default function SpeakerModal({ speaker, onClose }: SpeakerModalProps) {
               )}
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-[#1A1C1E] mb-1.5 leading-tight">{speaker.nombre}</h1>
-              <p className="text-sm font-medium text-[#1A73E8] mb-3.5">{speaker.puesto}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-[#1E2A39] mb-1.5 leading-tight">{speaker.nombre}</h1>
+              <p className="text-sm font-medium text-[#8B1E23] mb-3.5">{speaker.puesto}</p>
               <div className="flex flex-wrap gap-2">
                 <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">domain</span> {speaker.compania}
@@ -91,7 +91,7 @@ export default function SpeakerModal({ speaker, onClose }: SpeakerModalProps) {
           {speaker.conferencia && (
             <div style={{ backgroundColor: speaker.theme.container }} className="p-5 rounded-[24px] mb-6 border border-white/50">
               <h3 className="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Tema de Exposición</h3>
-              <p className="text-lg font-bold text-[#001A41] leading-snug">&quot;{speaker.conferencia}&quot;</p>
+<p className="text-lg font-bold text-[#1E2A39] leading-snug">&#34;{speaker.conferencia}&#34;</p>
             </div>
           )}
 
@@ -116,7 +116,7 @@ export default function SpeakerModal({ speaker, onClose }: SpeakerModalProps) {
 
           {/* Sección de Trayectoria Profesional o Descripción */}
           <div className="mb-8">
-            <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-4 flex items-center gap-2 text-slate-400">
+            <h3 className="text-xs font-bold text-[#1E2A39] uppercase tracking-wider mb-4 flex items-center gap-2 text-slate-400">
               <span className="material-symbols-outlined text-lg">history_edu</span> Reseña Curricular
             </h3>
             <div className="space-y-3.5">
@@ -124,14 +124,14 @@ export default function SpeakerModal({ speaker, onClose }: SpeakerModalProps) {
                 speaker.bio.map((item, index) => (
                   <div key={index} className="flex gap-3 items-start">
                     <span style={{ backgroundColor: speaker.theme.onContainer }} className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 opacity-60" />
-                    <p className="text-xs md:text-sm text-[#43474E] leading-relaxed font-normal">{item}</p>
+                    <p className="text-xs md:text-sm text-[#7D7D7D] leading-relaxed font-normal">{item}</p>
                   </div>
                 ))
               ) : (
                 <div className="flex gap-3 items-start">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-2 flex-shrink-0" />
-                  <p className="text-xs md:text-sm text-[#43474E] leading-relaxed italic">
-                    &quot;Un espacio internacional de aprendizaje, inspiración y conexión para transformar ideas en soluciones que generen valor y desarrollo sostenible.&quot;
+                  <p className="text-xs md:text-sm text-[#7D7D7D] leading-relaxed italic">
+                    &#34;Un espacio internacional de aprendizaje, inspiración y conexión para transformar ideas en soluciones que generen valor y desarrollo sostenible.&#34;
                   </p>
                 </div>
               )}

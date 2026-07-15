@@ -18,57 +18,68 @@
   --animate-fluid-pulse: fluid-pulse 8s infinite ease-in-out;
 
   /* ── Paleta Oficial del 1er Congreso Internacional en Gestión Empresarial - ELIGE ── */
-  /* Colores Principales */
-  --color-congreso-dark: #07264D;
-  --color-congreso-blue: #0D47A1;
-  --color-congreso-teal: #0097A7;
-  --color-congreso-emerald: #00B894;
-  --color-congreso-orange: #FF7A00;
+  /* Extraída del manual de imagen (image_cffccc.jpg) */
+  --color-ige-red: #8B1E23;        /* Rojo ELIGE — Acento primario (botones de acción) */
+  --color-ige-navy: #1E2A39;       /* Azul Marino — Fondo principal / contraste (Navbar, Footer) */
+  --color-ige-grey: #7D7D7D;       /* Gris — Texto secundario y bordes */
+  --color-ige-greyLight: #E6E6E6;  /* Gris Claro — Fondo secundario / secciones y tarjetas */
+  --color-ige-white: #FFFFFF;      /* Blanco — Texto sobre fondo oscuro / fondo base limpio */
+
+  /* Mapeo de tokens de marca previos a la paleta oficial del manual */
+  --color-congreso-dark: #1E2A39;
+  --color-congreso-blue: #1E2A39;
+  --color-congreso-teal: #8B1E23;
+  --color-congreso-emerald: #7D7D7D;
+  --color-congreso-orange: #8B1E23;
 
   /* Colores Secundarios y Soporte */
-  --color-congreso-mint: #26A69A;
-  --color-congreso-sky: #2E7DE1;
-  --color-congreso-pastel: #7BD3E6;
-  --color-congreso-apple: #6BBF59;
-  --color-congreso-yellow: #FFB02E;
-  --color-congreso-deep: #0A305F;
-  --color-congreso-electric: #1565C0;
-  --color-congreso-cyan: #0091B2;
-  --color-congreso-turquesa: #4CC9C0;
-  --color-congreso-lime: #A3D977;
+  --color-congreso-mint: #7D7D7D;
+  --color-congreso-sky: #1E2A39;
+  --color-congreso-pastel: #E6E6E6;
+  --color-congreso-apple: #7D7D7D;
+  --color-congreso-yellow: #7D7D7D;
+  --color-congreso-deep: #1E2A39;
+  --color-congreso-electric: #1E2A39;
+  --color-congreso-cyan: #1E2A39;
+  --color-congreso-turquesa: #1E2A39;
+  --color-congreso-lime: #7D7D7D;
 
   /* Colores Neutros de Marca */
-  --color-congreso-bgDark: #1A1F2E;
-  --color-congreso-greyDark: #374151;
-  --color-congreso-greyMed: #6B7280;
-  --color-congreso-greyLight: #E5E7EB;
-  --color-congreso-whiteSmoke: #F8FAFC;
+  --color-congreso-bgDark: #1E2A39;
+  --color-congreso-greyDark: #7D7D7D;
+  --color-congreso-greyMed: #7D7D7D;
+  --color-congreso-greyLight: #E6E6E6;
+  --color-congreso-whiteSmoke: #E6E6E6;
+
+  /* ── Tipografía Oficial: Montserrat ── */
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* --- MAPEO DE VARIABLES NATIVAS --- */
 :root {
-  /* MODO CLARO BLANCO PURO (Ajustado para máximo contraste y legibilidad) */
+  /* MODO CLARO — FONDO BLANCO LIMPIO (Identidad oficial Congreso IGE) */
   --aurora-bg: #ffffff;
   --aurora-surface: #ffffff;
-  --aurora-text: #0f172a;
-  --aurora-text-dim: #334155;
-  --aurora-border: #e2e8f0;
-  --aurora-mesh: radial-gradient(at 0% 0%, rgba(196, 180, 222, 0.25) 0px, transparent 50%),
-                 radial-gradient(at 100% 0%, rgba(167, 139, 250, 0.2) 0px, transparent 50%),
-                 radial-gradient(at 50% 100%, rgba(221, 214, 254, 0.3) 0px, transparent 50%);
+  --aurora-text: #1E2A39;          /* Azul Marino para títulos y texto principal */
+  --aurora-text-dim: #7D7D7D;      /* Gris para texto secundario */
+  --aurora-border: #E6E6E6;        /* Gris Claro para bordes */
+  --aurora-mesh: none;             /* Sin malla: limpieza visual del manual */
+  --bg-tarjetas: #E6E6E6;          /* Gris Claro para tarjetas/secciones */
+  --border-componentes: #E6E6E6;
   color-scheme: light;
 }
 
 html.dark {
-  /* MODO OSCURO NEBULA CYBERPUNK */
-  --aurora-bg: #030712;
-  --aurora-surface: rgba(17, 24, 39, 0.75);
-  --aurora-text: #f8fafc;
-  --aurora-text-dim: #94a3b8;
-  --aurora-border: rgba(255, 255, 255, 0.06);
-  --aurora-mesh: radial-gradient(at 50% 0%, rgba(124, 58, 237, 0.15) 0px, transparent 50%),
-                 radial-gradient(at 0% 100%, rgba(76, 29, 149, 0.2) 0px, transparent 50%),
-                 radial-gradient(at 100% 100%, rgba(30, 27, 75, 0.3) 0px, transparent 50%);
+  /* MODO OSCURO — Azul Marino corporativo */
+  --aurora-bg: #1E2A39;
+  --aurora-surface: rgba(30, 42, 57, 0.92);
+  --aurora-text: #ffffff;
+  --aurora-text-dim: #E6E6E6;
+  --aurora-border: rgba(255, 255, 255, 0.12);
+  --aurora-mesh: radial-gradient(at 50% 0%, rgba(139, 30, 35, 0.18) 0px, transparent 50%),
+                 radial-gradient(at 0% 100%, rgba(125, 125, 125, 0.12) 0px, transparent 50%);
+  --bg-tarjetas: #1E2A39;
+  --border-componentes: rgba(255, 255, 255, 0.12);
   color-scheme: dark;
 }
 
@@ -89,6 +100,7 @@ body {
   background-color: var(--aurora-bg) !important;
   color: var(--aurora-text) !important;
   background-image: var(--aurora-mesh);
+  font-family: var(--font-sans) !important;
   transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
               color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-x: hidden;

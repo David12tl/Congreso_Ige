@@ -62,7 +62,7 @@ export default function FAQsPage() {
   }, []);
 
   return (
-    <div className="bg-[#F4F7FA] text-[#0A192F] font-['Sora'] overflow-x-hidden min-h-screen antialiased flex flex-col justify-between">
+    <div className="bg-white text-[#1E2A39] font-['Montserrat'] overflow-x-hidden min-h-screen antialiased flex flex-col justify-between">
       <Navbar />
       
       {/* Ajuste de pt-32 para evitar colisiones con el Navbar */}
@@ -70,13 +70,13 @@ export default function FAQsPage() {
         
         {/* ─── HEADER DE LA PÁGINA ─── */}
         <header className="text-center mb-12 animate-on-scroll">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-[#00B4D8] uppercase border border-slate-200 rounded-full bg-white shadow-sm">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 text-xs font-bold tracking-wider text-[#8B1E23] uppercase border border-[#E6E6E6] rounded-full bg-white shadow-sm">
             Soporte & Ayuda
           </span>
-          <h1 style={{ color: '#0B2545' }} className="text-3xl md:text-5xl font-extrabold tracking-tighter uppercase mb-4 leading-tight">
-            Preguntas <span style={{ color: '#00B4D8' }}>Frecuentes</span>
+          <h1 style={{ color: '#1E2A39' }} className="text-3xl md:text-5xl font-extrabold tracking-tighter uppercase mb-4 leading-tight">
+            Preguntas <span style={{ color: '#8B1E23' }}>Frecuentes</span>
           </h1>
-          <p className="text-[#4A5E78] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+          <p className="text-[#7D7D7D] text-sm md:text-base max-w-xl mx-auto leading-relaxed">
             Resolvemos tus dudas sobre el proceso de registro, validación de pagos físicos y acceso al evento empresarial.
           </p>
         </header>
@@ -90,10 +90,10 @@ export default function FAQsPage() {
 
         {/* ─── CALL TO ACTION TONAL ─── */}
         <div className="mt-16 text-center p-8 rounded-2xl bg-white border border-slate-200 shadow-sm animate-on-scroll">
-          <p className="text-sm font-semibold text-[#4A5E78] mb-2">¿Aún tienes dudas técnicas o administrativas?</p>
+          <p className="text-sm font-semibold text-[#7D7D7D] mb-2">¿Aún tienes dudas técnicas o administrativas?</p>
           <a 
             href="mailto:soporte@congresoige.com" 
-            style={{ color: '#0B2545' }}
+            style={{ color: '#1E2A39' }}
             className="inline-flex items-center gap-2 font-bold hover:opacity-80 transition-all underline underline-offset-4 text-sm md:text-base"
           >
             Contacta con nuestro equipo de soporte
@@ -111,22 +111,22 @@ function FAQItem({ faq }: { faq: typeof faqs[0] }) {
 
   return (
     <div 
-      className={`animate-on-scroll bg-white border transition-all duration-300 rounded-2xl overflow-hidden shadow-sm ${
-        isOpen 
-          ? 'border-[#00B4D8] shadow-md shadow-[#00B4D8]/5' 
-          : 'border-slate-200 hover:border-slate-400'
-      }`}
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer bg-white"
+        className={`animate-on-scroll bg-white border transition-all duration-300 rounded-2xl overflow-hidden shadow-sm ${
+          isOpen 
+            ? 'border-[#8B1E23] shadow-md shadow-[#8B1E23]/5' 
+            : 'border-[#E6E6E6] hover:border-[#7D7D7D]'
+        }`}
       >
-        <span className={`text-base font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-[#00B4D8]' : 'text-[#0A192F]'}`}>
-          {faq.question}
-        </span>
-        <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-300 ${
-          isOpen ? 'bg-[#00B4D8]/10 border-transparent text-[#00B4D8]' : 'bg-white border-slate-200 text-slate-400'
-        }`}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer bg-white"
+        >
+          <span className={`text-base font-bold tracking-tight transition-colors duration-300 ${isOpen ? 'text-[#8B1E23]' : 'text-[#1E2A39]'}`}>
+            {faq.question}
+          </span>
+          <div className={`flex-shrink-0 ml-4 w-8 h-8 rounded-lg border flex items-center justify-center transition-all duration-300 ${
+            isOpen ? 'bg-[#8B1E23]/10 border-transparent text-[#8B1E23]' : 'bg-white border-[#E6E6E6] text-[#7D7D7D]'
+          }`}>
           <span 
             className="material-symbols-outlined text-xl transition-transform duration-300"
             style={{ 
@@ -145,7 +145,7 @@ function FAQItem({ faq }: { faq: typeof faqs[0] }) {
           isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-6 pb-6 text-[#4A5E78] text-sm md:text-base leading-relaxed text-justify border-t border-slate-100 pt-4 bg-[#F4F7FA]/40">
+          <div className="px-6 pb-6 text-[#7D7D7D] text-sm md:text-base leading-relaxed text-justify border-t border-[#E6E6E6] pt-4 bg-[#E6E6E6]/40">
           {faq.answer}
         </div>
       </div>
