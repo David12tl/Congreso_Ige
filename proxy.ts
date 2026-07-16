@@ -102,6 +102,8 @@ export async function proxy(request: NextRequest) {
     "/",
     "/login",
     "/register",
+    "/reset-password",
+    "/update-password",
     "/about-ige",
     "/aboutme",
     "/Conferencias",

@@ -269,7 +269,59 @@ function mapSupabaseError(message: string): string {
     return 'El formato del correo electrónico no es válido.';
   }
 
+  if (lower.includes('unable to validate email address')) {
+    return 'El formato del correo electrónico no es válido.';
+  }
+  if (lower.includes('email link is invalid or has expired')) {
+    return 'El enlace de recuperación ha expirado o no es válido. Solicita uno nuevo.';
+  }
+  if (lower.includes('new password should be different')) {
+    return 'La nueva contraseña debe ser diferente a la anterior.';
+  }
+
   // OWASP: Fallback genérico sin exponer el mensaje original
   // Esto evita filtrar detalles internos del sistema
   return 'Ocurrió un error inesperado. Por favor, intenta de nuevo.';
+}
+
+/**
+ * Envía un correo electrónico al usuario con un enlace para restablecer su contraseña.
+ * Supabase se encarga de la plantilla del email con el enlace de recuperación.
+ * El enlace apunta a /auth/callback?type=recovery que intercambia el code por sesión
+ * y redirige a /update-password.
+ */
+export async function resetPassword(email: string): Promise<AuthResult> {
+  const supabase = await createClient();
+
+  // OWASP: Siempre devolver éxito aunque el email no exista para no revelar
+  // qué correos están registrados (prevención de enumeración de usuarios)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+  });
+
+  if (error) {
+    const message = mapSupabaseError(error.message);
+    return { error: message };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Actualiza la contraseña del usuario autenticado.
+ * Requiere que el usuario tenga una sesión activa (después del recovery flow).
+ */
+export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    const message = mapSupabaseError(error.message);
+    return { error: message };
+  }
+
+  return { success: true, redirectTo: '/dashboard/perfil' };
 }

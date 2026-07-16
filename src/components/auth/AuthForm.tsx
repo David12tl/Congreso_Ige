@@ -165,7 +165,7 @@ export default function AuthForm({ initialError = null }: AuthFormProps) {
             <label htmlFor="login-password" className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Contraseña
             </label>
-            <a href="#" className="text-xs font-bold text-[#800020] hover:underline">
+            <a href="/reset-password" className="text-xs font-bold text-[#800020] hover:underline">
               ¿Olvidaste tu contraseña?
             </a>
           </div>

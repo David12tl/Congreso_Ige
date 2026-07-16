@@ -52,6 +52,7 @@ function sanitizeErrorParam(error: string | null): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
+  const type = searchParams.get('type'); // 'recovery' for password reset, null for OAuth login
   
   // OWASP: Get secure origin from request (dynamic, for serverless environments)
   // This detects automatically if we're on localhost or your Vercel domain
@@ -104,6 +105,16 @@ export async function GET(request: Request) {
   }
 
   const user = data.user;
+
+  // --- FLUJO DE RECUPERACIÓN DE CONTRASEÑA ---
+  // Si el callback viene con type=recovery, redirigir a /update-password
+  // para que el usuario pueda establecer su nueva contraseña
+  if (type === 'recovery') {
+    return NextResponse.redirect(
+      `${secureOrigin}/update-password`,
+      { status: 307 }
+    );
+  }
 
   try {
     // --- CRITICAL: Get the REAL id_rol from the database ---
