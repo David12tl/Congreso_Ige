@@ -14,7 +14,7 @@ import {
 } from 'react-icons/hi'
 
 // Importamos createClient directo de supabase-js para evitar problemas con helpers obsoletos
-import { createClient } from '@supabase/supabase-js'
+import { createClient, User } from '@supabase/supabase-js'
 import { getMiPerfil, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
 import { getResumenAsistente } from '../usuario/actions'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -42,6 +42,13 @@ interface UnidadAcademica {
 
 type ResumenDashboard = Awaited<ReturnType<typeof getResumenAsistente>>
 
+// Interfaz para estructurar de manera tipada la metadata que retorna OAuth (Google)
+interface SupabaseUserMetadata {
+  avatar_url?: string
+  picture?: string
+  [key: string]: unknown
+}
+
 import { PreTicketOnboarding } from './PreTicketOnboarding'
 
 export default function PerfilPage() {
@@ -57,6 +64,26 @@ export default function PerfilPage() {
   const [uaError, setUaError] = useState<string | null>(null)
 
   const requiereCompletarUA = perfil !== null && perfil.unidadAcademicaId === null
+
+  // Función unificada y tipada para extraer de forma segura el avatar del usuario
+  const extraerAvatarDeUsuario = (user: User | null | undefined): string | null => {
+    if (!user) return null
+    
+    const userMetadata = user.user_metadata as SupabaseUserMetadata | undefined
+    
+    // 1. Intentar desde metadatos estándar
+    if (userMetadata?.avatar_url) return userMetadata.avatar_url
+    if (userMetadata?.picture) return userMetadata.picture
+    
+    // 2. Intentar desde los datos de identidad del proveedor (Google OAuth)
+    if (user.identities && user.identities[0]?.identity_data) {
+      const idData = user.identities[0].identity_data as SupabaseUserMetadata
+      if (idData.avatar_url) return idData.avatar_url
+      if (idData.picture) return idData.picture
+    }
+
+    return null
+  }
 
   const actualizarDatosPantalla = async () => {
     try {
@@ -76,9 +103,7 @@ export default function PerfilPage() {
       setResumen(dataResumen)
       setUnidadesAcademicas(dataUAs as UnidadAcademica[])
 
-      // Intentamos recuperar la URL del avatar buscando en ambas posibilidades de metadatos del proveedor (OAuth)
-      const userMetadata = session?.user?.user_metadata
-      const photoUrl = userMetadata?.avatar_url || userMetadata?.picture || null
+      const photoUrl = extraerAvatarDeUsuario(session?.user)
       setAvatarUrl(photoUrl)
 
       if (dataPerfil?.unidadAcademicaId) {
@@ -92,49 +117,51 @@ export default function PerfilPage() {
   useEffect(() => {
     let activo = true
 
-    const sincronizarPerfil = async () => {
+    const inicializarYEscucharSesion = async () => {
       try {
+        // 1. Obtener datos iniciales de la base de datos y sesión actual
         const [dataPerfil, dataResumen, dataUAs, { data: { session } }] = await Promise.all([
           getMiPerfil(),
           getResumenAsistente(),
           getUnidadesAcademicas(),
           supabase.auth.getSession()
         ])
-        
+
         if (activo) {
           if (dataPerfil) {
             setPerfil(dataPerfil as PerfilUsuarioConId)
-          } else {
-            setPerfil(null)
+            if (dataPerfil.unidadAcademicaId) {
+              setSelectedUA(dataPerfil.unidadAcademicaId)
+            }
           }
-
           setResumen(dataResumen)
           setUnidadesAcademicas(dataUAs as UnidadAcademica[])
-
-          // Intentamos recuperar la URL del avatar buscando en ambas posibilidades de metadatos del proveedor (OAuth)
-          const userMetadata = session?.user?.user_metadata
-          const photoUrl = userMetadata?.avatar_url || userMetadata?.picture || null
+          
+          const photoUrl = extraerAvatarDeUsuario(session?.user)
           setAvatarUrl(photoUrl)
-
-          if (dataPerfil?.unidadAcademicaId) {
-            setSelectedUA(dataPerfil.unidadAcademicaId)
-          }
         }
-      } catch (err) {
-        console.error('Error al sincronizar datos del perfil:', err)
+      } catch (error) {
+        console.error('Error cargando perfil inicial:', error)
       } finally {
-        if (activo) {
-          setLoading(false)
-        }
+        if (activo) setLoading(false)
       }
     }
 
-    sincronizarPerfil()
+    inicializarYEscucharSesion()
+
+    // 2. Escuchar cambios de autenticación en tiempo real (vital para Google OAuth)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (activo && session?.user) {
+        const photoUrl = extraerAvatarDeUsuario(session.user)
+        setAvatarUrl(photoUrl)
+      }
+    })
 
     return () => {
       activo = false
+      subscription.unsubscribe()
     }
-  }, []) // Dependencias limpias y seguras para evitar bucles infinitos de renderizado
+  }, [])
 
   const handleSaveUA = async () => {
     if (selectedUA === '') return
@@ -213,7 +240,7 @@ export default function PerfilPage() {
         {/* Panel Izquierdo: Avatar Dinámico de Google o Iniciales */}
         <GlassCard className="p-8 flex flex-col items-center justify-center text-center bg-white border border-[#cbd5e1] shadow-sm" glowColor="cyan">
           
-          {/* Contenedor circular idéntico al de tu segunda imagen */}
+          {/* Contenedor circular con borde blanco grueso y sombra física */}
           <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-[#e0e7ff] flex items-center justify-center text-[#1e3a8a] shadow-md relative shrink-0">
             {avatarUrl ? (
               <Image 
