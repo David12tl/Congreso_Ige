@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { 
   HiOutlineIdentification, 
@@ -13,16 +13,19 @@ import {
   HiOutlineClipboardList
 } from 'react-icons/hi'
 
-// Importamos createClient directo de supabase-js para evitar problemas con helpers obsoletos
-import { createClient, User } from '@supabase/supabase-js'
+// Importamos el cliente SSR de Supabase para sincronización correcta con cookies de Next.js
+import { createBrowserClient } from '@supabase/ssr'
+import type { User } from '@supabase/supabase-js'
 import { getMiPerfil, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
 import { getResumenAsistente } from '../usuario/actions'
 import { GlassCard } from '@/components/ui/GlassCard'
 
-// Inicializamos el cliente de supabase del lado del cliente de forma directa y segura
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Inicializamos el cliente de Supabase del lado del cliente usando @supabase/ssr
+// para sincronización correcta con las cookies de sesión de Next.js
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+)
 
 interface PerfilUsuarioConId {
   id: string
@@ -42,14 +45,42 @@ interface UnidadAcademica {
 
 type ResumenDashboard = Awaited<ReturnType<typeof getResumenAsistente>>
 
-// Interfaz para estructurar de manera tipada la metadata que retorna OAuth (Google)
-interface SupabaseUserMetadata {
+// Interfaz estricta para la metadata que retorna OAuth (Google)
+interface OAuthUserMetadata {
   avatar_url?: string
   picture?: string
   [key: string]: unknown
 }
 
 import { PreTicketOnboarding } from './PreTicketOnboarding'
+
+/**
+ * Extrae de forma segura y tipada la URL del avatar desde el objeto User de Supabase.
+ * Prioridad de búsqueda:
+ *   1. user.user_metadata.avatar_url
+ *   2. user.user_metadata.picture
+ *   3. user.identities[0].identity_data.avatar_url
+ *   4. user.identities[0].identity_data.picture
+ */
+function extraerAvatarDeUsuario(user: User | null | undefined): string | null {
+  if (!user) return null
+
+  const metadata = user.user_metadata as OAuthUserMetadata | undefined
+
+  // 1. Desde metadatos estándar del usuario
+  if (metadata?.avatar_url) return metadata.avatar_url
+  if (metadata?.picture) return metadata.picture
+
+  // 2. Desde los datos de identidad del proveedor OAuth (Google)
+  const identity = user.identities?.[0]
+  if (identity?.identity_data) {
+    const idData = identity.identity_data as OAuthUserMetadata
+    if (idData.avatar_url) return idData.avatar_url
+    if (idData.picture) return idData.picture
+  }
+
+  return null
+}
 
 export default function PerfilPage() {
   const [perfil, setPerfil] = useState<PerfilUsuarioConId | null>(null)
@@ -65,91 +96,46 @@ export default function PerfilPage() {
 
   const requiereCompletarUA = perfil !== null && perfil.unidadAcademicaId === null
 
-  // Función unificada y tipada para extraer de forma segura el avatar del usuario
-  const extraerAvatarDeUsuario = (user: User | null | undefined): string | null => {
-    if (!user) return null
-    
-    const userMetadata = user.user_metadata as SupabaseUserMetadata | undefined
-    
-    // 1. Intentar desde metadatos estándar
-    if (userMetadata?.avatar_url) return userMetadata.avatar_url
-    if (userMetadata?.picture) return userMetadata.picture
-    
-    // 2. Intentar desde los datos de identidad del proveedor (Google OAuth)
-    if (user.identities && user.identities[0]?.identity_data) {
-      const idData = user.identities[0].identity_data as SupabaseUserMetadata
-      if (idData.avatar_url) return idData.avatar_url
-      if (idData.picture) return idData.picture
-    }
-
-    return null
-  }
-
-  const actualizarDatosPantalla = async () => {
+  // Función unificada para cargar todos los datos del perfil + sesión
+  const cargarDatos = useCallback(async () => {
     try {
       const [dataPerfil, dataResumen, dataUAs, { data: { session } }] = await Promise.all([
         getMiPerfil(),
         getResumenAsistente(),
         getUnidadesAcademicas(),
-        supabase.auth.getSession()
+        supabase.auth.getSession(),
       ])
-      
+
       if (dataPerfil) {
-        setPerfil(dataPerfil as PerfilUsuarioConId)
+        setPerfil(dataPerfil)
+        if (dataPerfil.unidadAcademicaId) {
+          setSelectedUA(dataPerfil.unidadAcademicaId)
+        }
       } else {
         setPerfil(null)
       }
-      
+
       setResumen(dataResumen)
-      setUnidadesAcademicas(dataUAs as UnidadAcademica[])
+      setUnidadesAcademicas(dataUAs)
 
       const photoUrl = extraerAvatarDeUsuario(session?.user)
       setAvatarUrl(photoUrl)
-
-      if (dataPerfil?.unidadAcademicaId) {
-        setSelectedUA(dataPerfil.unidadAcademicaId)
-      }
     } catch (err) {
       console.error('Error al sincronizar datos del perfil:', err)
     }
-  }
+  }, [])
 
   useEffect(() => {
     let activo = true
 
-    const inicializarYEscucharSesion = async () => {
-      try {
-        // 1. Obtener datos iniciales de la base de datos y sesión actual
-        const [dataPerfil, dataResumen, dataUAs, { data: { session } }] = await Promise.all([
-          getMiPerfil(),
-          getResumenAsistente(),
-          getUnidadesAcademicas(),
-          supabase.auth.getSession()
-        ])
-
-        if (activo) {
-          if (dataPerfil) {
-            setPerfil(dataPerfil as PerfilUsuarioConId)
-            if (dataPerfil.unidadAcademicaId) {
-              setSelectedUA(dataPerfil.unidadAcademicaId)
-            }
-          }
-          setResumen(dataResumen)
-          setUnidadesAcademicas(dataUAs as UnidadAcademica[])
-          
-          const photoUrl = extraerAvatarDeUsuario(session?.user)
-          setAvatarUrl(photoUrl)
-        }
-      } catch (error) {
-        console.error('Error cargando perfil inicial:', error)
-      } finally {
-        if (activo) setLoading(false)
-      }
+    const inicializar = async () => {
+      await cargarDatos()
+      if (activo) setLoading(false)
     }
 
-    inicializarYEscucharSesion()
+    inicializar()
 
-    // 2. Escuchar cambios de autenticación en tiempo real (vital para Google OAuth)
+    // Escuchar cambios de autenticación en tiempo real (vital para Google OAuth)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (activo && session?.user) {
         const photoUrl = extraerAvatarDeUsuario(session.user)
@@ -161,7 +147,7 @@ export default function PerfilPage() {
       activo = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [cargarDatos])
 
   const handleSaveUA = async () => {
     if (selectedUA === '') return
@@ -173,7 +159,7 @@ export default function PerfilPage() {
       const res = await actualizarMiUnidadAcademica(Number(selectedUA))
       if (res.success) {
         setUaSaved(true)
-        await actualizarDatosPantalla()
+        await cargarDatos()
         setTimeout(() => setUaSaved(false), 3000)
       } else {
         setUaError(res.message)
@@ -249,7 +235,6 @@ export default function PerfilPage() {
                 width={128}
                 height={128}
                 className="w-full h-full object-cover rounded-full"
-                unoptimized 
               />
             ) : perfil?.email ? (
               <span className="text-3xl font-extrabold tracking-wider uppercase text-[#1e3a8a]">
@@ -385,4 +370,4 @@ export default function PerfilPage() {
 
     </div>
   )
-}
+} 

@@ -24,14 +24,16 @@ const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired', 
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.
+ * Debe coincidir EXACTAMENTE con la función homónima en proxy.ts
+ * para evitar redirecciones inconsistentes tras el login OAuth.
  *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargado
- *   3 → Usuario      → /dashboard/usuario
+ *   2 → Encargado    → /dashboard/encargados
+ *   3 → Usuario      → /dashboard/perfil
  */
 function getDashboardPath(idRol: number): string {
   if (idRol === 1) return '/dashboard/admin';
-  if (idRol === 2) return '/dashboard/encargado';
-  return '/dashboard/usuario';
+  if (idRol === 2) return '/dashboard/encargados';
+  return '/dashboard/perfil';
 }
 
 /**
@@ -128,9 +130,9 @@ export async function GET(request: Request) {
       console.warn('[Security] Profile lookup failed during OAuth callback');
     }
     
-    // Default safe redirect - user dashboard (lowest privilege)
+    // Default safe redirect - perfil dashboard (lowest privilege)
     return NextResponse.redirect(
-      `${secureOrigin}/dashboard/usuario`,
+      `${secureOrigin}/dashboard/perfil`,
       { status: 307 }
     );
   }
