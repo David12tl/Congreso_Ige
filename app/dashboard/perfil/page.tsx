@@ -162,7 +162,7 @@ export default function PerfilPage() {
               Perfil
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">USUARIO // INFORMACIÓN_PERSONAL_Y_CREDENCIALES</p>
+          
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-cyan-50 border border-cyan-200 rounded-full">

@@ -134,61 +134,6 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* ── Tarjetas de Estadísticas Rápidas ────────────────────────── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Tickets Emitidos</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a]">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-slate-900">{stats.totalTickets.toLocaleString()}</p>
-          <p className="text-xs text-slate-500 mt-1">Boletos registrados en el sistema</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Asistentes</span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-slate-900">{stats.totalAsistentes.toLocaleString()}</p>
-          <p className="text-xs text-slate-500 mt-1">Asistentes registrados nominalmente</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Capacidad Total</span>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-slate-900">{stats.capacidadTotal.toLocaleString()}</p>
-          <p className="text-xs text-slate-500 mt-1">Lugares disponibles en todas las zonas</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Zonas Activas</span>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-slate-900">{stats.zonasDisponibles}</p>
-          <p className="text-xs text-slate-500 mt-1">Zonas con disponibilidad actual</p>
-        </div>
-      </section>
-
       {/* ── Grid de Acceso Rápido ───────────────────────────────────── */}
       <section>
         <h2 className="text-xl font-bold text-slate-900 mb-4">Acceso Rápido</h2>
@@ -245,18 +190,6 @@ export default async function DashboardPage() {
             <p className="text-sm text-slate-500 mt-1">Gafete digital, credenciales y unidad académica</p>
           </Link>
 
-          <Link
-            href="/dashboard/tickets-gestion"
-            className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
-          >
-            <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 mb-4 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Gestión de Tickets</h3>
-            <p className="text-sm text-slate-500 mt-1">Administra y da seguimiento a los boletos</p>
-          </Link>
 
           {esAdmin && (
             <Link
@@ -274,81 +207,6 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
-
-      {/* ── Información del Evento ────────────────────────────────────── */}
-      {evento && (
-        <section className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Información del Congreso</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a] shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Fechas del Evento</p>
-                  <p className="text-sm text-slate-500">{formatDateRange(evento.start_date, evento.end_date)}</p>
-                </div>
-              </div>
-              {evento.location && (
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">Ubicación</p>
-                    <p className="text-sm text-slate-500">{evento.location}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Capacidad</p>
-                  <p className="text-sm text-slate-500">{stats.capacidadTotal.toLocaleString()} lugares en {zonas?.length ?? 0} zonas</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Tickets Emitidos</p>
-                  <p className="text-sm text-slate-500">{stats.totalTickets.toLocaleString()} boletos registrados</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {evento.maps_link && (
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <a
-                href={evento.maps_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#1e3a8a] hover:text-[#1e3a8a]/80 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Ver ubicación en Google Maps
-              </a>
-            </div>
-          )}
-        </section>
-      )}
 
       {/* ── Información de la cuenta ────────────────────────────────── */}
       <section className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">

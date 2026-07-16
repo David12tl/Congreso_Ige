@@ -159,26 +159,6 @@ export default async function UsuarioPage() {
           {/* Columna Izquierda: QR de Acceso & Sede */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             
-            {/* Tarjeta de Código QR de Acceso */}
-            <div className="bg-white p-6 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col items-center">
-              <div className="w-full flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-[#0f172a]">Gafete Digital</h3>
-                <span className="text-xs font-bold text-white bg-[#7f1d1d] px-2.5 py-1 rounded-full">Acceso QR</span>
-              </div>
-              <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] shadow-inner">
-                <img
-                  src={qrCodeUrl}
-                  alt="QR de Acceso"
-                  width={180}
-                  height={180}
-                  className="rounded-xl mix-blend-multiply"
-                />
-              </div>
-              <p className="text-[11px] font-bold text-[#475569] uppercase tracking-wider mt-4 text-center">
-                Muestra este código al entrar a las conferencias
-              </p>
-            </div>
-
             {/* Unidad Académica */}
             <div className="bg-white p-6 rounded-2xl border border-[#cbd5e1] shadow-sm">
               <div className="flex items-center justify-between mb-4">
@@ -204,24 +184,6 @@ export default async function UsuarioPage() {
               </div>
             </div>
 
-            {/* Credenciales / Medallas */}
-            <div className="bg-white p-6 rounded-2xl border border-[#cbd5e1] shadow-sm">
-              <h3 className="font-bold text-lg text-[#0f172a] mb-4">Tus Medallas</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col items-center text-center p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
-                  <div className="w-10 h-10 rounded-full bg-[#fef2f2] mb-2 flex items-center justify-center text-[#7f1d1d]">
-                    🏆
-                  </div>
-                  <p className="text-xs font-bold text-[#0f172a]">Asistente IGE</p>
-                </div>
-                <div className="flex flex-col items-center text-center p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
-                  <div className="w-10 h-10 rounded-full bg-[#eff6ff] mb-2 flex items-center justify-center text-[#1e3a8a]">
-                    ⚡
-                  </div>
-                  <p className="text-xs font-bold text-[#0f172a]">Pase Completo</p>
-                </div>
-              </div>
-            </div>
 
           </div>
 
