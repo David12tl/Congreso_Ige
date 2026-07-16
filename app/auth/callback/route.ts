@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getUserProfile, syncAuthMetadataWithProfile } from '@/db/perfiles';
-import { getSecureRedirectBase } from '@/utils/supabase/get-redirect-url';
+import { getSecureRedirectBase, getRequestOrigin } from '@/utils/supabase/get-redirect-url';
 
 /**
  * ============================================================================
@@ -10,7 +10,7 @@ import { getSecureRedirectBase } from '@/utils/supabase/get-redirect-url';
  * 
  * Security considerations:
  * - Validates the presence and format of the authorization code
- * - Uses secure redirect base from environment configuration
+ * - Uses secure redirect base from environment configuration OR request origin
  * - Never exposes internal error details to the client
  * - Prevents open redirect vulnerabilities
  * - Validates user profile before redirecting to protected routes
@@ -20,7 +20,7 @@ import { getSecureRedirectBase } from '@/utils/supabase/get-redirect-url';
  * Allowed error query parameters (whitelist)
  * Prevents open redirect by only allowing predefined error messages
  */
-const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired'] as const;
+const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired', 'config-error'] as const;
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.
@@ -32,15 +32,6 @@ function getDashboardPath(idRol: number): string {
   if (idRol === 1) return '/dashboard/admin';
   if (idRol === 2) return '/dashboard/encargado';
   return '/dashboard/usuario';
-}
-
-/**
- * Validates that an error parameter is in the allowed whitelist
- * Prevents open redirect attacks via error query params
- */
-function isValidErrorParam(error: string | null): boolean {
-  if (!error) return true; // No error param is fine
-  return ALLOWED_ERROR_PARAMS.includes(error as typeof ALLOWED_ERROR_PARAMS[number]);
 }
 
 /**
@@ -60,19 +51,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   
-  // OWASP: Get secure origin from environment configuration
-  // Never trust the request origin for security decisions
-  const secureOrigin = getSecureRedirectBase();
+  // OWASP: Get secure origin from request (dynamic, for serverless environments)
+  // This detects automatically if we're on localhost or your Vercel domain
+  // The origin is validated against the whitelist to prevent Open Redirect
+  const requestOrigin = getRequestOrigin(request);
   
-  // If secure origin is not configured, fail securely
-  if (!secureOrigin) {
-    // OWASP: Log only in development, never expose in production
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[Security] NEXT_PUBLIC_SITE_URL not configured');
-    }
-    // Redirect to a safe error page without exposing details
-    return NextResponse.redirect('http://localhost:3000/login?error=config-error', { status: 307 });
-  }
+  // Priority: env var > validated request origin
+  // This ensures we use NEXT_PUBLIC_SITE_URL if configured, but falls back safely
+  const secureOrigin = getSecureRedirectBase(requestOrigin) || requestOrigin || 'https://congreso-ige.vercel.app';
 
   // Validate that we have an authorization code
   // OWASP: This prevents processing empty or malformed requests

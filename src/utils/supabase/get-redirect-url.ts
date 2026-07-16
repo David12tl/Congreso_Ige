@@ -34,6 +34,29 @@ const DEVELOPMENT_ORIGINS = [
 ] as const;
 
 /**
+ * All allowed origins (production + development)
+ * Used for dynamic origin validation in serverless environments
+ */
+const ALL_ALLOWED_ORIGINS = [...PRODUCTION_ORIGINS, ...DEVELOPMENT_ORIGINS] as const;
+
+/**
+ * Validates that an origin is in the whitelist of allowed origins.
+ * This prevents Open Redirect attacks by only allowing known domains.
+ * 
+ * @param origin - The origin to validate
+ * @returns true if the origin is safe to use for redirects
+ */
+export function isOriginAllowed(origin: string): boolean {
+  try {
+    // Basic URL validation to prevent injection
+    const url = new URL(origin);
+    return ALL_ALLOWED_ORIGINS.includes(url.origin as typeof ALL_ALLOWED_ORIGINS[number]);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Safely extracts and validates the origin from an environment variable
  * 
  * Security considerations:
@@ -80,32 +103,69 @@ function getValidatedOriginFromEnv(): string | null {
  * 
  * Priority order:
  * 1. NEXT_PUBLIC_SITE_URL environment variable (Vercel production)
- * 2. window.location.origin (client-side only, when no env var)
- * 3. http://localhost:3000 (development fallback)
+ * 2. requestOrigin parameter (extracted from the incoming request in serverless)
+ * 3. window.location.origin (client-side only, when no env var)
+ * 4. http://localhost:3000 (development fallback)
  * 
+ * @param requestOrigin - Optional origin from the incoming request (for serverless environments)
  * @returns The sanitized base URL for redirects
  */
-export function getSecureRedirectBase(): string {
+export function getSecureRedirectBase(requestOrigin?: string): string {
   // Priority 1: Environment variable (configured in Vercel)
   const envOrigin = getValidatedOriginFromEnv();
   if (envOrigin) {
     return envOrigin;
   }
 
-  // In server-side context (Route Handler, Server Action), 
+  // Priority 2: Request origin (for serverless/edge environments)
+  // This extracts the origin from the incoming request URL
+  if (requestOrigin && isOriginAllowed(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  // Priority 3: In server-side context (Route Handler, Server Action), 
   // fall back to localhost only in development
   if (typeof window === 'undefined') {
     if (process.env.NODE_ENV === 'development') {
       return 'http://localhost:3000';
     }
-    // In production server-side context without env var,
-    // this is a configuration error - return empty to trigger safe fallback
+    // In production server-side context without env var or valid request origin,
+    // return empty string to trigger safe fallback in caller
+    // The caller should handle this by using the request origin dynamically
     return '';
   }
 
-  // Client-side: use window.location.origin safely
+  // Priority 4: Client-side: use window.location.origin safely
   // The browser ensures this is always the actual origin
   return window.location.origin;
+}
+
+/**
+ * Extracts and validates the origin from the incoming request
+ * Used in Route Handlers to get the real origin in serverless environments
+ * 
+ * @param request - The incoming Request object
+ * @returns The validated origin string or empty string if not allowed
+ */
+export function getRequestOrigin(request: Request): string {
+  try {
+    const requestUrl = new URL(request.url);
+    const origin = requestUrl.origin;
+    
+    // Validate against whitelist
+    if (isOriginAllowed(origin)) {
+      return origin;
+    }
+    
+    // Log warning in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[Security] Request origin not in whitelist: ${origin}`);
+    }
+    
+    return '';
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -116,10 +176,11 @@ export function getSecureRedirectBase(): string {
  * - Validates the base URL to prevent open redirects
  * - Never exposes internal URLs to external origins
  * 
+ * @param requestOrigin - Optional origin from the incoming request (for serverless environments)
  * @returns The complete callback URL for redirectTo in signInWithOAuth
  */
-export function getSecureCallbackUrl(): string {
-  const base = getSecureRedirectBase();
+export function getSecureCallbackUrl(requestOrigin?: string): string {
+  const base = getSecureRedirectBase(requestOrigin);
   
   // If we have a validated base, append the callback path
   if (base) {

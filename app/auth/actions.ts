@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
-import { getSecureCallbackUrl } from '@/utils/supabase/get-redirect-url';
+import { getSecureCallbackUrl, getSecureRedirectBase, isOriginAllowed } from '@/utils/supabase/get-redirect-url';
 
 export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
@@ -70,9 +71,9 @@ export async function signInWithPassword(
 /**
  * Registro de nuevo usuario con correo, contraseña, nombre completo y land de interés.
  * TAMBIÉN:
- * 1. Crea un ticket para el usuario
- * 2. Asigna un asiento automáticamente
- * 3. Genera y envía la credencial en PDF
+ *  1. Crea un ticket para el usuario
+ *  2. Asigna un asiento automáticamente
+ *  3. Genera y envía la credencial en PDF
  */
 export async function signUp(data: {
   email: string;
@@ -178,39 +179,66 @@ export async function signOut() {
  * 
  * Security considerations (OWASP):
  * - Uses secure callback URL from helper to prevent Open Redirect
- * - Never constructs URLs with user input
+ * - Gets request origin dynamically for serverless/edge environments
  * - Validates redirect URL against whitelist
  * - Generic error messages to prevent information disclosure
  */
 export async function signInWithGoogle(): Promise<string> {
   const supabase = await createClient();
   
-  // OWASP: Usar URL de redirección segura validada contra whitelist
-  const redirectTo = getSecureCallbackUrl();
+  // Get request origin dynamically for serverless/edge environments
+  // This works in Server Actions to detect the real host
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = headersList.get('x-forwarded-proto') || 'https';
   
-  // Validar que tenemos una URL válida antes de continuar
-  if (!redirectTo) {
-    // OWASP: Error genérico sin exponer detalles internos
-    throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
-  }
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-      queryParams: {
-        prompt: 'select_account',
+  // Construct request origin if we have a host header
+  const requestOrigin = host ? `${protocol}://${host}` : undefined;
+  
+  // OWASP: Try to get secure callback URL from env var or request origin
+  const redirectTo = getSecureCallbackUrl(requestOrigin);
+  
+  // If we have a valid redirect URL, use it
+  if (redirectTo) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
-    },
-  });
+    });
 
-  if (error) {
-    // OWASP: Mensaje de error genérico sin exponer detalles del servidor
-    // No propagar mensajes de error internos al cliente
-    throw new Error('Error de conexión con el proveedor de autenticación. Intente nuevamente.');
+    if (error) {
+      throw new Error('Error de conexión con el proveedor de autenticación. Intente nuevamente.');
+    }
+    
+    return data.url;
+  }
+  
+  // Fallback: If we have a validated request origin, use it directly
+  // This handles Vercel serverless where env var might not be set
+  if (requestOrigin && isOriginAllowed(requestOrigin)) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${requestOrigin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
+
+    if (error) {
+      throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
+    }
+    
+    return data.url;
   }
 
-  return data.url;
+  // No se pudo determinar el origen de forma segura
+  throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
 }
 
 /**
