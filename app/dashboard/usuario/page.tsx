@@ -82,25 +82,7 @@ export default async function UsuarioPage() {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] text-[#1e293b] font-sans">
-      
-      {/* Barra de Navegación Superior */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-[#cbd5e1] shadow-sm px-6 py-4">
-        <div className="max-w-[1280px] mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#1e3a8a] flex items-center justify-center text-white font-bold text-sm">I</div>
-            <span className="font-bold text-lg tracking-tight text-[#1e3a8a]">CONGRESO IGE 2026</span>
-          </div>
-          <form action="/auth/signout" method="post">
-            <button type="submit" className="text-sm font-semibold text-[#475569] hover:text-[#7f1d1d] transition-colors flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Cerrar Sesión
-            </button>
-          </form>
-        </div>
-      </header>
-
+        
       {/* Main Container */}
       <main className="pt-24 pb-20 px-4 md:px-16 max-w-[1280px] mx-auto">
         
