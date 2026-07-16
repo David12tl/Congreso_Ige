@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import ProgramaCompleto from '../../../src/components/ui/Speakers/ProgramaCompleto';
 import { redirect } from 'next/navigation';
 
 interface ProfileData {
@@ -184,79 +185,7 @@ export default async function UsuarioPage() {
 
               {/* Timeline Estilizado */}
               <div className="space-y-8 relative before:absolute before:inset-0 before:right-auto before:left-[11px] before:w-0.5 before:bg-[#cbd5e1]">
-                
-                {/* Evento 1 */}
-                <div className="flex gap-4 relative">
-                  <div className="w-6 h-6 rounded-full border-4 border-[#1e3a8a] bg-white z-10 shrink-0"></div>
-                  <div className="flex-1 -mt-1">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider">09:00 AM - 10:30 AM</span>
-                      <span className="bg-[#7f1d1d]/10 text-[#7f1d1d] px-2 py-0.5 rounded text-[10px] font-bold">Magistral</span>
-                    </div>
-                    <div className="p-4 rounded-xl border border-[#e2e8f0] hover:border-[#1e3a8a]/40 hover:bg-[#f8fafc] transition-all">
-                      <h4 className="font-bold text-base text-[#0f172a] hover:text-[#1e3a8a] transition-colors">
-                        El Futuro de la Inteligencia Artificial en la Gestión Empresarial
-                      </h4>
-                      <p className="text-xs text-[#475569] mt-1">Auditorio Principal • Nivel 2</p>
-                      <div className="flex items-center gap-2 mt-4">
-                        <div className="w-7 h-7 rounded-full bg-[#1e3a8a] text-white font-bold text-[10px] flex items-center justify-center">
-                          HV
-                        </div>
-                        <span className="text-xs font-medium text-[#0f172a]">Dra. Helena Vance</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Evento 2 */}
-                <div className="flex gap-4 relative">
-                  <div className="w-6 h-6 rounded-full border-4 border-[#7f1d1d] bg-white z-10 shrink-0"></div>
-                  <div className="flex-1 -mt-1">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-xs font-bold text-[#7f1d1d] uppercase tracking-wider">11:15 AM - 12:45 PM</span>
-                      <span className="bg-[#1e3a8a]/10 text-[#1e3a8a] px-2 py-0.5 rounded text-[10px] font-bold">Taller</span>
-                    </div>
-                    <div className="p-4 rounded-xl border border-[#e2e8f0] hover:border-[#7f1d1d]/40 hover:bg-[#f8fafc] transition-all">
-                      <h4 className="font-bold text-base text-[#0f172a] hover:text-[#7f1d1d] transition-colors">
-                        Estrategias de Liderazgo y Scrum para Nuevos Emprendedores
-                      </h4>
-                      <p className="text-xs text-[#475569] mt-1">Laboratorio de Innovación • Nivel 1</p>
-                      <div className="flex items-center gap-2 mt-4">
-                        <div className="w-7 h-7 rounded-full bg-[#7f1d1d] text-white font-bold text-[10px] flex items-center justify-center">
-                          KS
-                        </div>
-                        <span className="text-xs font-medium text-[#0f172a]">Mtro. Kenji Saito</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Evento 3 */}
-                <div className="flex gap-4 relative">
-                  <div className="w-6 h-6 rounded-full border-4 border-[#1e3a8a] bg-white z-10 shrink-0"></div>
-                  <div className="flex-1 -mt-1">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-xs font-bold text-[#1e3a8a] uppercase tracking-wider">02:30 PM - 03:45 PM</span>
-                      <span className="bg-[#1e3a8a]/10 text-[#1e3a8a] px-2 py-0.5 rounded text-[10px] font-bold">Panel</span>
-                    </div>
-                    <div className="p-4 rounded-xl border border-[#e2e8f0] hover:border-[#1e3a8a]/40 hover:bg-[#f8fafc] transition-all">
-                      <h4 className="font-bold text-base text-[#0f172a] hover:text-[#1e3a8a] transition-colors">
-                        Tendencias en Sostenibilidad y Economía Circular 2026
-                      </h4>
-                      <p className="text-xs text-[#475569] mt-1">Sala Tecnológica • Nivel 3</p>
-                      <div className="flex items-center -space-x-1 mt-4">
-                        <div className="w-7 h-7 rounded-full bg-[#1e3a8a] text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">
-                          A
-                        </div>
-                        <div className="w-7 h-7 rounded-full bg-[#7f1d1d] text-white text-[9px] font-bold flex items-center justify-center border-2 border-white">
-                          B
-                        </div>
-                        <span className="text-xs text-[#475569] pl-2 font-medium">+2 Expositores</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+                <ProgramaCompleto />
               </div>
             </div>
           </div>
