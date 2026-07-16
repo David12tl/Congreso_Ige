@@ -76,9 +76,10 @@ export default function PerfilPage() {
       setResumen(dataResumen)
       setUnidadesAcademicas(dataUAs as UnidadAcademica[])
 
-      if (session?.user?.user_metadata?.avatar_url) {
-        setAvatarUrl(session.user.user_metadata.avatar_url)
-      }
+      // Intentamos recuperar la URL del avatar buscando en ambas posibilidades de metadatos del proveedor (OAuth)
+      const userMetadata = session?.user?.user_metadata
+      const photoUrl = userMetadata?.avatar_url || userMetadata?.picture || null
+      setAvatarUrl(photoUrl)
 
       if (dataPerfil?.unidadAcademicaId) {
         setSelectedUA(dataPerfil.unidadAcademicaId)
@@ -110,9 +111,10 @@ export default function PerfilPage() {
           setResumen(dataResumen)
           setUnidadesAcademicas(dataUAs as UnidadAcademica[])
 
-          if (session?.user?.user_metadata?.avatar_url) {
-            setAvatarUrl(session.user.user_metadata.avatar_url)
-          }
+          // Intentamos recuperar la URL del avatar buscando en ambas posibilidades de metadatos del proveedor (OAuth)
+          const userMetadata = session?.user?.user_metadata
+          const photoUrl = userMetadata?.avatar_url || userMetadata?.picture || null
+          setAvatarUrl(photoUrl)
 
           if (dataPerfil?.unidadAcademicaId) {
             setSelectedUA(dataPerfil.unidadAcademicaId)
@@ -132,7 +134,7 @@ export default function PerfilPage() {
     return () => {
       activo = false
     }
-  }, [supabase.auth]) // Se incluye supabase.auth en las dependencias para cumplir con las reglas de React hooks
+  }, []) // Dependencias limpias y seguras para evitar bucles infinitos de renderizado
 
   const handleSaveUA = async () => {
     if (selectedUA === '') return
@@ -191,7 +193,6 @@ export default function PerfilPage() {
 
       {/* 📢 BANNER: Si no ha seleccionado UA aún */}
       {requiereCompletarUA && (
-        // Se cambió el glowColor "red" que fallaba a "amber" que es compatible con tu componente
         <GlassCard className="p-5 border-l-4 border-[#7f1d1d] bg-[#fef2f2]" glowColor="amber">
           <div className="flex items-start gap-4">
             <HiOutlineExclamationCircle className="w-8 h-8 text-[#7f1d1d] shrink-0 mt-0.5" />
@@ -212,18 +213,19 @@ export default function PerfilPage() {
         {/* Panel Izquierdo: Avatar Dinámico de Google o Iniciales */}
         <GlassCard className="p-8 flex flex-col items-center justify-center text-center bg-white border border-[#cbd5e1] shadow-sm" glowColor="cyan">
           
-          <div className="w-28 h-28 rounded-full border-4 border-slate-100 overflow-hidden bg-slate-200 flex items-center justify-center text-[#1e3a8a] shadow-inner relative">
+          {/* Contenedor circular idéntico al de tu segunda imagen */}
+          <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-[#e0e7ff] flex items-center justify-center text-[#1e3a8a] shadow-md relative shrink-0">
             {avatarUrl ? (
               <Image 
                 src={avatarUrl} 
                 alt="Foto de Perfil" 
-                width={112}
-                height={112}
-                className="w-full h-full object-cover"
-                unoptimized // Esto evita tener que configurar el dominio de googleusercontent en next.config.js para imágenes externas dinámicas
+                width={128}
+                height={128}
+                className="w-full h-full object-cover rounded-full"
+                unoptimized 
               />
             ) : perfil?.email ? (
-              <span className="text-3xl font-extrabold tracking-wider uppercase">
+              <span className="text-3xl font-extrabold tracking-wider uppercase text-[#1e3a8a]">
                 {perfil.email.substring(0, 2)}
               </span>
             ) : (
