@@ -58,7 +58,6 @@ export default function GenerarQRPage() {
               QR
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">USUARIO // CÓDIGO_DE_ACCESO_UNIFICADO</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-cyan-50 border border-cyan-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />

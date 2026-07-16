@@ -21,8 +21,8 @@ import {
   HiOutlineQrcode,
   HiOutlineCash,
   HiOutlineCamera,
+  HiOutlineHome,
 } from 'react-icons/hi'
-
 type UserRole = 'admin' | 'encargado' | 'user'
 
 interface SidebarUser {
@@ -111,6 +111,12 @@ const navItems: NavItem[] = [
     href: '/dashboard/generar-tokens',
     icon: <HiOutlineCash className="w-5 h-5" />,
     roles: ['admin', 'encargado'],
+  },
+  {
+    label: 'Inicio',
+    href: '/dashboard/usuario',
+    icon: <HiOutlineHome className="w-5 h-5" />,
+    roles: ['user'],
   },
   {
     label: 'Mis Asientos',
