@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { auditorioConfig, getSeatKey, type SeatIdentity } from '@/config/auditorioConfig'
 import type { SeatEstatusPago } from './types'
 
@@ -22,11 +23,11 @@ interface AuditorioSeatMapProps {
 /**
  * Mapea el estatus de pago a su color representativo en el mapa.
  *  - libre          : no se usa (se renderiza con el color de la zona)
- *  - pre-registro   : NARANJA  (sin pago en consola de staff)
- *  - pendiente      : ÁMBAR    (legacy = apartado)
- *  - apartado       : AMARILLO (compra pendiente o total < $650)
- *  - pagado         : VERDE    (consola staff)
- *  - completo       : ROJO     (mapa público / vista de caja)
+ *  - pre-registro   : NARANJA
+ *  - pendiente      : ÁMBAR (legacy = apartado)
+ *  - apartado       : AMARILLO/ÁMBAR
+ *  - pagado         : VERDE CORPORATIVO
+ *  - completo       : ROJO (liquidado)
  */
 function getStatusColor(
   status: SeatStatus | undefined,
@@ -43,13 +44,13 @@ function getStatusColor(
       return { backgroundColor: '#EA580C' } // Naranja
     case 'pendiente':
     case 'apartado':
-      return { backgroundColor: '#EAB308' } // Amarillo / Ámbar
+      return { backgroundColor: '#f59e0b' } // Ámbar / Amarillo corporativo limpio
     case 'pagado':
-      return { backgroundColor: '#059669' } // Verde
+      return { backgroundColor: '#00a354' } // Verde corporativo
     case 'completo':
-      return { backgroundColor: '#DC2626' } // Rojo (liquidado en mapa público)
+      return { backgroundColor: '#DC2626' } // Rojo
     default:
-      return { backgroundColor: '#6B7280' } // Gris ocupado genérico
+      return { backgroundColor: '#a3a3a3' } // Gris neutro medio para ocupado genérico
   }
 }
 
@@ -78,45 +79,50 @@ export function AuditorioSeatMap({
   seatStatusMap,
 }: AuditorioSeatMapProps) {
   return (
-    <section className="w-full overflow-x-auto rounded-lg border border-white/10 bg-slate-950 p-4 shadow-2xl">
+    <section className="w-full overflow-x-auto rounded-2xl border border-[#e5e5e5] bg-white p-5 shadow-sm">
       <div className="min-w-[1120px] space-y-6">
-        <div className="mx-auto flex h-16 w-[560px] items-center justify-center rounded-t-full border border-cyan-300/30 bg-gradient-to-b from-cyan-300/30 to-transparent text-xs font-black uppercase tracking-[0.35em] text-cyan-100 shadow-[0_0_35px_rgba(34,211,238,0.18)]">
+        {/* Escenario con estética corporativa limpia */}
+        <div className="mx-auto flex h-14 w-[560px] items-center justify-center rounded-b-3xl border-x border-b border-[#00a354]/20 bg-gradient-to-b from-[#00a354]/5 to-[#00a354]/10 text-xs font-black uppercase tracking-[0.35em] text-[#00a354] shadow-sm">
           Escenario
         </div>
 
         <div className="space-y-8">
           {auditorioConfig.map((zone) => (
             <div key={zone.zoneId} className="space-y-3">
+              {/* Encabezado de la Zona */}
               <div className="flex items-center gap-3">
                 <span
-                  className="h-3 w-3 rounded-sm shadow-[0_0_16px_currentColor]"
-                  style={{ backgroundColor: zone.color, color: zone.color }}
+                  className="h-3.5 w-3.5 rounded-md border border-black/5 shadow-sm"
+                  style={{ backgroundColor: zone.color }}
                 />
-                <h2 className="text-xs font-black uppercase tracking-[0.24em] text-slate-200">
+                <h2 className="text-xs font-black uppercase tracking-[0.24em] text-[#1a1a1a]">
                   {zone.nombre}
                 </h2>
               </div>
 
+              {/* Contenedor de Bloques */}
               <div
-                className={`grid gap-3 ${
+                className={`grid gap-4 ${
                   zone.bloques.length === 1 ? 'grid-cols-1' : 'grid-cols-5'
                 }`}
               >
                 {zone.bloques.map((bloque) => (
                   <div
                     key={bloque.id}
-                    className="rounded-md border border-white/10 bg-white/[0.025] p-3"
+                    className="rounded-xl border border-[#e5e5e5] bg-[#f5f5f5]/40 p-3.5"
                   >
-                    <div className="mb-2 truncate text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <div className="mb-3 truncate text-center text-[10px] font-black uppercase tracking-widest text-[#4a4a4a] border-b border-[#e5e5e5] pb-1.5">
                       {bloque.nombre}
                     </div>
 
                     <div className="space-y-1.5">
                       {bloque.filas.map((fila) => (
                         <div key={fila.fila} className="flex items-center justify-center gap-1">
-                          <span className="mr-1 w-6 text-right text-[10px] font-bold text-slate-500">
+                          {/* Identificador de fila */}
+                          <span className="mr-1.5 w-6 text-right text-[10px] font-black text-[#4a4a4a]/70">
                             {fila.fila}
                           </span>
+                          
                           {Array.from({ length: fila.asientos }, (_, index) => {
                             const numero = index + 1
                             const seat: SeatIdentity = {
@@ -129,12 +135,11 @@ export function AuditorioSeatMap({
                             const key = getSeatKey(seat)
                             const occupied = occupiedSeatKeys.has(key)
                             const selected = selectedSeatKey === key
-                            const status = seatStatusMap?.[key] // eslint-disable-line security/detect-object-injection -- seatStatusMap es un Record de índice controlado por getSeatKey
+                            const status = seatStatusMap?.[key]
                             const isApartado = status === 'apartado' || status === 'pendiente'
                             const isPagado = status === 'pagado' || status === 'completo'
                             const isPreRegistro = status === 'pre-registro'
-                            const isInteractive =
-                              mode === 'assign' && !occupied
+                            const isInteractive = mode === 'assign' && !occupied
 
                             return (
                               <div
@@ -151,20 +156,20 @@ export function AuditorioSeatMap({
                                   onClick={() => onSeatClick?.(seat)}
                                   title={getStatusTitle(status, `${zone.nombre} ${bloque.nombre} fila ${fila.fila}, asiento ${numero}`)}
                                   aria-label={`${occupied ? 'Ocupado' : 'Disponible'}: ${zone.nombre}, ${bloque.nombre}, fila ${fila.fila}, asiento ${numero}`}
-                                  className={`h-5 w-5 rounded-t-[4px] border text-[8px] font-bold leading-none transition-all duration-300 ${
+                                  className={`h-5 w-5 rounded-t-[4px] border text-[8px] font-black leading-none transition-all duration-200 ${
                                     occupied && !status
-                                      ? 'cursor-not-allowed border-gray-500/40 bg-gray-400 text-gray-700 opacity-80 animate-pulse'
+                                      ? 'cursor-not-allowed border-[#e5e5e5] bg-[#e5e5e5] text-[#4a4a4a] opacity-65'
                                       : isPreRegistro
-                                        ? 'cursor-pointer border-orange-400/60 bg-orange-600 text-orange-100 hover:scale-110 hover:border-orange-300'
+                                        ? 'cursor-pointer border-orange-500 bg-orange-600 text-white hover:scale-110 hover:brightness-105'
                                         : isApartado
-                                          ? 'cursor-pointer border-yellow-300/70 bg-yellow-500 text-yellow-50 hover:scale-110 hover:border-yellow-200'
+                                          ? 'cursor-pointer border-amber-400 bg-amber-500 text-white hover:scale-110 hover:brightness-105'
                                           : isPagado
-                                            ? 'cursor-not-allowed border-emerald-400/60 bg-emerald-700 text-emerald-200 opacity-80'
+                                            ? 'cursor-not-allowed border-[#00a354]/30 bg-[#00a354] text-white opacity-85'
                                             : selected
-                                              ? 'scale-110 border-white bg-white text-slate-950 shadow-[0_0_0_2px_rgba(255,255,255,0.35)]'
+                                              ? 'scale-110 border-[#1a1a1a] bg-[#1a1a1a] text-white shadow-[0_0_0_2px_rgba(26,26,26,0.15)]'
                                               : isInteractive
-                                                ? 'border-white/25 text-white hover:scale-110 hover:border-white hover:bg-white hover:text-slate-950'
-                                                : 'border-white/20 text-white'
+                                                ? 'border-[#e5e5e5] bg-white text-[#4a4a4a] hover:scale-110 hover:border-[#00a354] hover:bg-[#00a354]/10 hover:text-[#00a354]'
+                                                : 'border-[#e5e5e5] bg-white text-[#4a4a4a]'
                                   }`}
                                   style={
                                     selected || (occupied && !status)
@@ -188,27 +193,27 @@ export function AuditorioSeatMap({
         </div>
       </div>
 
-      {/* Leyenda extendida */}
-      <div className="mt-6 flex flex-wrap items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+      {/* Leyenda extendida adaptada a fondo claro */}
+      <div className="mt-6 flex flex-wrap items-center gap-5 border-t border-[#e5e5e5] pt-4 text-[9px] font-black uppercase tracking-widest text-[#4a4a4a]">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-gray-400" />
-          <span className="text-slate-400">Ocupado genérico</span>
+          <span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#a3a3a3] border border-black/5" />
+          <span>Ocupado genérico</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-orange-600" />
-          <span className="text-orange-300">Pre-registro</span>
+          <span className="inline-block h-3.5 w-3.5 rounded-sm bg-orange-600 border border-black/5" />
+          <span className="text-orange-600">Pre-registro</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-yellow-500" />
-          <span className="text-yellow-300">Apartado (Pago parcial)</span>
+          <span className="inline-block h-3.5 w-3.5 rounded-sm bg-amber-500 border border-black/5" />
+          <span className="text-amber-600">Apartado (Pago parcial)</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-emerald-700" />
-          <span className="text-emerald-300">Confirmado / Pagado</span>
+          <span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#00a354] border border-black/5" />
+          <span className="text-[#00a354]">Confirmado / Pagado</span>
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-red-600" />
-          <span className="text-red-300">Liquidado (Mapa público)</span>
+          <span className="inline-block h-3.5 w-3.5 rounded-sm bg-red-600 border border-black/5" />
+          <span className="text-red-600">Liquidado (Caja)</span>
         </span>
       </div>
     </section>

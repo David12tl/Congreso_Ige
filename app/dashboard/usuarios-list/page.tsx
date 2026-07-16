@@ -99,7 +99,7 @@ export default function UsuariosListPage() {
               Asistentes
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ADMIN // PADRÓN_GLOBAL_DE_REGISTROS</p>
+          
         </div>
         
         {/* Pestañas de Filtrado Rápido */}

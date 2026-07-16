@@ -51,7 +51,7 @@ export default function EncargadoDashboardPage() {
               {landData.name}
             </span>
           </h1>
-          <p className="text-slate-500 text-xs font-light mt-1">STATUS: OPERATIVO // SESIÓN_ACTIVA: STAFF_084</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full self-start md:self-auto">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

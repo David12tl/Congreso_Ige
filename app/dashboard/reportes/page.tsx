@@ -53,7 +53,7 @@ export default function ReportesPage() {
               Reportes
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ADMIN // ANALÍTICA_Y_EXPORTACIÓN_DE_DATOS</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -166,12 +166,6 @@ export default function ReportesPage() {
         </GlassCard>
       </div>
 
-      {/* Footer con Métricas Rápidas */}
-      <GlassCard className="p-6" glowColor="amber">
-        <p className="text-slate-500 text-sm font-light">
-          Los datos reflejados se leen dinámicamente de la tabla <code className="text-amber-700 font-light bg-amber-50 px-1 py-0.5 rounded border border-amber-200">public.tickets</code> filtrando en tiempo real por los constraints de validación estructural.
-        </p>
-      </GlassCard>
     </div>
   )
 }

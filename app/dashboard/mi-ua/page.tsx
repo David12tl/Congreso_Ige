@@ -161,7 +161,7 @@ export default function MiUAPage() {
               UA
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ENCARGADO // {nombreUA.toUpperCase()}</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

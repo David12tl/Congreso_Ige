@@ -64,7 +64,6 @@ interface TicketSelectResponse {
   type?: string | null
 }
 
-// Interfaz para los registros de Apartados Pendientes (tabla de la nueva pestaña)
 interface ApartadoPendienteRow {
   ticketId: string
   purchaseId: string | null
@@ -82,7 +81,6 @@ interface ApartadoPendienteRow {
   purchasedAt: string | null
 }
 
-// Interfaz para extender las propiedades esperadas en el objeto de configuración de zonas
 interface ExtendedZoneConfig {
   id: string
   code: ZoneCode
@@ -152,7 +150,6 @@ export function TaquillaTokensView({
   const [apartadosPendientes, setApartadosPendientes] = useState<ApartadoPendienteRow[]>([])
   const [loadingApartados, setLoadingApartados] = useState(false)
   const [errorApartados, setErrorApartados] = useState<string | null>(null)
-  // (El panel siempre es visible en la columna izquierda, no se requiere un toggle)
   const [filtroNombre, setFiltroNombre] = useState('')
 
   // Estados de Transición y Feedback
@@ -238,8 +235,9 @@ export function TaquillaTokensView({
 
   // Carga automática al montar el componente
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void cargarApartadosPendientes()
+    void (async () => {
+      await cargarApartadosPendientes()
+    })()
   }, [cargarApartadosPendientes])
 
   // Cargar información si el asiento está apartado
@@ -356,7 +354,11 @@ export function TaquillaTokensView({
           return
         }
 
-        const ticketRow = data as TicketSelectResponse
+        const ticketRow: TicketSelectResponse = {
+          id: data.id,
+          nombre: data.nombre,
+          email: data.email,
+        }
         setSelectedTicketId(ticketRow.id)
         setNombreAlumno(ticketRow.nombre ?? '')
         setEmailAlumno(ticketRow.email ?? '')
@@ -532,7 +534,6 @@ export function TaquillaTokensView({
             [seatKey]: (metodoRegistro === 'apartado' ? 'apartado' : 'completo') as SeatStatus,
           }))
 
-          // Refrescar lista de pendientes
           void cargarApartadosPendientes()
 
           const { data: tokenStats } = await supabase.from('tokens_canje').select('status')
@@ -573,7 +574,6 @@ export function TaquillaTokensView({
             [seatKey]: 'completo' as SeatStatus,
           }))
 
-          // Refrescar lista de pendientes: remueve automáticamente al alumno liquidado
           void cargarApartadosPendientes()
 
           const { data: tokenStats } = await supabase.from('tokens_canje').select('status')
@@ -597,7 +597,6 @@ export function TaquillaTokensView({
     })
   }
 
-  // Lista filtrada por nombre o email
   const apartadosFiltrados = useMemo(() => {
     if (!filtroNombre.trim()) return apartadosPendientes
     const f = filtroNombre.toLowerCase()
@@ -610,20 +609,20 @@ export function TaquillaTokensView({
   const totalAdeudo = apartadosPendientes.reduce((acc, r) => acc + r.montoRestante, 0)
 
   return (
-    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen text-white p-4">
+    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen bg-white text-[#1a1a1a] p-4">
       {/* Columna Izquierda: Mapa del Auditorio */}
-      <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-6 backdrop-blur-xl xl:col-span-2">
+      <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl xl:col-span-2 shadow-sm">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black uppercase tracking-wider text-emerald-400">Taquilla Física y Control de Asientos</h2>
-            <p className="text-xs text-slate-400">Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.</p>
-            <span className="mt-2 inline-block rounded-md bg-white/[0.03] border border-white/10 px-3 py-1.5 text-xs text-slate-300">
-              Rol: <strong>{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
+            <h2 className="text-lg font-black uppercase tracking-wider text-[#00a354]">Taquilla Física y Control de Asientos</h2>
+            <p className="text-xs text-[#4a4a4a]">Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.</p>
+            <span className="mt-2 inline-block rounded-md bg-white border border-[#e5e5e5] px-3 py-1.5 text-xs text-[#4a4a4a] font-medium shadow-sm">
+              Rol: <strong className="text-[#1a1a1a]">{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
             </span>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl bg-slate-950/50 p-4 border border-white/5">
+        <div className="overflow-x-auto rounded-2xl bg-white p-4 border border-[#e5e5e5] shadow-inner">
           <AuditorioSeatMap
             mode="assign"
             occupiedSeatKeys={occupiedSeatKeys}
@@ -634,30 +633,30 @@ export function TaquillaTokensView({
         </div>
 
         {/* ─── Panel inferior: Lista de Apartados Pendientes ─── */}
-        <div className="mt-6 rounded-2xl border border-amber-500/20 bg-slate-950/50 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-white/5">
+        <div className="mt-6 rounded-2xl border border-amber-500/30 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[#e5e5e5]">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
                 <HiClipboardList className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">Apartados Pendientes</h3>
-                <p className="text-[10px] text-slate-400">Personas que aún deben liquidar el resto de su asiento.</p>
+                <h3 className="text-sm font-black uppercase tracking-wider text-amber-600">Apartados Pendientes</h3>
+                <p className="text-[10px] text-[#4a4a4a]">Personas que aún deben liquidar el resto de su asiento.</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Pendientes</p>
-                <p className="text-lg font-black text-amber-400 leading-none">{totalPendientes}</p>
+                <p className="text-[9px] uppercase tracking-widest text-[#4a4a4a] font-bold">Pendientes</p>
+                <p className="text-lg font-black text-amber-600 leading-none">{totalPendientes}</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Adeudo Total</p>
-                <p className="text-lg font-black text-rose-400 leading-none">${totalAdeudo.toLocaleString('es-MX')} MXN</p>
+                <p className="text-[9px] uppercase tracking-widest text-[#4a4a4a] font-bold">Adeudo Total</p>
+                <p className="text-lg font-black text-rose-600 leading-none">${totalAdeudo.toLocaleString('es-MX')} MXN</p>
               </div>
               <button
                 type="button"
                 onClick={() => void cargarApartadosPendientes()}
-                className="bg-slate-800 hover:bg-slate-700 text-white rounded-lg p-2 transition"
+                className="bg-[#f5f5f5] hover:bg-[#e5e5e5] border border-[#e5e5e5] text-[#1a1a1a] rounded-lg p-2 transition shadow-sm"
                 title="Refrescar lista"
               >
                 <HiRefresh className={`h-4 w-4 ${loadingApartados ? 'animate-spin' : ''}`} />
@@ -666,27 +665,27 @@ export function TaquillaTokensView({
           </div>
 
           {errorApartados && (
-            <div className="m-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-400">
+            <div className="m-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-600">
               <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <span>{errorApartados}</span>
             </div>
           )}
 
           <div className="p-4">
-            <div className="mb-3 flex items-center gap-2 bg-slate-900/50 border border-white/5 rounded-xl px-3 py-2">
-              <HiSearch className="w-4 h-4 text-slate-500" />
+            <div className="mb-3 flex items-center gap-2 bg-[#f5f5f5] border border-[#e5e5e5] rounded-xl px-3 py-2">
+              <HiSearch className="w-4 h-4 text-[#4a4a4a]" />
               <input
                 type="text"
                 value={filtroNombre}
                 onChange={(e) => setFiltroNombre(e.target.value)}
                 placeholder="Filtrar por nombre o correo..."
-                className="flex-1 bg-transparent text-xs text-white focus:outline-none placeholder:text-slate-600"
+                className="flex-1 bg-transparent text-xs text-[#1a1a1a] focus:outline-none placeholder:text-[#4a4a4a]/60"
               />
               {filtroNombre && (
                 <button
                   type="button"
                   onClick={() => setFiltroNombre('')}
-                  className="text-slate-500 hover:text-slate-300"
+                  className="text-[#4a4a4a] hover:text-[#1a1a1a]"
                 >
                   <HiX className="w-3 h-3" />
                 </button>
@@ -696,22 +695,22 @@ export function TaquillaTokensView({
             {loadingApartados && apartadosPendientes.length === 0 ? (
               <div className="py-12 text-center">
                 <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
-                <p className="text-xs text-slate-400 font-mono">Cargando lista de apartados pendientes...</p>
+                <p className="text-xs text-[#4a4a4a] font-mono">Cargando lista de apartados pendientes...</p>
               </div>
             ) : apartadosFiltrados.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-white/5 rounded-xl">
-                <HiOutlineCheckCircle className="mx-auto h-8 w-8 text-emerald-500/40 mb-2" />
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="py-12 text-center border border-dashed border-[#e5e5e5] rounded-xl">
+                <HiOutlineCheckCircle className="mx-auto h-8 w-8 text-[#00a354]/40 mb-2" />
+                <p className="text-xs font-bold uppercase tracking-wider text-[#4a4a4a]">
                   {totalPendientes === 0 ? '¡No hay apartados pendientes!' : 'Sin coincidencias para el filtro.'}
                 </p>
                 {totalPendientes === 0 && (
-                  <p className="mt-1 text-[11px] text-slate-500">Todos los asientos apartados han sido liquidados.</p>
+                  <p className="mt-1 text-[11px] text-[#4a4a4a]/70">Todos los asientos apartados han sido liquidados.</p>
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-white/5">
+              <div className="overflow-x-auto rounded-xl border border-[#e5e5e5]">
                 <table className="w-full text-[11px]">
-                  <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[9px]">
+                  <thead className="bg-[#f5f5f5] border-b border-[#e5e5e5] text-[#4a4a4a] uppercase tracking-wider text-[9px]">
                     <tr>
                       <th className="px-3 py-2.5 text-left font-black">Alumno</th>
                       <th className="px-3 py-2.5 text-left font-black">Correo</th>
@@ -721,46 +720,46 @@ export function TaquillaTokensView({
                       <th className="px-3 py-2.5 text-center font-black">Acción</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-[#e5e5e5]">
                     {apartadosFiltrados.map((row) => (
-                      <tr key={row.ticketId} className="hover:bg-white/[0.02] transition">
+                      <tr key={row.ticketId} className="hover:bg-[#f5f5f5]/30 transition">
                         <td className="px-3 py-2.5">
                           <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-black text-[10px] shrink-0">
+                            <div className="h-7 w-7 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-[10px] shrink-0">
                               {row.nombre?.charAt(0).toUpperCase() || '?'}
                             </div>
-                            <span className="font-bold text-white truncate max-w-[140px]" title={row.nombre ?? ''}>
+                            <span className="font-bold text-[#1a1a1a] truncate max-w-[140px]" title={row.nombre ?? ''}>
                               {row.nombre || '—'}
                             </span>
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-slate-300 font-mono text-[10px] truncate max-w-[180px]" title={row.email ?? ''}>
+                        <td className="px-3 py-2.5 text-[#4a4a4a] font-mono text-[10px] truncate max-w-[180px]" title={row.email ?? ''}>
                           {row.email || '—'}
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="flex flex-col">
-                            <span className="text-white font-black">
+                            <span className="text-[#1a1a1a] font-black">
                               {row.zoneCode} · {row.bloque}{row.fila}{row.numero}
                             </span>
-                            <span className="text-slate-500 text-[9px]">
+                            <span className="text-[#4a4a4a] text-[9px]">
                               Bloque {row.bloque} · Fila {row.fila} · Num {row.numero}
                             </span>
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          <span className="text-emerald-400 font-black">${row.totalAbonado.toLocaleString('es-MX')}</span>
-                          <span className="text-slate-500 text-[9px] block">de ${row.total.toLocaleString('es-MX')}</span>
+                          <span className="text-[#00a354] font-black">${row.totalAbonado.toLocaleString('es-MX')}</span>
+                          <span className="text-[#4a4a4a] text-[9px] block">de ${row.total.toLocaleString('es-MX')}</span>
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          <span className="text-rose-400 font-black">${row.montoRestante.toLocaleString('es-MX')}</span>
-                          <span className="text-slate-500 text-[9px] block">MXN</span>
+                          <span className="text-rose-600 font-black">${row.montoRestante.toLocaleString('es-MX')}</span>
+                          <span className="text-[#4a4a4a] text-[9px] block">MXN</span>
                         </td>
                         <td className="px-3 py-2.5 text-center">
                           <button
                             type="button"
                             onClick={() => void handleLiquidarDesdeTabla(row)}
                             disabled={isPending}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-black font-black uppercase tracking-wider text-[10px] px-3 py-1.5 hover:opacity-90 disabled:opacity-50 transition shadow-md"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider text-[10px] px-3 py-1.5 hover:opacity-90 disabled:opacity-50 transition shadow-sm"
                           >
                             <HiCurrencyDollar className="w-3 h-3" />
                             Liquidar Saldo
@@ -780,18 +779,18 @@ export function TaquillaTokensView({
       <div className="space-y-6">
         {tokenGenerado ? (
           /* PANTALLA DE ÉXITO */
-          <div className="rounded-3xl border border-emerald-500/30 bg-slate-900/80 p-6 text-center backdrop-blur-xl animate-fadeIn">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+          <div className="rounded-3xl border border-[#00a354]/30 bg-white p-6 text-center shadow-md animate-fadeIn">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#00a354]/10 text-[#00a354]">
               <HiOutlineCheckCircle className="h-6 w-6" />
             </div>
-            <h3 className="mt-4 text-sm font-black uppercase tracking-wider text-emerald-400">
+            <h3 className="mt-4 text-sm font-black uppercase tracking-wider text-[#00a354]">
               {metodoRegistro === 'apartado' && modalMode === 'nuevo' ? '¡Apartado Registrado!' : '¡Pago Procesado Exitosamente!'}
             </h3>
-            <p className="mt-1 text-xs text-slate-400">Proporciona este código de acceso al alumno:</p>
+            <p className="mt-1 text-xs text-[#4a4a4a]">Proporciona este código de acceso al alumno:</p>
 
-            <div className="mx-auto my-5 inline-block rounded-xl border border-cyan-500/30 bg-cyan-500/5 px-6 py-4">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 mb-1">Token de Inscripción</p>
-              <p className="text-4xl font-black tracking-wider text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]">
+            <div className="mx-auto my-5 inline-block rounded-xl border border-[#00a354]/20 bg-[#00a354]/5 px-6 py-4">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-[#00a354] mb-1">Token de Inscripción</p>
+              <p className="text-4xl font-black tracking-wider text-[#1a1a1a]">
                 {tokenGenerado}
               </p>
             </div>
@@ -804,34 +803,34 @@ export function TaquillaTokensView({
                 setSelectedTicketId(null)
                 setModalMode(null)
               }}
-              className="mt-5 w-full rounded-xl bg-slate-800 py-3 text-xs font-bold text-white hover:bg-slate-700 transition"
+              className="mt-5 w-full rounded-xl bg-[#1a1a1a] py-3 text-xs font-bold text-white hover:bg-[#4a4a4a] transition"
             >
               Cerrar Ventana
             </button>
           </div>
         ) : modalMode === 'nuevo' && selectedSeat && selectedZone ? (
           /* REGISTRAR UN NUEVO ASIENTO */
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl animate-fadeIn">
-            <div className="mb-4 border-b border-white/5 pb-3">
-              <span className="inline-block rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+          <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl shadow-sm animate-fadeIn">
+            <div className="mb-4 border-b border-[#e5e5e5] pb-3">
+              <span className="inline-block rounded-full bg-[#00a354]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#00a354]">
                 Selección Activa
               </span>
-              <h3 className="mt-1 text-sm font-black uppercase text-white">
+              <h3 className="mt-1 text-sm font-black uppercase text-[#1a1a1a]">
                 Zona {selectedZone.name} — Bloque {selectedSeat.bloque} Fila {selectedSeat.fila} Num {selectedSeat.numero}
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">Precio Neto: <span className="text-emerald-400 font-bold">${selectedZone.price} MXN</span></p>
+              <p className="text-[11px] text-[#4a4a4a] mt-0.5">Precio Neto: <span className="text-[#00a354] font-bold">${selectedZone.price} MXN</span></p>
             </div>
 
             {errorMsg && (
-              <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-400">
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-600">
                 <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* BUSCADOR DE PRE-REGISTROS */}
-            <div className="mb-4 bg-slate-950 p-3 rounded-xl border border-white/5">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-cyan-400 mb-1.5">
+            <div className="mb-4 bg-white p-3 rounded-xl border border-[#e5e5e5] shadow-sm">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-[#00a354] mb-1.5">
                 ¿Tiene Pre-Registro? Buscar Usuario
               </label>
               <div className="flex gap-2">
@@ -840,19 +839,19 @@ export function TaquillaTokensView({
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar por Correo o Nombre..."
-                  className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="flex-1 bg-[#f5f5f5] border border-[#e5e5e5] rounded-lg px-3 py-1.5 text-xs text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
                 />
                 <button
                   type="button"
                   onClick={handleBuscarPreRegistro}
-                  className="bg-slate-800 text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-slate-700 transition flex items-center gap-1"
+                  className="bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-[#4a4a4a] transition flex items-center gap-1"
                 >
                   <HiSearch className="w-3 h-3" /> Buscar
                 </button>
               </div>
 
               {usuariosPendientes.length > 0 && (
-                <div className="mt-2 max-h-32 overflow-y-auto border border-white/5 bg-slate-900 rounded-lg divide-y divide-white/5 text-[11px]">
+                <div className="mt-2 max-h-32 overflow-y-auto border border-[#e5e5e5] bg-white rounded-lg divide-y divide-[#e5e5e5] text-[11px]">
                   {usuariosPendientes.map((u) => (
                     <button
                       key={u.id}
@@ -864,11 +863,11 @@ export function TaquillaTokensView({
                         setUsuariosPendientes([])
                         setBusqueda('')
                       }}
-                      className="w-full text-left px-2.5 py-2 hover:bg-white/5 transition flex justify-between items-center"
+                      className="w-full text-left px-2.5 py-2 hover:bg-[#f5f5f5] transition flex justify-between items-center"
                     >
                       <div className="truncate pr-2">
-                        <span className="font-bold text-white block truncate">{u.nombre}</span>
-                        <span className="text-gray-400 font-mono text-[10px] block truncate">{u.email}</span>
+                        <span className="font-bold text-[#1a1a1a] block truncate">{u.nombre}</span>
+                        <span className="text-[#4a4a4a] font-mono text-[10px] block truncate">{u.email}</span>
                       </div>
                     </button>
                   ))}
@@ -876,11 +875,11 @@ export function TaquillaTokensView({
               )}
 
               {usuarioSeleccionado && (
-                <div className="mt-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5 text-emerald-400 truncate">
+                <div className="mt-2 bg-[#00a354]/10 border border-[#00a354]/20 rounded-lg p-2 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5 text-[#00a354] truncate">
                     <HiUser className="w-4 h-4 shrink-0" />
                     <p className="truncate">
-                      Vinculado: <span className="font-bold text-white">{usuarioSeleccionado.nombre}</span>
+                      Vinculado: <span className="font-bold text-[#1a1a1a]">{usuarioSeleccionado.nombre}</span>
                     </p>
                   </div>
                   <button
@@ -890,7 +889,7 @@ export function TaquillaTokensView({
                       setNombreAlumno('')
                       setEmailAlumno('')
                     }}
-                    className="text-red-400 hover:text-red-300 p-1"
+                    className="text-red-600 hover:text-red-500 p-1"
                   >
                     <HiTrash className="w-3 h-3" />
                   </button>
@@ -901,41 +900,41 @@ export function TaquillaTokensView({
             {/* FORMULARIO DE COBRO */}
             <form onSubmit={handleConfirmarNuevoCobro} className="space-y-4 text-xs">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Nombre del Asistente</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1">Nombre del Asistente</label>
                 <input
                   type="text"
                   required
                   value={nombreAlumno}
                   onChange={(e) => setNombreAlumno(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none"
+                  className="w-full bg-white border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Correo Electrónico</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1">Correo Electrónico</label>
                 <input
                   type="email"
                   required
                   value={emailAlumno}
                   onChange={(e) => setEmailAlumno(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none"
+                  className="w-full bg-white border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Esquema de Adquisición</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Esquema de Adquisición</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setMetodoRegistro('pago')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Pago Total
                   </button>
                   <button
                     type="button"
                     onClick={() => setMetodoRegistro('apartado')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Dejar Apartado
                   </button>
@@ -943,34 +942,34 @@ export function TaquillaTokensView({
               </div>
 
               {metodoRegistro === 'apartado' && (
-                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 space-y-2 animate-fadeIn">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-400">Monto del Anticipo (MXN)</label>
+                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 space-y-2 animate-fadeIn">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-600">Monto del Anticipo (MXN)</label>
                   <input
                     type="number"
                     min={200}
                     max={(selectedZone.price ?? 650) - 50}
                     value={montoApartado}
                     onChange={(e) => setMontoApartado(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-amber-500/30 rounded-lg px-3 py-1.5 text-white focus:outline-none"
+                    className="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-[#1a1a1a] focus:outline-none"
                   />
-                  <p className="text-[10px] text-slate-400">Monto Restante: <span className="text-white font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
+                  <p className="text-[10px] text-[#4a4a4a]">Monto Restante: <span className="text-[#1a1a1a] font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
                 </div>
               )}
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Método de Cobro</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Método de Cobro</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setTipoPago('efectivo')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Efectivo
                   </button>
                   <button
                     type="button"
                     onClick={() => setTipoPago('transferencia')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-500/10 border-purple-500 text-purple-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Transferencia
                   </button>
@@ -981,14 +980,14 @@ export function TaquillaTokensView({
                 <button
                   type="button"
                   onClick={() => { setSelectedSeat(null); setModalMode(null) }}
-                  className="w-1/3 bg-slate-800 text-white rounded-xl font-bold py-3 hover:bg-slate-700 transition"
+                  className="w-1/3 bg-[#f5f5f5] border border-[#e5e5e5] text-[#1a1a1a] rounded-xl font-bold py-3 hover:bg-[#e5e5e5] transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-black uppercase tracking-wider rounded-xl py-3 hover:opacity-90 disabled:opacity-50 transition"
+                  className="flex-1 bg-gradient-to-r from-[#00a354] to-[#00a34d] text-white font-black uppercase tracking-wider rounded-xl py-3 hover:opacity-90 disabled:opacity-50 transition"
                 >
                   {isPending ? 'Procesando...' : metodoRegistro === 'apartado' ? 'Registrar Apartado' : 'Completar Inscripción'}
                 </button>
@@ -997,37 +996,37 @@ export function TaquillaTokensView({
           </div>
         ) : modalMode === 'liquidar' && selectedSeat && infoApartado ? (
           /* LIQUIDACIÓN DE UN APARTADO EXISTENTE */
-          <div className="rounded-3xl border border-amber-500/30 bg-slate-900/60 p-6 backdrop-blur-xl animate-fadeIn">
-            <div className="mb-4 border-b border-amber-500/10 pb-3">
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+          <div className="rounded-3xl border border-amber-500/30 bg-[#f5f5f5]/60 p-6 backdrop-blur-xl shadow-sm animate-fadeIn">
+            <div className="mb-4 border-b border-amber-500/20 pb-3">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
                 <HiClock className="w-3 h-3" /> Asiento Apartado
               </span>
-              <h3 className="mt-1 text-sm font-black uppercase text-white">
+              <h3 className="mt-1 text-sm font-black uppercase text-[#1a1a1a]">
                 Bloque {selectedSeat.bloque} — Fila {selectedSeat.fila} Num {selectedSeat.numero}
               </h3>
             </div>
 
-            <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2.5 text-xs mb-4">
+            <div className="bg-white rounded-xl p-4 border border-[#e5e5e5] space-y-2.5 text-xs mb-4 shadow-sm">
               <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Asistente</p>
-                <p className="text-white font-bold text-sm">{infoApartado.nombre || '—'}</p>
-                <p className="text-slate-400 font-mono text-[11px]">{infoApartado.email || '—'}</p>
+                <p className="text-[10px] text-[#4a4a4a] uppercase tracking-widest font-bold">Asistente</p>
+                <p className="text-[#1a1a1a] font-bold text-sm">{infoApartado.nombre || '—'}</p>
+                <p className="text-[#4a4a4a] font-mono text-[11px]">{infoApartado.email || '—'}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-2 text-center">
-                <div className="bg-white/[0.02] p-2 rounded-lg border border-white/5">
-                  <p className="text-[9px] text-slate-500 uppercase font-bold">Abonado</p>
-                  <p className="text-emerald-400 font-black text-sm">${infoApartado.totalAbonado} MXN</p>
+              <div className="grid grid-cols-2 gap-2 border-t border-[#e5e5e5] pt-2 text-center">
+                <div className="bg-[#f5f5f5] p-2 rounded-lg border border-[#e5e5e5]">
+                  <p className="text-[9px] text-[#4a4a4a] uppercase font-bold">Abonado</p>
+                  <p className="text-[#00a354] font-black text-sm">${infoApartado.totalAbonado} MXN</p>
                 </div>
                 <div className="bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
-                  <p className="text-[9px] text-amber-500 uppercase font-bold">Saldo Restante</p>
-                  <p className="text-white font-black text-sm">${infoApartado.montoRestante} MXN</p>
+                  <p className="text-[9px] text-amber-600 uppercase font-bold">Saldo Restante</p>
+                  <p className="text-[#1a1a1a] font-black text-sm">${infoApartado.montoRestante} MXN</p>
                 </div>
               </div>
             </div>
 
             {errorMsg && (
-              <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-[11px] text-red-400 flex items-start gap-2">
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-[11px] text-red-600 flex items-start gap-2">
                 <HiExclamationCircle className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
@@ -1035,19 +1034,19 @@ export function TaquillaTokensView({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Método para Liquidar Saldo</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Método para Liquidar Saldo</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setTipoPagoLiquidacion('efectivo')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Efectivo
                   </button>
                   <button
                     type="button"
                     onClick={() => setTipoPagoLiquidacion('transferencia')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-500/10 border-purple-500 text-purple-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Transferencia
                   </button>
@@ -1058,7 +1057,7 @@ export function TaquillaTokensView({
                 <button
                   type="button"
                   onClick={() => { setSelectedSeat(null); setModalMode(null) }}
-                  className="w-1/3 bg-slate-800 text-white rounded-xl font-bold py-3 text-xs hover:bg-slate-700 transition"
+                  className="w-1/3 bg-[#f5f5f5] border border-[#e5e5e5] text-[#1a1a1a] rounded-xl font-bold py-3 text-xs hover:bg-[#e5e5e5] transition"
                 >
                   Regresar
                 </button>
@@ -1066,7 +1065,7 @@ export function TaquillaTokensView({
                   type="button"
                   disabled={isPending}
                   onClick={handleConfirmarLiquidacion}
-                  className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black font-black uppercase tracking-wider text-xs rounded-xl py-3 hover:opacity-90 transition shadow-lg"
+                  className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider text-xs rounded-xl py-3 hover:opacity-90 transition shadow-md"
                 >
                   {isPending ? 'Liquidando...' : `Liquidar $${infoApartado.montoRestante} MXN`}
                 </button>
@@ -1075,16 +1074,16 @@ export function TaquillaTokensView({
           </div>
         ) : loadingApartado ? (
           /* LOADING APARTADO */
-          <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-8 text-center backdrop-blur-xl">
+          <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/40 p-8 text-center backdrop-blur-xl">
             <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
-            <p className="text-xs text-slate-400 font-mono">Consultando historial de abonos y pre-registros...</p>
+            <p className="text-xs text-[#4a4a4a] font-mono">Consultando historial de abonos y pre-registros...</p>
           </div>
         ) : (
           /* PANEL VACÍO */
-          <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/10 p-8 text-center backdrop-blur-xl">
-            <HiInformationCircle className="mx-auto h-8 w-8 text-slate-600 mb-2" />
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Monitoreo de Asientos</p>
-            <p className="mt-1 text-[11px] text-slate-500">Selecciona cualquier asiento en el mapa del teatro para desplegar los controles de taquilla física, buscador de pre-registros y cobro.</p>
+          <div className="rounded-3xl border border-dashed border-[#e5e5e5] bg-[#f5f5f5]/10 p-8 text-center shadow-inner">
+            <HiInformationCircle className="mx-auto h-8 w-8 text-[#4a4a4a]/40 mb-2" />
+            <p className="text-xs font-bold uppercase tracking-wider text-[#4a4a4a]">Monitoreo de Asientos</p>
+            <p className="mt-1 text-[11px] text-[#4a4a4a]/70">Selecciona cualquier asiento en el mapa del teatro para desplegar los controles de taquilla física, buscador de pre-registros y cobro.</p>
           </div>
         )}
       </div>

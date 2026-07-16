@@ -76,7 +76,6 @@ export default function AdminDashboardPage() {
               General
             </span>
           </h1>
-          <p className="text-slate-500 text-xs font-light mt-1">ADMIN // PANEL_DE_CONTROL // MÉTRICAS_GLOBALES</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full self-start md:self-auto">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

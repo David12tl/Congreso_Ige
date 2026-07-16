@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -181,15 +182,8 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         ${collapsed ? 'w-20' : 'w-64'}`}
     >
       {/* Header / Logo */}
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-200 shrink-0">
-        <div className="w-8 h-8 rounded-[24px] bg-[#1E2A39] flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">IGE</span>
-        </div>
-        {!collapsed && (
-          <span className="text-[#1E2A39] font-semibold text-lg whitespace-nowrap">
-            ELIGE 2026
-          </span>
-        )}
+     <div className="flex justify-center items-center w-full">
+        <Image src="/logo.png" alt="Logo" width={50} height={50} />
       </div>
 
       {/* User info */}

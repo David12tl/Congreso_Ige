@@ -73,7 +73,7 @@ export default function TicketsGestionPage() {
               Tickets
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ENCARGADO // CONTROL_DE_ASISTENTES_POR_UA</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />

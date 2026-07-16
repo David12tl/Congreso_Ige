@@ -17,7 +17,7 @@ export default function TicketsVendidosPage() {
               Vendidos
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ADMIN // MÉTRICAS_DE_VENTAS_Y_EMISIÓN</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />

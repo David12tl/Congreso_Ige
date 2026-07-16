@@ -53,7 +53,7 @@ export default function EncargadosPage() {
               Encargados
             </span>
           </h1>
-          <p className="text-slate-500 text-sm font-light mt-1">ADMIN // CONTROL_DE_PERMISOS_Y_ROL_2</p>
+          
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
