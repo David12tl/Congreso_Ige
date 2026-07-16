@@ -1,11 +1,43 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AuthForm from '../../src/components/auth/AuthForm';
 import Footer from '@/components/ui/Footer';
 import Image from 'next/image';
 
-export default function LoginPage() {
+/**
+ * Error message mapping for OAuth/callback errors
+ * OWASP: Only predefined, safe messages are displayed to prevent injection
+ */
+const ERROR_MESSAGES: Record<string, string> = {
+  'invalid-code': 'El código de autenticación expiró o es inválido. Por favor, intenta iniciar sesión nuevamente.',
+  'auth-failed': 'La autenticación falló. Por favor, verifica tus credenciales e intenta de nuevo.',
+  'session-expired': 'Tu sesión expiró. Por favor, inicia sesión nuevamente.',
+  'config-error': 'Error de configuración. Por favor, contacta a soporte.',
+};
+
+/**
+ * Validates that an error parameter is in the allowed whitelist
+ * OWASP: Prevents open redirect by only accepting predefined errors
+ */
+function isValidErrorParam(error: string | null): boolean {
+  if (!error) return true; // No error param is fine
+  return error.toLowerCase().trim() in ERROR_MESSAGES;
+}
+
+/**
+ * Login page component with OAuth error handling
+ */
+function LoginPageContent() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get('error');
+
+  // OWASP: Validate error param against whitelist
+  const error = isValidErrorParam(errorParam) && errorParam 
+    ? ERROR_MESSAGES[errorParam.toLowerCase().trim()] 
+    : null;
+
   return (
     <main className="min-h-screen w-full bg-[#FCFCFD] flex flex-col justify-between relative overflow-hidden text-[#1E293B]">
       
@@ -41,8 +73,15 @@ export default function LoginPage() {
           {/* Decoración superior idéntica a la del Register */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[3px] bg-gradient-to-r from-[#800020] to-[#b91c1c] rounded-b-full"></div>
           
+          {/* Error message banner - only shown for valid whitelisted errors */}
+          {error && (
+            <div className="mb-6 bg-[#fef3c7] border border-[#f59e0b] rounded-lg px-4 py-3 text-sm text-[#92400e] text-center font-medium">
+              {error}
+            </div>
+          )}
+          
           {/* Formulario de Login */}
-          <AuthForm />
+          <AuthForm initialError={error} />
           
         </div>
       </div>
@@ -51,5 +90,17 @@ export default function LoginPage() {
       <Footer />
 
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen w-full bg-[#FCFCFD] flex items-center justify-center text-[#1E293B]">
+        Cargando...
+      </main>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }

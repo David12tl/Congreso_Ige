@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
+import { getSecureCallbackUrl } from '@/utils/supabase/get-redirect-url';
 
 export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
@@ -40,6 +41,7 @@ export async function signInWithPassword(
 
   if (error) {
     // Mapear mensajes de error comunes de Supabase a español
+    // OWASP: No exponer detalles internos del error
     const message = mapSupabaseError(error.message);
     return { error: message };
   }
@@ -123,7 +125,11 @@ export async function signUp(data: {
     .single();
 
   if (ticketError || !ticketData) {
-    console.error('Error creando ticket:', ticketError);
+    // OWASP: En producción, no exponer errores internos en consola
+    // Solo loggear en desarrollo para debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creando ticket:', ticketError?.message);
+    }
     // No retornar error, el usuario se registró correctamente
     // Pero sin ticket, no tendrá credencial
   }
@@ -137,11 +143,17 @@ export async function signUp(data: {
       );
 
       if (!credentialResult.success) {
-        console.warn('Advertencia: Credencial no generada:', credentialResult.error);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Advertencia: Credencial no generada');
+        }
         // No bloqueamos el registro si la credencial falla
       }
-    } catch (credentialError) {
-      console.error('Error generando credencial:', credentialError);
+    } catch {
+      // OWASP: Silenciar errores internos en producción
+      // Loggear solo en desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error generando credencial');
+      }
       // Continuamos con el registro
     }
   }
@@ -162,13 +174,25 @@ export async function signOut() {
 }
 
 /**
- * Inicia el flujo de autenticación con Google.
- * Genera la URL de redirección segura a través del servidor de Supabase.
+ * Inicia el flujo de autenticación con Google OAuth.
+ * 
+ * Security considerations (OWASP):
+ * - Uses secure callback URL from helper to prevent Open Redirect
+ * - Never constructs URLs with user input
+ * - Validates redirect URL against whitelist
+ * - Generic error messages to prevent information disclosure
  */
 export async function signInWithGoogle(): Promise<string> {
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const redirectTo = `${siteUrl.replace(/\/$/, '')}/auth/callback`;
+  
+  // OWASP: Usar URL de redirección segura validada contra whitelist
+  const redirectTo = getSecureCallbackUrl();
+  
+  // Validar que tenemos una URL válida antes de continuar
+  if (!redirectTo) {
+    // OWASP: Error genérico sin exponer detalles internos
+    throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -181,7 +205,9 @@ export async function signInWithGoogle(): Promise<string> {
   });
 
   if (error) {
-    throw new Error(error.message);
+    // OWASP: Mensaje de error genérico sin exponer detalles del servidor
+    // No propagar mensajes de error internos al cliente
+    throw new Error('Error de conexión con el proveedor de autenticación. Intente nuevamente.');
   }
 
   return data.url;
@@ -189,6 +215,7 @@ export async function signInWithGoogle(): Promise<string> {
 
 /**
  * Mapea mensajes de error de Supabase a español claro para el usuario.
+ * OWASP: Solo devolver mensajes amigables, nunca exponer stack traces o detalles internos.
  */
 function mapSupabaseError(message: string): string {
   const lower = message.toLowerCase();
@@ -212,6 +239,7 @@ function mapSupabaseError(message: string): string {
     return 'El formato del correo electrónico no es válido.';
   }
 
-  // Fallback: devolver el mensaje original en inglés si no está mapeado
-  return message;
+  // OWASP: Fallback genérico sin exponer el mensaje original
+  // Esto evita filtrar detalles internos del sistema
+  return 'Ocurrió un error inesperado. Por favor, intenta de nuevo.';
 }
