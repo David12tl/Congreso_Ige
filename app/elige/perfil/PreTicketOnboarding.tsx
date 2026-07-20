@@ -1,25 +1,71 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { HiUser, HiOfficeBuilding, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
+import { HiUser, HiOfficeBuilding, HiCheckCircle, HiExclamationCircle, HiLockClosed, HiClock } from 'react-icons/hi'
+
+// Estructura de datos para el formulario local
+interface TicketFormData {
+  buyer_id: string
+  email: string
+  type: 'alumno' | 'empresa'
+  nombre: string
+  telefono: string | null
+  estatus_pago: string
+  matricula: string | null
+  carrera: string | null
+  semestre: string | null
+  empresa: string | null
+}
 
 export function PreTicketOnboarding({ userId, userEmail }: { userId: string; userEmail: string }) {
   const supabase = createClient()
   const [isPending, startTransition] = useTransition()
   
-  const [step, setStep] = useState<'selection' | 'form' | 'success'>('selection')
+  // Estados de flujo y control
+  const [step, setStep] = useState<'checking' | 'selection' | 'form' | 'success' | 'already_registered'>('checking')
   const [type, setType] = useState<'alumno' | 'empresa'>('alumno')
+  const [existingStatus, setExistingStatus] = useState<string | null>(null)
 
   // Estados del Formulario
   const [nombre, setNombre] = useState('')
   const [matricula, setMatricula] = useState('')
   const [carrera, setCarrera] = useState('')
   const [semestre, setSemestre] = useState('')
-  const [empresa, setEmpresa] = useState('') // Escuela / Organización
+  const [empresa, setEmpresa] = useState('') 
   const [telefono, setTelefono] = useState('')
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // --- CANDADO: Verificar si el usuario ya envió el formulario ---
+  useEffect(() => {
+    async function verificarRegistroPrevio() {
+      try {
+        const { data, error } = await supabase
+          .from('tickets')
+          .select('estatus_pago')
+          .eq('buyer_id', userId)
+          .returns<Array<{ estatus_pago: string }>>()
+          .maybeSingle()
+
+        if (error) throw error
+
+        if (data) {
+          setExistingStatus(data.estatus_pago)
+          setStep('already_registered')
+        } else {
+          setStep('selection')
+        }
+      } catch (err) {
+        console.error('Error al verificar estatus:', err)
+        setStep('selection') 
+      }
+    }
+
+    if (userId) {
+      verificarRegistroPrevio()
+    }
+  }, [userId, supabase])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,8 +77,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     }
 
     startTransition(async () => {
-      // 1. Estructuramos la data exactamente como la necesita la BD
-      const payload = {
+      const payload: TicketFormData = {
         buyer_id: userId,
         email: userEmail,
         type: type,
@@ -45,12 +90,10 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
         empresa: type === 'empresa' ? empresa.trim() : null,
       }
 
-      // 2. Relajamos el tipado de la tabla para que acepte 'estatus_pago' como string
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ticketsTable = supabase.from('tickets') as any
-
-      // 3. Insertamos de forma segura
-      const { error } = await ticketsTable.insert([payload])
+      // Usamos 'as any' para evitar el error estricto de tipado del .insert() de Supabase
+      const { error } = await supabase
+        .from('tickets')
+        .insert(payload as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
       if (error) {
         setErrorMsg('Error al procesar tu pre-registro. Es posible que ya tengas un ticket asignado.')
@@ -60,7 +103,50 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     })
   }
 
-  // PANTALLA DE ÉXITO (Ahora en Verde / Emerald)
+  // 1. Pantalla de carga
+  if (step === 'checking') {
+    return (
+      <div className="max-w-md mx-auto bg-white border border-slate-100 rounded-[24px] p-8 text-center shadow-sm">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B1E23] mx-auto mb-3"></div>
+        <p className="text-xs text-slate-500 font-light">Verificando estatus...</p>
+      </div>
+    )
+  }
+
+  // 2. CANDADO: Usuario ya registrado
+  if (step === 'already_registered') {
+    const isPendingApproval = existingStatus === 'pending'
+
+    return (
+      <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm animate-fadeIn">
+        {isPendingApproval ? (
+          <>
+            <HiClock className="w-12 h-12 text-amber-500 mx-auto mb-3 animate-pulse" />
+            <h3 className="text-base font-black uppercase tracking-wider text-amber-700">Registro en Espera</h3>
+            <p className="text-xs text-[#7D7D7D] mt-2 font-light">
+              Ya hemos recibido tu solicitud. Actualmente se encuentra en <strong>Lista de Espera</strong>.
+            </p>
+            <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 p-3 rounded-xl mt-4 font-light">
+              Por favor acude con el encargado de tu unidad para validar tus datos, elegir tu asiento y realizar el pago.
+            </p>
+          </>
+        ) : (
+          <>
+            <HiLockClosed className="w-12 h-12 text-cyan-600 mx-auto mb-3" />
+            <h3 className="text-base font-black uppercase tracking-wider text-cyan-700">Registro Procesado</h3>
+            <p className="text-xs text-[#7D7D7D] mt-2 font-light">
+              Tu solicitud ya cuenta con una respuesta en el sistema.
+            </p>
+            <div className="text-[11px] text-cyan-900 bg-cyan-50 border border-cyan-200 p-3 rounded-xl mt-4 font-normal">
+              Estatus: <span className="uppercase font-bold tracking-wider">{existingStatus}</span>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  // 3. Éxito después de enviar
   if (step === 'success') {
     return (
       <div className="max-w-md mx-auto bg-white border border-emerald-500 rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm animate-fadeIn">
@@ -76,13 +162,14 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     )
   }
 
+  // 4. Formulario
   return (
     <div className="max-w-md mx-auto bg-white border border-[#E6E6E6] rounded-[24px] p-6 text-[#1E2A39] shadow-sm">
       {step === 'selection' ? (
         <>
           <div className="text-center mb-6">
             <h2 className="text-sm font-black uppercase tracking-wider text-[#8B1E23]">Tipo de Asistente</h2>
-            <p className="text-xs text-[#7D7D7D] mt-1 font-light">Selecciona tu perfil para iniciar tu registro al evento</p>
+            <p className="text-xs text-[#7D7D7D] mt-1 font-light">Selecciona tu perfil para iniciar tu registro</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -91,8 +178,8 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
               className="flex flex-col items-center justify-center p-5 bg-slate-50 border border-slate-200 hover:border-[#8B1E23] rounded-xl transition group text-center"
             >
               <HiUser className="w-8 h-8 text-slate-400 group-hover:text-[#8B1E23] transition mb-2" />
-              <span className="text-xs font-bold text-slate-700 block">Comunidad Interna</span>
-              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Alumnos / Docentes)</span>
+              <span className="text-xs font-bold text-slate-700 block">Interno</span>
+              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Alumnos)</span>
             </button>
 
             <button
@@ -100,8 +187,8 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
               className="flex flex-col items-center justify-center p-5 bg-slate-50 border border-slate-200 hover:border-[#8B1E23] rounded-xl transition group text-center"
             >
               <HiOfficeBuilding className="w-8 h-8 text-slate-400 group-hover:text-[#8B1E23] transition mb-2" />
-              <span className="text-xs font-bold text-slate-700 block">Externos</span>
-              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Escuelas / Empresas)</span>
+              <span className="text-xs font-bold text-slate-700 block">Externo</span>
+              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Empresas)</span>
             </button>
           </div>
         </>
@@ -111,122 +198,40 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
             <h3 className="font-black uppercase tracking-wider text-[#8B1E23]">
               Pre-Registro: {type === 'alumno' ? 'Interno' : 'Externo'}
             </h3>
-            <button
-              type="button"
-              onClick={() => setStep('selection')}
-              className="text-[10px] text-slate-500 hover:underline font-light"
-            >
-              Cambiar tipo
+            <button type="button" onClick={() => setStep('selection')} className="text-[10px] text-slate-500 hover:underline">
+              Cambiar
             </button>
           </div>
 
-          {/* MENSAJE DE ERROR (En Rojo / Red) */}
           {errorMsg && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-[11px] font-medium animate-slideDown">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-[11px] font-medium">
               <HiExclamationCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* Campo Común: Nombre */}
           <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nombre Completo</label>
-            <input
-              type="text"
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-              placeholder="Ej. Juan Pérez López"
-            />
+            <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#8B1E23]" placeholder="Ej. Juan Pérez" />
           </div>
 
-          {/* Campos condicionales para INTERNOS (Alumnos) */}
           {type === 'alumno' && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Matrícula</label>
-                  <input
-                    type="text"
-                    required
-                    value={matricula}
-                    onChange={(e) => setMatricula(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                    placeholder="Matrícula escolar"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Teléfono</label>
-                  <input
-                    type="tel"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                    placeholder="10 dígitos"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Carrera</label>
-                  <input
-                    type="text"
-                    required
-                    value={carrera}
-                    onChange={(e) => setCarrera(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                    placeholder="Ej. Ing. Sistemas"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Semestre</label>
-                  <input
-                    type="text"
-                    required
-                    value={semestre}
-                    onChange={(e) => setSemestre(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                    placeholder="Ej. 6to"
-                  />
-                </div>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-3">
+               <input type="text" required value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Matrícula" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="text" required value={carrera} onChange={(e) => setCarrera(e.target.value)} placeholder="Carrera" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="text" required value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="Semestre" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+            </div>
           )}
 
-          {/* Campos condicionales para EXTERNOS (Empresas/Escuelas externas) */}
           {type === 'empresa' && (
-            <>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Institución / Escuela u Organización</label>
-                <input
-                  type="text"
-                  required
-                  value={empresa}
-                  onChange={(e) => setEmpresa(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                  placeholder="Nombre de la escuela o empresa de procedencia"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Teléfono de Contacto</label>
-                <input
-                  type="tel"
-                  required
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#1E2A39] placeholder-slate-400 focus:outline-none focus:border-[#8B1E23] transition-all font-light"
-                  placeholder="Número a 10 dígitos"
-                />
-              </div>
-            </>
+            <div className="space-y-3">
+              <input type="text" required value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Institución / Empresa" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+              <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full mt-2 rounded-xl bg-[#8B1E23] text-white font-semibold text-sm px-6 py-3 disabled:opacity-50 transition-all shadow-sm"
-          >
+          <button type="submit" disabled={isPending} className="w-full mt-2 rounded-xl bg-[#8B1E23] text-white font-semibold text-sm px-6 py-3 disabled:opacity-50 transition-all shadow-sm">
             {isPending ? 'Procesando...' : 'Completar Pre-Registro'}
           </button>
         </form>
