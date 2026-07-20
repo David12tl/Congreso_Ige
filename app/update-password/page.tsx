@@ -54,7 +54,7 @@ export default function UpdatePasswordPage() {
     }
 
     // Redirigir al dashboard
-    router.push(result.redirectTo || '/dashboard/perfil');
+    router.push(result.redirectTo || '/elige/perfil');
   };
 
   if (checkingSession) {

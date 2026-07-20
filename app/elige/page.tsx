@@ -139,7 +139,7 @@ export default async function DashboardPage() {
         <h2 className="text-xl font-bold text-slate-900 mb-4">Acceso Rápido</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
-            href="/dashboard/mapa"
+            href="/elige/mapa"
             className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a] mb-4 group-hover:scale-110 transition-transform">
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/dashboard/mi-ua"
+            href="/elige/mi-ua"
             className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4 group-hover:scale-110 transition-transform">
@@ -165,7 +165,7 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/dashboard/mis-asientos"
+            href="/elige/mis-asientos"
             className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 transition-transform">
@@ -178,7 +178,7 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/dashboard/usuario"
+            href="/elige/usuario"
             className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
 
           {esAdmin && (
             <Link
-              href="/dashboard/reportes"
+              href="/elige/reportes"
               className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
             >
               <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
           </div>
           <div className="sm:ml-auto flex gap-3">
             <Link
-              href="/dashboard/perfil"
+              href="/elige/perfil"
               className="text-xs font-bold uppercase tracking-wider text-[#1e3a8a] bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
             >
               Editar Perfil

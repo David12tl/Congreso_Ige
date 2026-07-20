@@ -7,14 +7,6 @@ import { getSecureRedirectBase, getRequestOrigin } from '@/utils/supabase/get-re
  * ============================================================================
  * OAuth Callback Route Handler - OWASP Security Best Practices
  * ============================================================================
- * 
- * Security considerations:
- * - Validates the presence and format of the authorization code
- * - Uses secure redirect base from environment configuration OR request origin
- * - Never exposes internal error details to the client
- * - Prevents open redirect vulnerabilities
- * - Validates user profile before redirecting to protected routes
- */
 
 /**
  * Allowed error query parameters (whitelist)
@@ -26,14 +18,14 @@ const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired', 
  * Mapea id_rol a la ruta del dashboard correspondiente.
  * Debe coincidir EXACTAMENTE con la función homónima en proxy.ts
  * para evitar redirecciones inconsistentes tras el login OAuth.
- *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargados
- *   3 → Usuario      → /dashboard/perfil
+ *   1 → Administrador → /elige/admin
+ *   2 → Encargado    → /elige/encargados
+ *   3 → Usuario      → /elige/perfil
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return '/dashboard/admin';
-  if (idRol === 2) return '/dashboard/encargados';
-  return '/dashboard/perfil';
+  if (idRol === 1) return '/elige/admin';
+  if (idRol === 2) return '/elige/encargados';
+  return '/elige/perfil';
 }
 
 /**
@@ -143,7 +135,7 @@ export async function GET(request: Request) {
     
     // Default safe redirect - perfil dashboard (lowest privilege)
     return NextResponse.redirect(
-      `${secureOrigin}/dashboard/perfil`,
+      `${secureOrigin}/elige/perfil`,
       { status: 307 }
     );
   }

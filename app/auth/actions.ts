@@ -12,14 +12,14 @@ export type AuthResult = { error: string } | { success: true; redirectTo?: strin
  * Mapea id_rol a la ruta del dashboard correspondiente.
  * Debe coincidir EXACTAMENTE con las funciones homónimas en proxy.ts y callback/route.ts
  * para evitar redirecciones inconsistentes tras el login OAuth.
- *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargados
- *   3 → Usuario      → /dashboard/perfil
+ *   1 → Administrador → /elige/admin
+ *   2 → Encargado    → /elige/encargados
+ *   3 → Usuario      → /elige/perfil
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return '/dashboard/admin';
-  if (idRol === 2) return '/dashboard/encargados';
-  return '/dashboard/perfil';
+  if (idRol === 1) return '/elige/admin';
+  if (idRol === 2) return '/elige/encargados';
+  return '/elige/perfil';
 }
 
 /**
@@ -323,5 +323,5 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
     return { error: message };
   }
 
-  return { success: true, redirectTo: '/dashboard/perfil' };
+  return { success: true, redirectTo: '/elige/perfil' };
 }
