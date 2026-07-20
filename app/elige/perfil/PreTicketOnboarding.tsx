@@ -60,16 +60,17 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     })
   }
 
+  // PANTALLA DE ÉXITO (Ahora en Verde / Emerald)
   if (step === 'success') {
     return (
-      <div className="max-w-md mx-auto bg-white border border-[#8B1E23] rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm">
-        <HiCheckCircle className="w-12 h-12 text-[#8B1E23] mx-auto mb-3" />
-        <h3 className="text-base font-black uppercase tracking-wider text-[#8B1E23]">¡Pre-registro Exitoso!</h3>
+      <div className="max-w-md mx-auto bg-white border border-emerald-500 rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm animate-fadeIn">
+        <HiCheckCircle className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
+        <h3 className="text-base font-black uppercase tracking-wider text-emerald-700">¡Pre-registro Exitoso!</h3>
         <p className="text-xs text-[#7D7D7D] mt-2 font-light">
-          Tus datos se enviaron a la lista de espera de <span className="text-[#1E2A39] font-bold">/elige/mi-ua</span>.
+          Tus datos se enviaron a la lista de espera.
         </p>
-        <p className="text-[11px] text-[#8B1E23] bg-[#E6E6E6] border border-[#8B1E23] p-3 rounded-xl mt-4 font-light">
-          Por favor acude a la taquilla física o con el encargado de tu unidad para seleccionar tu asiento y realizar tu pago.
+        <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 p-3 rounded-xl mt-4 font-light">
+          Por favor acude con el encargado de tu unidad para seleccionar tu asiento y realizar tu pago.
         </p>
       </div>
     )
@@ -119,9 +120,10 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
             </button>
           </div>
 
+          {/* MENSAJE DE ERROR (En Rojo / Red) */}
           {errorMsg && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-[11px] font-light">
-              <HiExclamationCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-[11px] font-medium animate-slideDown">
+              <HiExclamationCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
