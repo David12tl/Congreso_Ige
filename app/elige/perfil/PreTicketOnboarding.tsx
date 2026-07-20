@@ -66,7 +66,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
         <HiCheckCircle className="w-12 h-12 text-[#8B1E23] mx-auto mb-3" />
         <h3 className="text-base font-black uppercase tracking-wider text-[#8B1E23]">¡Pre-registro Exitoso!</h3>
         <p className="text-xs text-[#7D7D7D] mt-2 font-light">
-          Tus datos se enviaron a la lista de espera de <span className="text-[#1E2A39] font-bold">/dashboard/mi-ua</span>.
+          Tus datos se enviaron a la lista de espera de <span className="text-[#1E2A39] font-bold">/elige/mi-ua</span>.
         </p>
         <p className="text-[11px] text-[#8B1E23] bg-[#E6E6E6] border border-[#8B1E23] p-3 rounded-xl mt-4 font-light">
           Por favor acude a la taquilla física o con el encargado de tu unidad para seleccionar tu asiento y realizar tu pago.

@@ -35,7 +35,7 @@ export default function RegisterForm() {
 
     setSuccess(true);
     setTimeout(() => {
-      router.push('/dashboard/usuario');
+      router.push('/elige/usuario');
     }, 1000);
   };
 

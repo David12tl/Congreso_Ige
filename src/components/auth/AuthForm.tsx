@@ -101,7 +101,7 @@ export default function AuthForm({ initialError = null }: AuthFormProps) {
     if (result.redirectTo) {
       router.push(result.redirectTo);
     } else {
-      router.push('/dashboard/usuario');
+      router.push('/elige/usuario');
     }
   };
 

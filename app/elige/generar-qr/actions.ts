@@ -162,7 +162,7 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     }
   }
 
-  revalidatePath('/dashboard/generar-qr')
+  revalidatePath('/elige/generar-qr')
 
   return {
     success: true,

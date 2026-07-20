@@ -167,8 +167,8 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
       return { success: false, message: 'Error al vincular el pase a tu cuenta.' }
     }
 
-    revalidatePath('/dashboard/ingresar-token')
-    revalidatePath('/dashboard/mis-asientos')
+    revalidatePath('/elige/ingresar-token')
+    revalidatePath('/elige/mis-asientos')
 
     return {
       success: true,
@@ -227,8 +227,8 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
       .eq('id', fbTicket.id)
 
     if (!updateFbError) {
-      revalidatePath('/dashboard/ingresar-token')
-      revalidatePath('/dashboard/mis-asientos')
+      revalidatePath('/elige/ingresar-token')
+      revalidatePath('/elige/mis-asientos')
 
       return {
         success: true,
@@ -253,7 +253,7 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
   }
 
   // Token canjeado pero no pudimos vincular un ticket específico
-  revalidatePath('/dashboard/ingresar-token')
+  revalidatePath('/elige/ingresar-token')
   return {
     success: true,
     message: 'Token canjeado. Tu pase está activo. Revisa la sección de Mis Asientos.',

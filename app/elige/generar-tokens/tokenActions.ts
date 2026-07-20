@@ -110,7 +110,7 @@ async function ensureStaffPermissions(supabase: SupabaseClient): Promise<{
 }
 
 function revalidateTokenPaths() {
-  revalidatePath('/dashboard/generar-tokens')
+  revalidatePath('/elige/generar-tokens')
   revalidatePath('/monitoreo-mapa')
 }
 
@@ -294,7 +294,7 @@ export async function getAssignmentContext(): Promise<AssignmentContext | null> 
 
 export async function requireAssignmentContext() {
   const context = await getAssignmentContext()
-  if (!context) redirect('/dashboard')
+  if (!context) redirect('/elige')
   return context
 }
 

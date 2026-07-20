@@ -143,5 +143,5 @@ export async function createUnidadAcademica(nombre: string, tipo: 'interno' | 'e
     throw new Error(error.message)
   }
 
-  revalidatePath('/dashboard/listas-ua')
+  revalidatePath('/elige/listas-ua')
 }

@@ -1,4 +1,4 @@
-// app/dashboard/generar-tokens/page.tsx
+// app/elige/generar-tokens/page.tsx
 import { TaquillaTokensView } from './TaquillaTokensView'
 import { createClient } from '@/lib/supabase/server'
 import { getSeatKey } from '@/config/auditorioConfig'

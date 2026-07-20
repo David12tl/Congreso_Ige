@@ -152,5 +152,5 @@ export async function updateUserRole(userId: string, idRol: number) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/dashboard/admin')
+  revalidatePath('/elige/admin')
 }

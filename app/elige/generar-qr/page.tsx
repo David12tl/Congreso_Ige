@@ -72,7 +72,7 @@ export default function GenerarQRPage() {
             <HiOutlineExclamationCircle className="w-16 h-16 text-amber-700 mx-auto" />
             <p className="text-amber-700 font-light text-sm">{error}</p>
             <a 
-              href="/dashboard/ingresar-token" 
+              href="/elige/ingresar-token"
               className="inline-block px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-amber-100 transition-all"
             >
               Ingresar Token Primero

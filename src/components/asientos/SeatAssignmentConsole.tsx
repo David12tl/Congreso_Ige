@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState, useTransition } from 'react'
 import { CONGRESO_IGE_EVENT_ID, getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
 import { createClient } from '@/lib/supabase/client'
-import { createManualSeatTicket, confirmarPagoTicket } from '../../../app/dashboard/generar-tokens/actions'
+import { createManualSeatTicket, confirmarPagoTicket } from '../../../app/elige/generar-tokens/actions'
 import { AuditorioSeatMap } from './AuditorioSeatMap'
 import type { AssignmentContext } from './types'
 import type { SeatStatus } from './AuditorioSeatMap'
@@ -505,7 +505,7 @@ export function SeatAssignmentConsole({
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-300">
               <p className="font-mono text-xs">
                 El alumno debe ingresar este código en{' '}
-                <span className="font-bold text-cyan-300">/dashboard/ingresar-token</span>{' '}
+                <span className="font-bold text-cyan-300">/elige/ingresar-token</span>{' '}
                 para canjear su pase.
               </p>
             </div>

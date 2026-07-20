@@ -84,5 +84,5 @@ export async function updateEncargadoUA(userId: string, unidadAcademicaId: numbe
     throw new Error(error.message)
   }
 
-  revalidatePath('/dashboard/encargados')
+  revalidatePath('/elige/encargados')
 }
