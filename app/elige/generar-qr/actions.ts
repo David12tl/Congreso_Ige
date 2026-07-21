@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { ActionResult } from '@/components/asientos/types'
+import { generateCredentialPDF } from '@/lib/credentials/pdf-generator'
 
 // ─── INTERFACES DE DATOS ESTRICTAS ───────────────────────────────────
 
@@ -260,6 +261,64 @@ function estructurarRespuestaExitosa(t: Record<string, unknown>): ResultadoValid
       matricula: (t.matricula as string) || null,
       asiento: asientoFormateado,
       tipo: (t.type as string) || 'alumno'
+    }
+  }
+}
+
+/**
+ * 3. GENERAR Y DESCARGAR PDF DEL TICKET
+ */
+export async function descargarTicketPDF(): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, error: 'Debes iniciar sesión para descargar el ticket.' }
+    }
+
+    const client = supabase as unknown as SupabaseBypass
+
+    const { data: ticket } = await client
+      .from('tickets')
+      .select('id, nombre, email, matricula, carrera, qr_data, asiento_zona, asiento_fila, asiento_numero')
+      .or(`id.eq.${user.id},buyer_id.eq.${user.id}`)
+      .maybeSingle() as unknown as { data: Record<string, unknown> | null }
+
+    if (!ticket) {
+      return { success: false, error: 'No tienes un ticket generado.' }
+    }
+
+    const ticketId = ticket.id as string
+    const nombre = (ticket.nombre as string) || 'Usuario'
+    const email = (ticket.email as string) || user.email || ''
+    const matricula = (ticket.matricula as string) || 'S/N'
+    const carrera = (ticket.carrera as string) || 'No especificada'
+    const asientoZona = (ticket.asiento_zona as string) || 'General'
+    const asientoFila = (ticket.asiento_fila as string) || 'A'
+    const asientoNumero = ticket.asiento_numero !== null ? Number(ticket.asiento_numero) : 0
+    const qr_data = (ticket.qr_data as string) || ticketId
+
+    const credentialData = {
+      nombre,
+      matricula,
+      carrera,
+      asiento_zona: asientoZona,
+      asiento_fila: asientoFila,
+      asiento_numero: asientoNumero,
+      qr_data,
+      email,
+    }
+
+    const pdfBuffer = await generateCredentialPDF(credentialData)
+    const pdfBase64 = pdfBuffer.toString('base64')
+
+    return { success: true, pdfBase64 }
+  } catch (error) {
+    console.error('Error generando PDF del ticket:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido al generar el PDF',
     }
   }
 }

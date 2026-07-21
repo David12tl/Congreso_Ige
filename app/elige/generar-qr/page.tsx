@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react'
 import { HiOutlineQrcode, HiOutlineDownload, HiOutlineRefresh, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getMiQR } from '../usuario/actions'
+import { descargarTicketPDF } from './actions'
 
 export default function GenerarQRPage() {
   const [qrData, setQrData] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [descargando, setDescargando] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -96,9 +98,41 @@ export default function GenerarQRPage() {
               <p className="text-slate-500 text-xs font-light">Presenta este código en los puntos de control del evento</p>
             </div>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition shadow-sm">
+              <button
+                onClick={async () => {
+                  setDescargando(true)
+                  try {
+                    const resultado = await descargarTicketPDF()
+                    if (resultado.success && resultado.pdfBase64) {
+                      const byteCharacters = atob(resultado.pdfBase64)
+                      const byteNumbers = new Array(byteCharacters.length)
+                      for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i)
+                      }
+                      const byteArray = new Uint8Array(byteNumbers)
+                      const blob = new Blob([byteArray], { type: 'application/pdf' })
+                      const url = URL.createObjectURL(blob)
+                      const link = document.createElement('a')
+                      link.href = url
+                      link.download = `ticket-congreso-ige-${Date.now()}.pdf`
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                      URL.revokeObjectURL(url)
+                    } else {
+                      alert(resultado.error || 'No se pudo generar el PDF')
+                    }
+                  } catch {
+                    alert('Error al descargar el ticket')
+                  } finally {
+                    setDescargando(false)
+                  }
+                }}
+                disabled={descargando}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <HiOutlineDownload className="w-4 h-4" />
-                Descargar
+                {descargando ? 'Generando...' : 'Descargar'}
               </button>
               <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 transition">
                 <HiOutlineRefresh className="w-4 h-4" />
