@@ -36,7 +36,7 @@ export default function EncargadosPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-purple-200 border-t-purple-500 animate-spin" />
-        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando encargados desde Supabase...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Cargando encargados desde Supabase...</p>
       </div>
     )
   }
@@ -46,7 +46,7 @@ export default function EncargadosPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineShieldCheck className="inline-block w-8 h-8 mr-3 text-purple-700" />
             Gestión de{' '}
             <span className="text-purple-700">
@@ -68,7 +68,7 @@ export default function EncargadosPage() {
             <HiOutlineUserGroup className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-purple-700/80">Total Encargados</span>
           </div>
-          <span className="text-6xl font-black text-[#0f172a]">
+          <span className="text-6xl font-black text-[#0f172a] dark:text-white">
             {data?.totalEncargados ?? '—'}
           </span>
           <p className="text-[10px] text-purple-700 mt-2 font-light">id_rol = 2 en profiles</p>
@@ -79,7 +79,7 @@ export default function EncargadosPage() {
             <HiOutlineShieldCheck className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-700/80">UAs Asignadas</span>
           </div>
-          <span className="text-6xl font-black text-[#0f172a]">
+          <span className="text-6xl font-black text-[#0f172a] dark:text-white">
             {data?.uasAsignadas ?? '—'}
           </span>
           <p className="text-[10px] text-emerald-700 mt-2 font-light">Unidades Académicas</p>
@@ -90,7 +90,7 @@ export default function EncargadosPage() {
             <HiOutlineUserGroup className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-amber-700/80">Sin UA Asignada</span>
           </div>
-          <span className="text-6xl font-black text-[#0f172a]">
+          <span className="text-6xl font-black text-[#0f172a] dark:text-white">
             {data?.encargados.filter((e) => e.unidad_academica_id === null).length ?? '—'}
           </span>
           <p className="text-[10px] text-amber-700 mt-2 font-light">Pendientes de asignación</p>
@@ -99,8 +99,8 @@ export default function EncargadosPage() {
 
       {/* Tabla de Encargados con UA - Usando tarjetas blancas con bordes redondeados */}
       <GlassCard className="overflow-hidden" glowColor="purple">
-        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <span className="text-xs font-light text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <HiOutlineOfficeBuilding className="w-4 h-4 text-purple-700" />
             Listado de Encargados y sus Unidades Académicas
           </span>
@@ -108,26 +108,26 @@ export default function EncargadosPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">ID / Email</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rol</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unidad Académica</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registro</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID / Email</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Rol</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Unidad Académica</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Registro</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {data && data.encargados.length > 0 ? (
                 data.encargados.map((enc) => (
-                  <tr key={enc.id} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={enc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 group-hover:border-purple-200 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:border-purple-200 transition-colors">
                           <HiOutlineUserCircle className="w-5 h-5" />
                         </div>
                         <div className="flex flex-col">
                           <span className="text-xs font-light text-purple-700 font-bold">{enc.id.slice(0, 12)}...</span>
-                          <span className="text-slate-700 text-sm">{enc.email ?? 'Sin email'}</span>
+                          <span className="text-slate-700 dark:text-slate-200 text-sm">{enc.email ?? 'Sin email'}</span>
                         </div>
                       </div>
                     </td>
@@ -137,16 +137,16 @@ export default function EncargadosPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700 font-light">{enc.nombre_ua ?? 'No asignada'}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-200 font-light">{enc.nombre_ua ?? 'No asignada'}</span>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500 font-light">
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-light">
                       {enc.created_at ? new Date(enc.created_at).toLocaleDateString('es-MX') : '—'}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500 font-light">
+                  <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
                     No hay encargados registrados con id_rol = 2.
                   </td>
                 </tr>

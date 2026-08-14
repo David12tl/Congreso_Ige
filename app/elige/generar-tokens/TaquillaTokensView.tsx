@@ -609,20 +609,20 @@ export function TaquillaTokensView({
   const totalAdeudo = apartadosPendientes.reduce((acc, r) => acc + r.montoRestante, 0)
 
   return (
-    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen bg-white text-[#1a1a1a] p-4">
+    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen bg-white dark:bg-[#2a2a2f] text-[#1a1a1a] p-4">
       {/* Columna Izquierda: Mapa del Auditorio */}
       <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl xl:col-span-2 shadow-sm">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-black uppercase tracking-wider text-[#00a354]">Taquilla Física y Control de Asientos</h2>
             <p className="text-xs text-[#4a4a4a]">Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.</p>
-            <span className="mt-2 inline-block rounded-md bg-white border border-[#e5e5e5] px-3 py-1.5 text-xs text-[#4a4a4a] font-medium shadow-sm">
+            <span className="mt-2 inline-block rounded-md bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] px-3 py-1.5 text-xs text-[#4a4a4a] font-medium shadow-sm">
               Rol: <strong className="text-[#1a1a1a]">{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
             </span>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl bg-white p-4 border border-[#e5e5e5] shadow-inner">
+        <div className="overflow-x-auto rounded-2xl bg-white dark:bg-[#2a2a2f] p-4 border border-[#e5e5e5] shadow-inner">
           <AuditorioSeatMap
             mode="assign"
             occupiedSeatKeys={occupiedSeatKeys}
@@ -633,7 +633,7 @@ export function TaquillaTokensView({
         </div>
 
         {/* ─── Panel inferior: Lista de Apartados Pendientes ─── */}
-        <div className="mt-6 rounded-2xl border border-amber-500/30 bg-white shadow-sm">
+        <div className="mt-6 rounded-2xl border border-amber-500/30 bg-white dark:bg-[#2a2a2f] shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[#e5e5e5]">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
@@ -779,7 +779,7 @@ export function TaquillaTokensView({
       <div className="space-y-6">
         {tokenGenerado ? (
           /* PANTALLA DE ÉXITO */
-          <div className="rounded-3xl border border-[#00a354]/30 bg-white p-6 text-center shadow-md animate-fadeIn">
+          <div className="rounded-3xl border border-[#00a354]/30 bg-white dark:bg-[#2a2a2f] p-6 text-center shadow-md animate-fadeIn">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#00a354]/10 text-[#00a354]">
               <HiOutlineCheckCircle className="h-6 w-6" />
             </div>
@@ -829,7 +829,7 @@ export function TaquillaTokensView({
             )}
 
             {/* BUSCADOR DE PRE-REGISTROS */}
-            <div className="mb-4 bg-white p-3 rounded-xl border border-[#e5e5e5] shadow-sm">
+            <div className="mb-4 bg-white dark:bg-[#2a2a2f] p-3 rounded-xl border border-[#e5e5e5] shadow-sm">
               <label className="block text-[10px] font-black uppercase tracking-widest text-[#00a354] mb-1.5">
                 ¿Tiene Pre-Registro? Buscar Usuario
               </label>
@@ -851,7 +851,7 @@ export function TaquillaTokensView({
               </div>
 
               {usuariosPendientes.length > 0 && (
-                <div className="mt-2 max-h-32 overflow-y-auto border border-[#e5e5e5] bg-white rounded-lg divide-y divide-[#e5e5e5] text-[11px]">
+                <div className="mt-2 max-h-32 overflow-y-auto border border-[#e5e5e5] bg-white dark:bg-[#2a2a2f] rounded-lg divide-y divide-[#e5e5e5] text-[11px]">
                   {usuariosPendientes.map((u) => (
                     <button
                       key={u.id}
@@ -906,7 +906,7 @@ export function TaquillaTokensView({
                   required
                   value={nombreAlumno}
                   onChange={(e) => setNombreAlumno(e.target.value)}
-                  className="w-full bg-white border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
+                  className="w-full bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
                 />
               </div>
 
@@ -917,7 +917,7 @@ export function TaquillaTokensView({
                   required
                   value={emailAlumno}
                   onChange={(e) => setEmailAlumno(e.target.value)}
-                  className="w-full bg-white border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
+                  className="w-full bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
                 />
               </div>
 
@@ -927,14 +927,14 @@ export function TaquillaTokensView({
                   <button
                     type="button"
                     onClick={() => setMetodoRegistro('pago')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Pago Total
                   </button>
                   <button
                     type="button"
                     onClick={() => setMetodoRegistro('apartado')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Dejar Apartado
                   </button>
@@ -950,7 +950,7 @@ export function TaquillaTokensView({
                     max={(selectedZone.price ?? 650) - 50}
                     value={montoApartado}
                     onChange={(e) => setMontoApartado(Number(e.target.value))}
-                    className="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-[#1a1a1a] focus:outline-none"
+                    className="w-full bg-white dark:bg-[#2a2a2f] border border-amber-300 rounded-lg px-3 py-1.5 text-[#1a1a1a] focus:outline-none"
                   />
                   <p className="text-[10px] text-[#4a4a4a]">Monto Restante: <span className="text-[#1a1a1a] font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
                 </div>
@@ -962,14 +962,14 @@ export function TaquillaTokensView({
                   <button
                     type="button"
                     onClick={() => setTipoPago('efectivo')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Efectivo
                   </button>
                   <button
                     type="button"
                     onClick={() => setTipoPago('transferencia')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Transferencia
                   </button>
@@ -1006,7 +1006,7 @@ export function TaquillaTokensView({
               </h3>
             </div>
 
-            <div className="bg-white rounded-xl p-4 border border-[#e5e5e5] space-y-2.5 text-xs mb-4 shadow-sm">
+            <div className="bg-white dark:bg-[#2a2a2f] rounded-xl p-4 border border-[#e5e5e5] space-y-2.5 text-xs mb-4 shadow-sm">
               <div>
                 <p className="text-[10px] text-[#4a4a4a] uppercase tracking-widest font-bold">Asistente</p>
                 <p className="text-[#1a1a1a] font-bold text-sm">{infoApartado.nombre || '—'}</p>
@@ -1039,14 +1039,14 @@ export function TaquillaTokensView({
                   <button
                     type="button"
                     onClick={() => setTipoPagoLiquidacion('efectivo')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Efectivo
                   </button>
                   <button
                     type="button"
                     onClick={() => setTipoPagoLiquidacion('transferencia')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white border-[#e5e5e5] text-[#4a4a4a]'}`}
+                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
                   >
                     Transferencia
                   </button>

@@ -8,7 +8,7 @@ import { getTodosLosAsistentes, AsistenteGlobal } from './actions'
 // ─── Mapa de estilos para badges de estatus ──────────────────────────────────
 // Map en lugar de Record para evitar "security/detect-object-injection"
 const STATUS_BADGE_MAP = new Map<string, { bg: string; text: string; border: string; label: string }>([
-  ['completado',    { bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-200',   label: 'Completado' }],
+  ['completado',    { bg: 'bg-slate-100 dark:bg-slate-800',   text: 'text-slate-700 dark:text-slate-200',   border: 'border-slate-200 dark:border-slate-700',   label: 'Completado' }],
   ['pre-registro',  { bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',   label: 'Pre-registro' }],
   ['pendiente',     { bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200',   label: 'Pendiente de pago' }],
   ['pagado',        { bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', label: 'Pagado' }],
@@ -82,7 +82,7 @@ export default function UsuariosListPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
-        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Sincronizando padrón completo...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Sincronizando padrón completo...</p>
       </div>
     )
   }
@@ -92,7 +92,7 @@ export default function UsuariosListPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineUserGroup className="inline-block w-8 h-8 mr-3 text-blue-700" />
             Control de{' '}
             <span className="text-blue-700">
@@ -103,22 +103,22 @@ export default function UsuariosListPage() {
         </div>
         
         {/* Pestañas de Filtrado Rápido */}
-        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200 space-x-1">
+        <div className="flex bg-slate-50 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200 dark:border-slate-700 space-x-1">
           <button
             onClick={() => setActiveTab('TODOS')}
-            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'TODOS' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'TODOS' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Todos
           </button>
           <button
             onClick={() => setActiveTab('INTERNOS')}
-            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'INTERNOS' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'INTERNOS' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Alumnos
           </button>
           <button
             onClick={() => setActiveTab('EXTERNOS')}
-            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'EXTERNOS' ? 'bg-pink-50 text-pink-700 border border-pink-200' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'EXTERNOS' ? 'bg-pink-50 text-pink-700 border border-pink-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Externos
           </button>
@@ -128,22 +128,22 @@ export default function UsuariosListPage() {
       {/* Buscador + Selector */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2 relative">
-          <HiOutlineSearch className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
+          <HiOutlineSearch className="absolute left-3 top-3.5 text-slate-400 dark:text-slate-500 w-5 h-5" />
           <input
             type="text"
             placeholder="Buscar por nombre, correo, matrícula..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
+            className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-[#0f172a] dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
           />
         </div>
 
         <div className="relative">
-          <HiOutlineFilter className="absolute left-3 top-3.5 text-slate-400 w-5 h-5 pointer-events-none" />
+          <HiOutlineFilter className="absolute left-3 top-3.5 text-slate-400 dark:text-slate-500 w-5 h-5 pointer-events-none" />
           <select
             value={selectedUA}
             onChange={(e) => setSelectedUA(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-700 focus:outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
           >
             <option value="TODAS">Filtrar por Unidad Académica</option>
             {listaUAs.map((ua) => (
@@ -155,8 +155,8 @@ export default function UsuariosListPage() {
 
       {/* Tabla Global - Usando tarjetas blancas con bordes redondeados */}
       <GlassCard className="overflow-hidden" glowColor="blue">
-        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <span className="text-xs font-light text-slate-500 uppercase tracking-widest">Listado unificado de ventas</span>
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <span className="text-xs font-light text-slate-500 dark:text-slate-400 uppercase tracking-widest">Listado unificado de ventas</span>
           <span className="text-[10px] font-light bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
             Registros encontrados: {asistentesFiltrados.length}
           </span>
@@ -164,51 +164,51 @@ export default function UsuariosListPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nombre Completo</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contacto</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Identificador / UA</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Detalles de Estudio</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Estatus</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Clasificación</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre Completo</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Contacto</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identificador / UA</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Detalles de Estudio</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Estatus</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Clasificación</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {asistentesFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500 font-light">
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
                     No se encontraron asistentes con los filtros seleccionados.
                   </td>
                 </tr>
               ) : (
                 asistentesFiltrados.map((asistente) => (
-                  <tr key={asistente.id} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={asistente.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <span className="text-sm font-light text-slate-700 group-hover:text-blue-700 transition-colors block">
+                      <span className="text-sm font-light text-slate-700 dark:text-slate-200 group-hover:text-blue-700 transition-colors block">
                         {asistente.nombre || 'Sin Nombre'}
                       </span>
                     </td>
                     <td className="px-6 py-4 font-light text-xs">
                       <div className="flex flex-col">
-                        <span className="text-slate-700">{asistente.email}</span>
-                        <span className="text-slate-500 text-[11px]">{asistente.telefono || 'Sin Teléfono'}</span>
+                        <span className="text-slate-700 dark:text-slate-200">{asistente.email}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px]">{asistente.telefono || 'Sin Teléfono'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-xs">
                       <div className="flex flex-col">
                         <span className="font-light text-cyan-700 font-bold">{asistente.matricula || 'EXT-N/A'}</span>
-                        <span className="text-slate-500 text-[11px] mt-0.5">{asistente.unidad_academica || 'Externa'}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">{asistente.unidad_academica || 'Externa'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
                       {asistente.type === 'alumno' ? (
                         <div className="flex flex-col">
-                          <span className="text-slate-700 font-light">{asistente.carrera}</span>
-                          <span className="text-slate-500 text-[10px] font-light">{asistente.semestre}° Semestre</span>
+                          <span className="text-slate-700 dark:text-slate-200 font-light">{asistente.carrera}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] font-light">{asistente.semestre}° Semestre</span>
                         </div>
                       ) : (
-                        <span className="text-slate-500 font-light italic">Acceso Corporativo / Empresa</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-light italic">Acceso Corporativo / Empresa</span>
                       )}
                     </td>
                     {/* Columna de Estatus de pago */}

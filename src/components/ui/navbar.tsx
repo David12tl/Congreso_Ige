@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/Conferencias', text: 'Conferencias' },
   { href: '/info', text: 'Información' },
   { href: '/aboutme', text: 'Nosotros' },
+  { href: '/investigacion', text: 'Investigación', external: true },
 ];
 
 // Paleta de colores ajustada con el Blanco como fondo y detalles en Azul, Vino y Marrón-Dorado
@@ -99,7 +100,13 @@ export default function Navbar() {
               <Link
                 key={link.text}
                 href={link.href}
-                onClick={(e) => handleSmoothScroll(e, link.href)}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
+                onClick={(e) => {
+                  if (!link.external) {
+                    handleSmoothScroll(e, link.href);
+                  }
+                }}
                 style={{ 
                   color: isActive ? tokens.red : tokens.navy 
                 }}
@@ -118,7 +125,7 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Botón de Registro y Menú Móvil */}
+        {/* Botón de Registro e Iniciar Sesión */}
         <div className="flex items-center gap-4">
           <Link href="/register">
             <button
@@ -131,7 +138,7 @@ export default function Navbar() {
               Registrarse
             </button>
           </Link>
-           <Link href="/login">
+          <Link href="/login">
             <button
               style={{ 
                 backgroundColor: tokens.red,
@@ -139,7 +146,7 @@ export default function Navbar() {
               }}
               className="hidden sm:block text-white text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
             >
-              iniciar Sesión
+              Iniciar Sesión
             </button>
           </Link>
           
@@ -175,7 +182,15 @@ export default function Navbar() {
                 <Link
                   key={link.text}
                   href={link.href}
-                  onClick={(e) => handleSmoothScroll(e, link.href)}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                  onClick={(e) => {
+                    if (!link.external) {
+                      handleSmoothScroll(e, link.href);
+                    } else {
+                      setIsMenuOpen(false);
+                    }
+                  }}
                   style={{ 
                     color: isActive ? tokens.red : tokens.navy,
                     backgroundColor: isActive ? `${tokens.gold}15` : 'transparent',
@@ -188,8 +203,8 @@ export default function Navbar() {
               );
             })}
             
-            {/* Botón de Registro en Móvil */}
-            <div className="pt-4 border-t border-black/5 sm:hidden">
+            {/* Botones Móvil */}
+            <div className="pt-4 border-t border-black/5 sm:hidden space-y-2">
               <Link href="/register" onClick={() => setIsMenuOpen(false)}>
                 <button
                   style={{ backgroundColor: tokens.red }}
@@ -198,8 +213,6 @@ export default function Navbar() {
                   Registrarse
                 </button>
               </Link>
-            </div>
-            <div className="pt-4 border-t border-black/5 sm:hidden">
               <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                 <button
                   style={{ backgroundColor: tokens.red }}

@@ -136,89 +136,89 @@ export default async function DashboardPage() {
 
       {/* ── Grid de Acceso Rápido ───────────────────────────────────── */}
       <section>
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Acceso Rápido</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Acceso Rápido</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
             href="/elige/mapa"
-            className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
+            className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a] mb-4 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Mapa del Evento</h3>
-            <p className="text-sm text-slate-500 mt-1">Explora stands, salas de conferencias y zonas del congreso</p>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] transition-colors">Mapa del Evento</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Explora stands, salas de conferencias y zonas del congreso</p>
           </Link>
 
           <Link
             href="/elige/mi-ua"
-            className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
+            className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Mi Unidad Académica</h3>
-            <p className="text-sm text-slate-500 mt-1">Información y estadísticas de tu unidad académica</p>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] transition-colors">Mi Unidad Académica</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Información y estadísticas de tu unidad académica</p>
           </Link>
 
           <Link
             href="/elige/mis-asientos"
-            className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
+            className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 mb-4 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Mis Asientos</h3>
-            <p className="text-sm text-slate-500 mt-1">Visualiza y gestiona tus asientos asignados</p>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] dark:group-hover:text-blue-400 transition-colors">Mis Asientos</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Visualiza y gestiona tus asientos asignados</p>
           </Link>
 
           <Link
             href="/elige/usuario"
-            className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
+            className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Mi Perfil</h3>
-            <p className="text-sm text-slate-500 mt-1">Gafete digital, credenciales y unidad académica</p>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] dark:group-hover:text-blue-400 transition-colors">Mi Perfil</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Gafete digital, credenciales y unidad académica</p>
           </Link>
 
 
           {esAdmin && (
             <Link
               href="/elige/reportes"
-              className="group bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
+              className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
             >
               <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="font-bold text-slate-900 group-hover:text-[#1e3a8a] transition-colors">Reportes</h3>
-              <p className="text-sm text-slate-500 mt-1">Exporta listados, métricas y estadísticas del evento</p>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] dark:group-hover:text-blue-400 transition-colors">Reportes</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Exporta listados, métricas y estadísticas del evento</p>
             </Link>
           )}
         </div>
       </section>
 
       {/* ── Información de la cuenta ────────────────────────────────── */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Tu Cuenta</h2>
+      <section className="bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 md:p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Tu Cuenta</h2>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#1e3a8a] text-white font-bold text-sm flex items-center justify-center">
               {(user.email ?? '?').charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">{user.email}</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user.email}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {esAdmin ? 'Administrador' : 'Usuario'}
               </p>
             </div>

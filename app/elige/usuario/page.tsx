@@ -116,7 +116,7 @@ export default async function UsuarioPage() {
             <div className="flex-1 pb-2">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#0f172a] capitalize">
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#0f172a] dark:text-white capitalize">
                     {username.replace(/[-_.]/g, ' ')}
                   </h1>
                   <p className="text-sm md:text-base text-[#475569] font-medium flex items-center justify-center md:justify-start gap-1.5 mt-1">
@@ -143,9 +143,9 @@ export default async function UsuarioPage() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             
             {/* Unidad Académica */}
-            <div className="bg-white p-6 rounded-2xl border border-[#cbd5e1] shadow-sm">
+            <div className="bg-white dark:bg-[#2a2a2f] p-6 rounded-2xl border border-[#cbd5e1] shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-[#0f172a]">Sede Académica</h3>
+                <h3 className="font-bold text-lg text-[#0f172a] dark:text-white">Sede Académica</h3>
                 <svg className="w-5 h-5 text-[#1e3a8a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
@@ -157,7 +157,7 @@ export default async function UsuarioPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-bold text-[#0f172a] leading-tight">
+                  <p className="font-bold text-[#0f172a] dark:text-white leading-tight">
                     {userProfile?.unidades_academicas?.nombre || 'Pendiente de Asignación'}
                   </p>
                   <p className="text-xs text-[#475569] mt-1 capitalize">
@@ -172,10 +172,10 @@ export default async function UsuarioPage() {
 
           {/* Columna Derecha: Agenda de Eventos */}
           <div className="lg:col-span-8">
-            <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#cbd5e1] shadow-sm">
+            <div className="bg-white dark:bg-[#2a2a2f] p-6 md:p-8 rounded-2xl border border-[#cbd5e1] shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-[#0f172a]">Cronograma del Congreso</h2>
+                  <h2 className="text-2xl font-black text-[#0f172a] dark:text-white">Cronograma del Congreso</h2>
                   <p className="text-sm text-[#475569]">Mantente al día con las conferencias programadas para hoy</p>
                 </div>
                 <span className="self-start md:self-auto bg-[#7f1d1d]/10 text-[#7f1d1d] font-semibold text-xs px-3.5 py-1.5 rounded-full border border-[#7f1d1d]/20">

@@ -106,9 +106,9 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
   // 1. Pantalla de carga
   if (step === 'checking') {
     return (
-      <div className="max-w-md mx-auto bg-white border border-slate-100 rounded-[24px] p-8 text-center shadow-sm">
+      <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-slate-100 rounded-[24px] p-8 text-center shadow-sm">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B1E23] mx-auto mb-3"></div>
-        <p className="text-xs text-slate-500 font-light">Verificando estatus...</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-light">Verificando estatus...</p>
       </div>
     )
   }
@@ -118,12 +118,12 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     const isPendingApproval = existingStatus === 'pending'
 
     return (
-      <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm animate-fadeIn">
+      <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-slate-200 dark:border-slate-700 rounded-[24px] p-6 text-center text-[#1E2A39] dark:text-white shadow-sm animate-fadeIn">
         {isPendingApproval ? (
           <>
             <HiClock className="w-12 h-12 text-amber-500 mx-auto mb-3 animate-pulse" />
             <h3 className="text-base font-black uppercase tracking-wider text-amber-700">Registro en Espera</h3>
-            <p className="text-xs text-[#7D7D7D] mt-2 font-light">
+            <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-2 font-light">
               Ya hemos recibido tu solicitud. Actualmente se encuentra en <strong>Lista de Espera</strong>.
             </p>
             <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 p-3 rounded-xl mt-4 font-light">
@@ -134,7 +134,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           <>
             <HiLockClosed className="w-12 h-12 text-cyan-600 mx-auto mb-3" />
             <h3 className="text-base font-black uppercase tracking-wider text-cyan-700">Registro Procesado</h3>
-            <p className="text-xs text-[#7D7D7D] mt-2 font-light">
+            <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-2 font-light">
               Tu solicitud ya cuenta con una respuesta en el sistema.
             </p>
             <div className="text-[11px] text-cyan-900 bg-cyan-50 border border-cyan-200 p-3 rounded-xl mt-4 font-normal">
@@ -149,10 +149,10 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
   // 3. Éxito después de enviar
   if (step === 'success') {
     return (
-      <div className="max-w-md mx-auto bg-white border border-emerald-500 rounded-[24px] p-6 text-center text-[#1E2A39] shadow-sm animate-fadeIn">
+      <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-emerald-500 rounded-[24px] p-6 text-center text-[#1E2A39] dark:text-white shadow-sm animate-fadeIn">
         <HiCheckCircle className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
         <h3 className="text-base font-black uppercase tracking-wider text-emerald-700">¡Pre-registro Exitoso!</h3>
-        <p className="text-xs text-[#7D7D7D] mt-2 font-light">
+        <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-2 font-light">
           Tus datos se enviaron a la lista de espera.
         </p>
         <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 p-3 rounded-xl mt-4 font-light">
@@ -164,41 +164,41 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
 
   // 4. Formulario
   return (
-    <div className="max-w-md mx-auto bg-white border border-[#E6E6E6] rounded-[24px] p-6 text-[#1E2A39] shadow-sm">
+    <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-[#E6E6E6] dark:border-slate-700 rounded-[24px] p-6 text-[#1E2A39] dark:text-white shadow-sm">
       {step === 'selection' ? (
         <>
           <div className="text-center mb-6">
             <h2 className="text-sm font-black uppercase tracking-wider text-[#8B1E23]">Tipo de Asistente</h2>
-            <p className="text-xs text-[#7D7D7D] mt-1 font-light">Selecciona tu perfil para iniciar tu registro</p>
+            <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-1 font-light">Selecciona tu perfil para iniciar tu registro</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => { setType('alumno'); setStep('form') }}
-              className="flex flex-col items-center justify-center p-5 bg-slate-50 border border-slate-200 hover:border-[#8B1E23] rounded-xl transition group text-center"
+              className="flex flex-col items-center justify-center p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#8B1E23] rounded-xl transition group text-center"
             >
-              <HiUser className="w-8 h-8 text-slate-400 group-hover:text-[#8B1E23] transition mb-2" />
-              <span className="text-xs font-bold text-slate-700 block">Interno</span>
-              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Alumnos)</span>
+              <HiUser className="w-8 h-8 text-slate-400 dark:text-slate-500 group-hover:text-[#8B1E23] transition mb-2" />
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Interno</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-light">(Alumnos)</span>
             </button>
 
             <button
               onClick={() => { setType('empresa'); setStep('form') }}
-              className="flex flex-col items-center justify-center p-5 bg-slate-50 border border-slate-200 hover:border-[#8B1E23] rounded-xl transition group text-center"
+              className="flex flex-col items-center justify-center p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#8B1E23] rounded-xl transition group text-center"
             >
-              <HiOfficeBuilding className="w-8 h-8 text-slate-400 group-hover:text-[#8B1E23] transition mb-2" />
-              <span className="text-xs font-bold text-slate-700 block">Externo</span>
-              <span className="text-[10px] text-slate-500 mt-0.5 font-light">(Empresas)</span>
+              <HiOfficeBuilding className="w-8 h-8 text-slate-400 dark:text-slate-500 group-hover:text-[#8B1E23] transition mb-2" />
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Externo</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-light">(Empresas)</span>
             </button>
           </div>
         </>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-2">
+          <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-2">
             <h3 className="font-black uppercase tracking-wider text-[#8B1E23]">
               Pre-Registro: {type === 'alumno' ? 'Interno' : 'Externo'}
             </h3>
-            <button type="button" onClick={() => setStep('selection')} className="text-[10px] text-slate-500 hover:underline">
+            <button type="button" onClick={() => setStep('selection')} className="text-[10px] text-slate-500 dark:text-slate-400 hover:underline">
               Cambiar
             </button>
           </div>
@@ -211,23 +211,23 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           )}
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nombre Completo</label>
-            <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#8B1E23]" placeholder="Ej. Juan Pérez" />
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Nombre Completo</label>
+            <input type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#8B1E23]" placeholder="Ej. Juan Pérez" />
           </div>
 
           {type === 'alumno' && (
             <div className="grid grid-cols-2 gap-3">
-               <input type="text" required value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Matrícula" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-               <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-               <input type="text" required value={carrera} onChange={(e) => setCarrera(e.target.value)} placeholder="Carrera" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-               <input type="text" required value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="Semestre" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="text" required value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Matrícula" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="text" required value={carrera} onChange={(e) => setCarrera(e.target.value)} placeholder="Carrera" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+               <input type="text" required value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="Semestre" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
             </div>
           )}
 
           {type === 'empresa' && (
             <div className="space-y-3">
-              <input type="text" required value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Institución / Empresa" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-              <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+              <input type="text" required value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Institución / Empresa" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+              <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
             </div>
           )}
 

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/components/theme-provider'
+import { FiSun, FiMoon } from 'react-icons/fi'
 import {
   HiOutlineViewGrid,
   HiOutlineTicket,
@@ -161,6 +163,10 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [collapsed, setCollapsed] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === 'dark'
+
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
 
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role),
@@ -183,25 +189,25 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   return (
     <aside
       className={`fixed left-0 top-0 h-screen z-40 flex flex-col transition-all duration-300 ease-in-out
-        bg-white
-        border-r border-slate-200
+        bg-white dark:bg-[#2a2a2f]
+        border-r border-slate-200 dark:border-slate-700
         ${collapsed ? 'w-20' : 'w-64'}`}
     >
       {/* Header / Logo */}
-     <div className="flex justify-center items-center w-full">
+     <div className="flex justify-center items-center w-full py-2">
         <Image src="/logo.png" alt="Logo" width={50} height={50} />
       </div>
 
       {/* User info */}
       {!collapsed && (
-        <div className="px-6 py-4 border-b border-slate-200">
-          <p className="text-[#1E2A39] text-sm font-medium truncate">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <p className="text-[#1E2A39] dark:text-slate-100 text-sm font-medium truncate">
             {user.name}
           </p>
-          <p className="text-slate-500 text-xs truncate mt-0.5">
+          <p className="text-slate-500 dark:text-slate-400 text-xs truncate mt-0.5">
             {user.email}
           </p>
-          <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900">
             {roleLabels[user.role]}
           </span>
         </div>
@@ -218,8 +224,8 @@ export function Sidebar({ user }: { user: SidebarUser }) {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                 ${
                   isActive
-                    ? 'bg-slate-50 text-[#1E2A39]'
-                    : 'text-slate-500 hover:text-[#1E2A39] hover:bg-slate-50'
+                    ? 'bg-slate-50 text-[#1E2A39] dark:bg-slate-800 dark:text-slate-50'
+                    : 'text-slate-500 hover:text-[#1E2A39] hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-50 dark:hover:bg-slate-800'
                 }`}
             >
               <span className="shrink-0">{item.icon}</span>
@@ -237,7 +243,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((prev) => !prev)}
-        className="mx-3 mb-2 flex items-center justify-center h-8 rounded-xl text-slate-400 hover:text-[#1E2A39] hover:bg-slate-50 transition-all duration-200"
+        className="mx-3 mb-2 flex items-center justify-center h-8 rounded-xl text-slate-400 hover:text-[#1E2A39] hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-50 dark:hover:bg-slate-800 transition-all duration-200"
         aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
       >
         {collapsed ? (
@@ -247,11 +253,28 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         )}
       </button>
 
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="mx-3 mb-2 flex items-center justify-center h-9 rounded-xl text-slate-500 hover:text-[#1E2A39] hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-all duration-200"
+        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        title={isDark ? 'Modo claro' : 'Modo oscuro'}
+      >
+        {collapsed ? (
+          isDark ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />
+        ) : (
+          <span className="flex items-center gap-3 w-full px-3">
+            {isDark ? <FiSun className="w-4 h-4 shrink-0" /> : <FiMoon className="w-4 h-4 shrink-0" />}
+            <span className="text-sm font-medium">{isDark ? 'Modo claro' : 'Modo oscuro'}</span>
+          </span>
+        )}
+      </button>
+
       {/* Sign Out */}
-      <div className="border-t border-slate-200 p-3">
+      <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 text-left cursor-pointer group"
+          className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40 rounded-xl transition-all duration-300 text-left cursor-pointer group"
         >
           <HiOutlineLogout className="w-5 h-5 shrink-0" />
           {!collapsed && (

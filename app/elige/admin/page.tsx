@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
-        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando panel de control...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Cargando panel de control...</p>
       </div>
     )
   }
@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
       {/* Header Estilo Centro de Comando */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#1E2A39] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#1E2A39] dark:text-white text-2xl md:text-3xl">
             Centro de Mando{' '}
             <span className="text-[#8B1E23]">
               General
@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
             <HiOutlineUsers className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Usuarios Registrados</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39] dark:text-white">
             {data?.totalUsuarios ?? '—'}
           </span>
           <p className="text-[10px] text-blue-700 mt-2 font-light">Total en profiles</p>
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
             <HiOutlineShieldCheck className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-purple-700/80">Encargados Activos</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39] dark:text-white">
             {data?.totalEncargados ?? '—'}
           </span>
           <p className="text-[10px] text-purple-700 mt-2 font-light">id_rol = 2</p>
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
             <HiOutlineOfficeBuilding className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-700/80">Unidades Académicas</span>
           </div>
-          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39]">
+          <span className="text-4xl sm:text-5xl font-black text-[#1E2A39] dark:text-white">
             {data?.totalUnidadesAcademicas ?? '—'}
           </span>
           <p className="text-[10px] text-emerald-700 mt-2 font-light">Registradas en el sistema</p>
@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
             <HiOutlineTicket className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-cyan-700/80">Total Tickets</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalTickets ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39] dark:text-white">{data?.totalTickets ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="blue">
@@ -134,7 +134,7 @@ export default function AdminDashboardPage() {
             <HiOutlineAcademicCap className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-blue-700/80">Alumnos</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalAlumnos ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39] dark:text-white">{data?.totalAlumnos ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="rose">
@@ -142,7 +142,7 @@ export default function AdminDashboardPage() {
             <HiOutlineBriefcase className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest text-rose-700/80">Empresas</span>
           </div>
-          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39]">{data?.totalEmpresas ?? '—'}</span>
+          <span className="text-3xl sm:text-4xl font-black text-[#1E2A39] dark:text-white">{data?.totalEmpresas ?? '—'}</span>
         </GlassCard>
 
         <GlassCard className="p-6" glowColor="amber">
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
             <span className="text-xs font-bold uppercase tracking-widest text-amber-700/80">Zona Top</span>
           </div>
           <div className="relative">
-            <span className="text-lg sm:text-xl font-black text-[#1E2A39] uppercase tracking-tight block truncate">
+            <span className="text-lg sm:text-xl font-black text-[#1E2A39] dark:text-white uppercase tracking-tight block truncate">
               {data?.topZone ?? 'Ninguna'}
             </span>
             <p className="text-[10px] text-amber-700 mt-1 font-light">{data?.topZoneTickets ?? 0} boletos</p>
@@ -163,46 +163,46 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Últimos Usuarios Registrados */}
         <GlassCard className="overflow-hidden" glowColor="blue">
-          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <span className="text-xs font-light text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <HiOutlineUsers className="w-4 h-4 text-blue-700" />
               Últimos usuarios registrados
             </span>
           </div>
           <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rol</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Registro</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Email</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Rol</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Registro</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {data && data.usuariosRecientes.length > 0 ? (
                   data.usuariosRecientes.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
-                            <HiOutlineUserCircle className="w-4 h-4 text-slate-500" />
+                          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                            <HiOutlineUserCircle className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                           </div>
-                          <span className="text-xs font-light text-slate-700 truncate max-w-[180px] block">{u.email ?? 'Sin email'}</span>
+                          <span className="text-xs font-light text-slate-700 dark:text-slate-200 truncate max-w-[180px] block">{u.email ?? 'Sin email'}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES.get(u.id_rol) ?? 'border-slate-300 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ROLE_BADGES.get(u.id_rol) ?? 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'}`}>
                           {ROLE_LABELS.get(u.id_rol) ?? 'Desconocido'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[11px] text-slate-500 font-light">
+                      <td className="px-4 py-3 text-[11px] text-slate-500 dark:text-slate-400 font-light">
                         {u.created_at ? new Date(u.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 font-light">
+                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400 font-light">
                       Sin actividad reciente.
                     </td>
                   </tr>
@@ -214,39 +214,39 @@ export default function AdminDashboardPage() {
 
         {/* Últimos Tickets Comprados */}
         <GlassCard className="overflow-hidden" glowColor="cyan">
-          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <span className="text-xs font-light text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <HiOutlineTicket className="w-4 h-4 text-cyan-700" />
               Últimos tickets vendidos
             </span>
           </div>
           <div className="overflow-x-auto whitespace-nowrap">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Comprador</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">UA / Fecha</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Comprador</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tipo</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">UA / Fecha</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {data && data.ticketsRecientes.length > 0 ? (
                   data.ticketsRecientes.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-xs font-light text-slate-700">{t.nombre ?? 'Anónimo'}</span>
-                          <span className="text-[10px] font-light text-slate-500">{t.email}</span>
+                          <span className="text-xs font-light text-slate-700 dark:text-slate-200">{t.nombre ?? 'Anónimo'}</span>
+                          <span className="text-[10px] font-light text-slate-500 dark:text-slate-400">{t.email}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES.get(t.type) ?? 'border-slate-300 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${TYPE_BADGES.get(t.type) ?? 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'}`}>
                           {t.type === 'alumno' ? 'Alumno' : 'Empresa'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[11px]">
-                        <span className="text-slate-700 block">{t.unidad_academica ?? 'Externa'}</span>
-                        <span className="text-slate-500 font-light text-[10px]">
+                        <span className="text-slate-700 dark:text-slate-200 block">{t.unidad_academica ?? 'Externa'}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-light text-[10px]">
                           {t.purchased_at ? new Date(t.purchased_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '—'}
                         </span>
                       </td>
@@ -254,7 +254,7 @@ export default function AdminDashboardPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 font-light">
+                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400 font-light">
                       Sin ventas recientes.
                     </td>
                   </tr>

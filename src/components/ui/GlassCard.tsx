@@ -8,15 +8,15 @@
 type GlowColor = 'blue' | 'purple' | 'amber' | 'cyan' | 'emerald' | 'rose'
 
 const GLOW_CLASS_MAP = new Map<GlowColor, string>([
-  ['blue',    'border-blue-200 shadow-sm'],
-  ['purple',  'border-purple-200 shadow-sm'],
-  ['amber',   'border-amber-200 shadow-sm'],
-  ['cyan',    'border-cyan-200 shadow-sm'],
-  ['emerald', 'border-emerald-200 shadow-sm'],
-  ['rose',    'border-rose-200 shadow-sm'],
+  ['blue',    'border-blue-200 shadow-sm dark:border-blue-900/60 dark:shadow-none'],
+  ['purple',  'border-purple-200 shadow-sm dark:border-purple-900/60 dark:shadow-none'],
+  ['amber',   'border-amber-200 shadow-sm dark:border-amber-900/60 dark:shadow-none'],
+  ['cyan',    'border-cyan-200 shadow-sm dark:border-cyan-900/60 dark:shadow-none'],
+  ['emerald', 'border-emerald-200 shadow-sm dark:border-emerald-900/60 dark:shadow-none'],
+  ['rose',    'border-rose-200 shadow-sm dark:border-rose-900/60 dark:shadow-none'],
 ])
 
-const DEFAULT_GLOW_CLASS = 'border-slate-200 shadow-sm'
+const DEFAULT_GLOW_CLASS = 'border-slate-200 shadow-sm dark:border-slate-700 dark:shadow-none'
 
 interface GlassCardProps {
   children: React.ReactNode
@@ -29,7 +29,7 @@ export function GlassCard({ children, className = '', glowColor = 'cyan' }: Glas
 
   return (
     <div
-      className={`relative rounded-[24px] border bg-white overflow-hidden transition-all duration-300 ${borderClass} ${className}`}
+      className={`relative rounded-[24px] border bg-white dark:bg-[#2a2a2f] overflow-hidden transition-all duration-300 ${borderClass} ${className}`}
     >
       {children}
     </div>

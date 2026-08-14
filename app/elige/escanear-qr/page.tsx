@@ -87,7 +87,7 @@ export default function EscanearQRPage() {
           <HiOutlineCamera className="text-purple-500 w-8 h-8" />
           Control de <span className="text-purple-500">Acceso QR</span>
         </h1>
-        <p className="text-slate-400 text-sm">Escanea las credenciales de los asistentes para validar su entrada al evento.</p>
+        <p className="text-slate-400 dark:text-slate-500 text-sm">Escanea las credenciales de los asistentes para validar su entrada al evento.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[400px]">
@@ -95,7 +95,7 @@ export default function EscanearQRPage() {
         {/* Lector de Cámara */}
         <div className="md:col-span-2 bg-[#0f172a] border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden ring-1 ring-white/5">
           {isScanning ? (
-            <div className="w-full max-w-md bg-white rounded-xl overflow-hidden p-2 text-slate-900" id="reader" />
+            <div className="w-full max-w-md bg-white dark:bg-[#2a2a2f] rounded-xl overflow-hidden p-2 text-slate-900 dark:text-slate-100" id="reader" />
           ) : loading ? (
             <div className="flex flex-col items-center gap-3">
               <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
@@ -103,7 +103,7 @@ export default function EscanearQRPage() {
             </div>
           ) : (
             <div className="text-center space-y-4">
-              <p className="text-slate-400 text-sm">Escáner en pausa</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm">Escáner en pausa</p>
               <button 
                 onClick={reiniciarEscaner}
                 className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold uppercase tracking-wider text-xs flex items-center gap-2 mx-auto transition-all"
@@ -117,16 +117,16 @@ export default function EscanearQRPage() {
         {/* Panel Lateral e Indicadores */}
         <div className="space-y-4 flex flex-col justify-start">
           <div className="bg-[#0f172a] border border-slate-800 rounded-2xl p-6">
-            <h3 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
               <HiOutlineShieldCheck className="w-4 h-4 text-purple-400" /> Estado del Punto
             </h3>
             <div className="space-y-3">
               <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-                <span className="text-xs text-slate-400">Personal de Entrada</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Personal de Entrada</span>
                 <span className="text-xs font-bold text-purple-400 uppercase">Encargado</span>
               </div>
               <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-                <span className="text-xs text-slate-400">Modo de Operación</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Modo de Operación</span>
                 <span className="text-xs font-bold text-emerald-400 uppercase">En Línea</span>
               </div>
             </div>
@@ -152,28 +152,28 @@ export default function EscanearQRPage() {
             <h2 className={`text-2xl font-black uppercase tracking-tight ${scanResult.success ? 'text-emerald-400' : 'text-rose-400'}`}>
               {scanResult.success ? 'Acceso Permitido' : 'Acceso Denegado'}
             </h2>
-            <p className="text-slate-300 text-sm mt-1 mb-6 font-medium">{scanResult.message}</p>
+            <p className="text-slate-300 dark:text-slate-400 text-sm mt-1 mb-6 font-medium">{scanResult.message}</p>
 
             {scanResult.asistente && (
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 text-left space-y-2 mb-6">
                 <div>
-                  <span className="text-[10px] uppercase font-mono text-slate-500">Nombre del Alumno</span>
+                  <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Nombre del Alumno</span>
                   <p className="text-white text-sm font-bold uppercase truncate">{scanResult.asistente.nombre}</p>
                 </div>
                 {scanResult.asistente.matricula && (
                   <div>
-                    <span className="text-[10px] uppercase font-mono text-slate-500">No. Control</span>
-                    <p className="text-slate-300 text-xs font-mono">{scanResult.asistente.matricula}</p>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">No. Control</span>
+                    <p className="text-slate-300 dark:text-slate-400 text-xs font-mono">{scanResult.asistente.matricula}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900">
                   <div>
-                    <span className="text-[10px] uppercase font-mono text-slate-500">Asiento</span>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Asiento</span>
                     <p className="text-purple-400 text-xs font-bold uppercase truncate">{scanResult.asistente.asiento}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-mono text-slate-500">Categoría</span>
-                    <p className="text-slate-300 text-xs font-bold uppercase">{scanResult.asistente.tipo}</p>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Categoría</span>
+                    <p className="text-slate-300 dark:text-slate-400 text-xs font-bold uppercase">{scanResult.asistente.tipo}</p>
                   </div>
                 </div>
               </div>

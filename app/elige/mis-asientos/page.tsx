@@ -38,7 +38,7 @@ export default function MisAsientosPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
-        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando tus asientos...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Cargando tus asientos...</p>
       </div>
     )
   }
@@ -48,7 +48,7 @@ export default function MisAsientosPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineTicket className="inline-block w-8 h-8 mr-3 text-blue-700" />
             Mis{' '}
             <span className="text-blue-700">
@@ -66,8 +66,8 @@ export default function MisAsientosPage() {
       {asientos.length === 0 ? (
         <GlassCard className="p-12 flex flex-col items-center justify-center text-center" glowColor="amber">
           <HiOutlineExclamationCircle className="w-16 h-16 text-amber-700 mb-4" />
-          <h2 className="text-xl font-bold text-[#0f172a] mb-2">Sin asientos asignados</h2>
-          <p className="text-slate-500 font-light max-w-md">
+          <h2 className="text-xl font-bold text-[#0f172a] dark:text-white mb-2">Sin asientos asignados</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-light max-w-md">
             Aún no has seleccionado tus asientos. Dirígete al módulo de generación de QR
             para elegir tus espacios preferidos.
           </p>
@@ -81,18 +81,18 @@ export default function MisAsientosPage() {
                   <HiOutlineMap className="w-5 h-5 text-blue-700" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#0f172a]">{asiento.zona}</h3>
-                  <p className="text-xs text-slate-500 font-light">Fila {asiento.fila}, Asiento {asiento.numero}</p>
+                  <h3 className="text-lg font-bold text-[#0f172a] dark:text-white">{asiento.zona}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-light">Fila {asiento.fila}, Asiento {asiento.numero}</p>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500 font-light">Estado</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-light">Estado</span>
                   <span className="text-blue-700 font-bold uppercase">{asiento.estado}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500 font-light">Tipo</span>
-                  <span className="text-slate-700 font-light">{asiento.tipo}</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-light">Tipo</span>
+                  <span className="text-slate-700 dark:text-slate-200 font-light">{asiento.tipo}</span>
                 </div>
               </div>
             </GlassCard>

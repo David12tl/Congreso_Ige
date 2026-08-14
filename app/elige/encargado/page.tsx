@@ -45,7 +45,7 @@ export default function EncargadoDashboardPage() {
       {/* 1. Header Dinámico */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#1E2A39] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#1E2A39] dark:text-white text-2xl md:text-3xl">
             Panel de Control <span className="text-[#8B1E23]">—</span> 
             <span className="text-[#8B1E23] ml-2">
               {landData.name}
@@ -73,14 +73,14 @@ export default function EncargadoDashboardPage() {
               {/* Pulsing scanner ring */}
               <div className="absolute -inset-4 bg-cyan-100 rounded-full blur-xl group-hover:bg-cyan-200 transition-all duration-500 animate-pulse" />
               
-              <button className="relative w-24 h-24 sm:w-32 sm:h-32 bg-white border-2 border-cyan-200 rounded-[24px] flex items-center justify-center text-cyan-700 group-hover:scale-110 transition-transform duration-300">
+              <button className="relative w-24 h-24 sm:w-32 sm:h-32 bg-white dark:bg-[#2a2a2f] border-2 border-cyan-200 rounded-[24px] flex items-center justify-center text-cyan-700 group-hover:scale-110 transition-transform duration-300">
                 <HiOutlineQrcode className="w-12 h-12 sm:w-16 sm:h-16" />
               </button>
             </div>
 
             <div className="mt-8 space-y-2">
-              <h2 className="text-lg font-bold text-[#1E2A39] uppercase tracking-widest">Simulador de Escaneo</h2>
-              <p className="text-slate-500 text-xs max-w-xs font-light">Haz clic para simular la lectura del código QR de un asistente y registrar su entrada.</p>
+              <h2 className="text-lg font-bold text-[#1E2A39] dark:text-white uppercase tracking-widest">Simulador de Escaneo</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-xs max-w-xs font-light">Haz clic para simular la lectura del código QR de un asistente y registrar su entrada.</p>
             </div>
 
             <button 
@@ -111,12 +111,12 @@ export default function EncargadoDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-widest">Total Visitas Hoy</span>
             </div>
             <div className="relative">
-              <span className="text-5xl sm:text-6xl font-black text-[#1E2A39]">
+              <span className="text-5xl sm:text-6xl font-black text-[#1E2A39] dark:text-white">
                 {visitasHoy}
               </span>
               <span className="ml-2 text-emerald-700 text-sm font-bold">+12%</span>
             </div>
-            <div className="mt-4 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div className="mt-4 h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div className="h-full bg-emerald-500 w-2/3 animate-shimmer" />
             </div>
           </GlassCard>
@@ -133,12 +133,12 @@ export default function EncargadoDashboardPage() {
             
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-2xl sm:text-3xl font-black text-[#1E2A39]">{currentCapacityPercent}%</span>
-                <span className="text-[10px] text-slate-500 uppercase font-bold pb-1">Ocupación</span>
+                <span className="text-2xl sm:text-3xl font-black text-[#1E2A39] dark:text-white">{currentCapacityPercent}%</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold pb-1">Ocupación</span>
               </div>
               
               {/* Tailwind Progress Bar Estilizada */}
-              <div className="relative w-full h-4 bg-slate-100 rounded-full border border-slate-200 p-1 overflow-hidden">
+              <div className="relative w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 p-1 overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ease-out ${
                     currentCapacityPercent > 90 ? 'bg-red-500' : 
@@ -148,16 +148,16 @@ export default function EncargadoDashboardPage() {
                   style={{ width: `${currentCapacityPercent}%` }}
                 />
               </div>
-              <p className="text-[10px] text-slate-500 font-light italic">Actualizado automáticamente cada 30s</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-light italic">Actualizado automáticamente cada 30s</p>
             </div>
           </GlassCard>
 
-          <div className="p-4 border border-slate-200 rounded-xl bg-slate-50">
-            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">Logs de Actividad</h4>
+          <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+            <h4 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-3">Logs de Actividad</h4>
             <div className="space-y-2 font-light text-[10px]">
-              <p className="text-slate-500"><span className="text-cyan-700">14:20:01</span> User IGE-902 Entrada</p>
-              <p className="text-slate-500"><span className="text-cyan-700">14:18:45</span> User IGE-112 Entrada</p>
-              <p className="text-slate-400 tracking-tighter"> Esperando nuevos datos...</p>
+              <p className="text-slate-500 dark:text-slate-400"><span className="text-cyan-700">14:20:01</span> User IGE-902 Entrada</p>
+              <p className="text-slate-500 dark:text-slate-400"><span className="text-cyan-700">14:18:45</span> User IGE-112 Entrada</p>
+              <p className="text-slate-400 dark:text-slate-500 tracking-tighter"> Esperando nuevos datos...</p>
             </div>
           </div>
         </aside>
@@ -169,11 +169,11 @@ export default function EncargadoDashboardPage() {
           <div className="w-full max-w-md animate-scaleIn">
             <GlassCard className="p-8" glowColor="cyan">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-[#1E2A39] flex items-center gap-2">
+                <h3 className="text-xl font-bold text-[#1E2A39] dark:text-white flex items-center gap-2">
                   <HiOutlineShieldCheck className="text-cyan-700" />
                   Validar Asistente
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-[#1E2A39] transition-colors">
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 dark:text-slate-500 hover:text-[#1E2A39] transition-colors">
                   <HiOutlineX className="w-6 h-6" />
                 </button>
               </div>
@@ -185,7 +185,7 @@ export default function EncargadoDashboardPage() {
                     autoFocus
                     type="text" 
                     placeholder="Ej: IGE-2026-XXXX"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#1E2A39] font-light focus:border-[#8B1E23] focus:bg-white transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-[#1E2A39] dark:text-white font-light focus:border-[#8B1E23] focus:bg-white dark:focus:bg-[#333338] transition-all"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                   />

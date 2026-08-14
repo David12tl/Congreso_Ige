@@ -37,7 +37,7 @@ export default function IngresarTokenPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineKey className="inline-block w-8 h-8 mr-3 text-amber-700" />
             Ingresar{' '}
             <span className="text-amber-700">
@@ -64,7 +64,7 @@ export default function IngresarTokenPage() {
               placeholder="Ej: IGE-2026-XXXX-XXXX"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-amber-500 transition-all font-light"
+              className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-[#0f172a] dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-500 transition-all font-light"
               required
             />
           </div>

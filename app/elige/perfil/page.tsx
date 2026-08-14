@@ -173,20 +173,20 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 bg-[#f8fafc]">
-        <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-[#1e3a8a] animate-spin" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 bg-slate-50 dark:bg-transparent">
+        <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-[#1e3a8a] animate-spin" />
         <p className="text-[#475569] font-light text-xs uppercase tracking-widest">Leyendo bases de datos...</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0 text-[#1e293b]">
+    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0 text-slate-900 dark:text-slate-100">
       
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineIdentification className="inline-block w-8 h-8 mr-3 text-[#1e3a8a]" />
             Mi{' '}
             <span className="text-[#1e3a8a]">
@@ -206,14 +206,14 @@ export default function PerfilPage() {
 
       {/* 📢 BANNER: Si no ha seleccionado UA aún */}
       {requiereCompletarUA && (
-        <GlassCard className="p-5 border-l-4 border-[#7f1d1d] bg-[#fef2f2]" glowColor="amber">
+        <GlassCard className="p-5 border-l-4 border-[#7f1d1d] bg-[#fef2f2] dark:bg-[#2a2a2f]" glowColor="amber">
           <div className="flex items-start gap-4">
-            <HiOutlineExclamationCircle className="w-8 h-8 text-[#7f1d1d] shrink-0 mt-0.5" />
+            <HiOutlineExclamationCircle className="w-8 h-8 text-[#7f1d1d] dark:text-red-400 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-base font-bold text-[#7f1d1d] uppercase tracking-wider">
+              <h3 className="text-base font-bold text-[#7f1d1d] dark:text-red-300 uppercase tracking-wider">
                 Unidad Académica Obligatoria
               </h3>
-              <p className="text-sm text-[#475569] mt-1 font-light">
+              <p className="text-sm text-[#475569] dark:text-slate-400 mt-1 font-light">
                 Para poder tramitar tu solicitud de registro al congreso, primero debes asignar tu Unidad Académica en el panel Datos del Perfil abajo. Una vez guardado, se desbloqueará tu formulario de pre-ticket.
               </p>
             </div>
@@ -224,7 +224,7 @@ export default function PerfilPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Panel Izquierdo: Avatar Dinámico de Google o Iniciales */}
-        <GlassCard className="p-8 flex flex-col items-center justify-center text-center bg-white border border-[#cbd5e1] shadow-sm" glowColor="cyan">
+        <GlassCard className="p-8 flex flex-col items-center justify-center text-center bg-white dark:bg-[#2a2a2f] border border-[#cbd5e1] dark:border-slate-700 shadow-sm" glowColor="cyan">
           
           {/* Contenedor circular con borde blanco grueso y sombra física */}
           <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-[#e0e7ff] flex items-center justify-center text-[#1e3a8a] shadow-md relative shrink-0">
@@ -245,59 +245,59 @@ export default function PerfilPage() {
             )}
           </div>
 
-          <h2 className="text-xl font-bold text-[#0f172a] mt-4 truncate max-w-full">
+          <h2 className="text-xl font-bold text-[#0f172a] dark:text-white mt-4 truncate max-w-full">
             {perfil?.email || 'Asistente Anónimo'}
           </h2>
           <span className="px-3 py-1 mt-2 rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] border border-[#1e3a8a]/20 text-xs font-bold uppercase tracking-wider">
             {perfil?.rolNombre || 'Asistente'}
           </span>
-          <p className="text-[10px] text-[#475569] font-semibold mt-4 uppercase tracking-wider">
-            Miembro desde: <span className="font-light text-[#1e293b]">{perfil?.createdAt ? new Date(perfil.createdAt).toLocaleDateString() : '—'}</span>
+          <p className="text-[10px] text-[#475569] dark:text-slate-400 font-semibold mt-4 uppercase tracking-wider">
+            Miembro desde: <span className="font-light text-[#1e293b] dark:text-slate-100">{perfil?.createdAt ? new Date(perfil.createdAt).toLocaleDateString() : '—'}</span>
           </p>
         </GlassCard>
 
         {/* Panel Derecho: Datos de Registro */}
-        <GlassCard className="p-8 lg:col-span-2 flex flex-col justify-between bg-white border border-[#cbd5e1] shadow-sm" glowColor="purple">
+        <GlassCard className="p-8 lg:col-span-2 flex flex-col justify-between bg-white dark:bg-[#2a2a2f] border border-[#cbd5e1] dark:border-slate-700 shadow-sm" glowColor="purple">
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-black text-[#0f172a] uppercase tracking-wider border-b-2 border-[#7f1d1d] pb-1">Datos del Perfil</h3>
+              <h3 className="text-lg font-black text-[#0f172a] dark:text-white uppercase tracking-wider border-b-2 border-[#7f1d1d] pb-1">Datos del Perfil</h3>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                 <HiOutlineUser className="w-6 h-6 text-[#1e3a8a]" />
                 <div className="flex-1">
-                  <p className="text-[10px] text-[#475569] uppercase tracking-widest font-bold">Nombre Completo</p>
-                  <p className="text-[#0f172a] font-medium">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">Nombre Completo</p>
+                  <p className="text-[#0f172a] dark:text-white font-medium">
                     {resumen?.hasTicket ? 'Revisa tu credencial en el módulo Pase' : '—'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                 <HiOutlineMail className="w-6 h-6 text-[#7f1d1d]" />
                 <div>
-                  <p className="text-[10px] text-[#475569] uppercase tracking-widest font-bold">Correo Electrónico</p>
-                  <p className="text-[#0f172a] font-medium">{perfil?.email || '—'}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">Correo Electrónico</p>
+                  <p className="text-[#0f172a] dark:text-white font-medium">{perfil?.email || '—'}</p>
                 </div>
               </div>
 
               {/* Selector de Unidad Académica */}
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                 <HiOutlineAcademicCap className="w-6 h-6 text-[#1e3a8a] mt-1" />
                 <div className="flex-1">
-                  <p className="text-[10px] text-[#475569] uppercase tracking-widest font-bold">
-                    Unidad Académica <span className="text-[#7f1d1d]">*</span>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
+                    Unidad Académica <span className="text-[#7f1d1d] dark:text-red-400">*</span>
                   </p>
                   {perfil?.unidadAcademicaNombre ? (
-                    <p className="text-[#0f172a] font-medium flex items-center gap-2 mt-1">
+                    <p className="text-[#0f172a] dark:text-white font-medium flex items-center gap-2 mt-1">
                       {perfil.unidadAcademicaNombre}
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900">
                         <HiOutlineCheckCircle className="w-3 h-3" /> Asignada
                       </span>
                     </p>
                   ) : (
-                    <p className="text-[#7f1d1d] font-bold text-sm mt-1">No asignada</p>
+                    <p className="text-[#7f1d1d] dark:text-red-300 font-bold text-sm mt-1">No asignada</p>
                   )}
 
                   <div className="mt-4 flex flex-col sm:flex-row gap-2">
@@ -307,13 +307,13 @@ export default function PerfilPage() {
                         setSelectedUA(e.target.value ? Number(e.target.value) : '')
                         setUaError(null)
                       }}
-                      className="flex-1 bg-white border border-[#cbd5e1] rounded-xl px-4 py-2 text-sm text-[#0f172a] focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] outline-none font-medium"
+                      className="flex-1 bg-slate-100 dark:bg-[#2a2a2f] border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a] outline-none font-medium"
                     >
-                      <option value="" className="bg-white">
+                      <option value="" className="bg-white dark:bg-[#2a2a2f]">
                         -- Seleccionar Unidad Académica --
                       </option>
                       {unidadesAcademicas.map((ua) => (
-                        <option key={ua.id} value={ua.id} className="bg-white">
+                        <option key={ua.id} value={ua.id} className="bg-white dark:bg-[#2a2a2f]">
                           {ua.nombre} ({ua.tipo === 'interno' ? 'Interna' : 'Externa'})
                         </option>
                       ))}
@@ -330,12 +330,12 @@ export default function PerfilPage() {
                   </div>
 
                   {uaSaved && (
-                    <p className="text-emerald-700 text-xs font-semibold mt-3 flex items-center gap-1">
+                    <p className="text-emerald-700 dark:text-emerald-300 text-xs font-semibold mt-3 flex items-center gap-1">
                       <HiOutlineCheckCircle className="w-4 h-4" /> Unidad Académica guardada correctamente.
                     </p>
                   )}
                   {uaError && (
-                    <p className="text-[#7f1d1d] text-xs font-bold mt-3">{uaError}</p>
+                    <p className="text-[#7f1d1d] dark:text-red-300 text-xs font-bold mt-3">{uaError}</p>
                   )}
                 </div>
               </div>
@@ -347,12 +347,12 @@ export default function PerfilPage() {
       </div>
 
       {/* ─── 📦 SECCIÓN CONDICIONAL DEL ONBOARDING DESBLOQUEABLE ─── */}
-      <div className="mt-8 border-t border-[#cbd5e1] pt-8">
+      <div className="mt-8 border-t border-[#cbd5e1] dark:border-slate-700 pt-8">
         {requiereCompletarUA ? (
-          <div className="max-w-md mx-auto text-center p-8 bg-white rounded-[24px] border border-dashed border-[#cbd5e1] opacity-75">
-            <HiOutlineClipboardList className="w-10 h-10 text-[#475569] mx-auto mb-2" />
-            <h4 className="text-xs font-black uppercase tracking-widest text-[#475569]">Onboarding Bloqueado</h4>
-            <p className="text-[11px] text-[#475569] mt-1 font-medium">
+          <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-[#2a2a2f] rounded-[24px] border border-dashed border-[#cbd5e1] dark:border-slate-700 opacity-75">
+            <HiOutlineClipboardList className="w-10 h-10 text-[#475569] dark:text-slate-400 mx-auto mb-2" />
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#475569] dark:text-slate-300">Onboarding Bloqueado</h4>
+            <p className="text-[11px] text-[#475569] dark:text-slate-400 mt-1 font-medium">
               Asigna tu Unidad Académica arriba para habilitar la solicitud del ticket.
             </p>
           </div>

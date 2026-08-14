@@ -144,7 +144,7 @@ export default function MiUAPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-500 animate-spin" />
-        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Cargando datos de la Sede...</p>
+        <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Cargando datos de la Sede...</p>
       </div>
     )
   }
@@ -154,7 +154,7 @@ export default function MiUAPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+          <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
             <HiOutlineOfficeBuilding className="inline-block w-8 h-8 mr-3 text-emerald-700" />
             Asistentes por{' '}
             <span className="text-emerald-700">
@@ -173,8 +173,8 @@ export default function MiUAPage() {
       <div className="grid grid-cols-1 gap-6">
         <div className="w-full">
           <GlassCard className="overflow-hidden" glowColor="emerald">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-light text-slate-500 uppercase tracking-widest flex items-center gap-2">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <span className="text-xs font-light text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <HiOutlineUserGroup className="text-emerald-700 w-4 h-4" /> Alumnos Registrados (Rol 3)
               </span>
               <span className="px-2 py-0.5 text-[10px] font-light bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
@@ -184,36 +184,36 @@ export default function MiUAPage() {
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nombre Completo</th>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Correo Electrónico</th>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Carrera // Matrícula</th>
-                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo de Asistente</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre Completo</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Correo Electrónico</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Carrera // Matrícula</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tipo de Asistente</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {asistentes.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500 font-light">
+                      <td colSpan={4} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
                         No hay alumnos con Rol 3 registrados en esta Unidad Académica actualmente.
                       </td>
                     </tr>
                   ) : (
                     asistentes.map((asistente) => (
-                      <tr key={asistente.id} className="hover:bg-slate-50 transition-colors group">
+                      <tr key={asistente.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                         <td className="px-6 py-4">
-                          <span className="text-sm font-light text-slate-700 block group-hover:text-emerald-700 transition-colors">
+                          <span className="text-sm font-light text-slate-700 dark:text-slate-200 block group-hover:text-emerald-700 transition-colors">
                             {asistente.nombre}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-xs font-light text-slate-500">
+                        <td className="px-6 py-4 text-xs font-light text-slate-500 dark:text-slate-400">
                           {asistente.email}
                         </td>
-                        <td className="px-6 py-4 text-xs text-slate-500 font-light">
+                        <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-light">
                           {asistente.carrera || 'N/A'}{' '}
                           {asistente.matricula && (
-                            <span className="text-slate-400">({asistente.matricula})</span>
+                            <span className="text-slate-400 dark:text-slate-500">({asistente.matricula})</span>
                           )}
                         </td>
                         <td className="px-6 py-4">

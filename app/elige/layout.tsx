@@ -41,7 +41,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Sidebar para escritorio: visible solo en md+ */}
       <div className="hidden md:block">
         <Sidebar user={userNav} />
@@ -51,7 +51,7 @@ export default async function DashboardLayout({
       <div className="flex flex-col flex-1 md:ml-64 min-w-0">
         {/* MobileNavbar: visible solo en móvil */}
         <MobileNavbar user={userNav} />
-        <main className="flex-1 px-4 sm:px-6 md:px-8 py-4 sm:py-6 animate-fadeIn overflow-x-hidden">
+        <main className="flex-1 px-3 sm:px-6 md:px-8 py-4 sm:py-6 animate-fadeIn overflow-x-hidden">
           {children}
         </main>
       </div>
