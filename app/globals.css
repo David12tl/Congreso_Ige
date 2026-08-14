@@ -1,29 +1,135 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg-base: var(--aurora-bg);
+  --color-surface-card: var(--aurora-surface);
+  --color-text-main: var(--aurora-text);
+  --color-text-muted: var(--aurora-text-dim);
+  --color-border-subtle: var(--aurora-border);
+
+  /* Mesh Gradient Token */
+  --bg-image-mesh-gradient: var(--aurora-mesh);
+
+  /* Registro de Animaciones del Fluid Design System */
+  --animate-aurora-slow: aurora-movement 25s infinite alternate ease-in-out;
+  --animate-aurora-fast: aurora-movement 15s infinite alternate-reverse ease-in-out;
+  --animate-fluid-pulse: fluid-pulse 8s infinite ease-in-out;
+
+  /* ── Paleta Oficial del 1er Congreso Internacional en Gestión Empresarial - ELIGE ── */
+  /* Extraída del manual de imagen (image_cffccc.jpg) */
+  --color-ige-red: #8B1E23;        /* Rojo ELIGE — Acento primario (botones de acción) */
+  --color-ige-navy: #1E2A39;       /* Azul Marino — Fondo principal / contraste (Navbar, Footer) */
+  --color-ige-grey: #7D7D7D;       /* Gris — Texto secundario y bordes */
+  --color-ige-greyLight: #E6E6E6;  /* Gris Claro — Fondo secundario / secciones y tarjetas */
+  --color-ige-white: #FFFFFF;      /* Blanco — Texto sobre fondo oscuro / fondo base limpio */
+
+  /* Mapeo de tokens de marca previos a la paleta oficial del manual */
+  --color-congreso-dark: #1E2A39;
+  --color-congreso-blue: #1E2A39;
+  --color-congreso-teal: #8B1E23;
+  --color-congreso-emerald: #7D7D7D;
+  --color-congreso-orange: #8B1E23;
+
+  /* Colores Secundarios y Soporte */
+  --color-congreso-mint: #7D7D7D;
+  --color-congreso-sky: #1E2A39;
+  --color-congreso-pastel: #E6E6E6;
+  --color-congreso-apple: #7D7D7D;
+  --color-congreso-yellow: #7D7D7D;
+  --color-congreso-deep: #1E2A39;
+  --color-congreso-electric: #1E2A39;
+  --color-congreso-cyan: #1E2A39;
+  --color-congreso-turquesa: #1E2A39;
+  --color-congreso-lime: #7D7D7D;
+
+  /* Colores Neutros de Marca */
+  --color-congreso-bgDark: #1E2A39;
+  --color-congreso-greyDark: #7D7D7D;
+  --color-congreso-greyMed: #7D7D7D;
+  --color-congreso-greyLight: #E6E6E6;
+  --color-congreso-whiteSmoke: #E6E6E6;
+
+  /* ── Tipografía Oficial: Montserrat ── */
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* --- MAPEO DE VARIABLES NATIVAS --- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* MODO CLARO — FONDO BLANCO LIMPIO (Identidad oficial Congreso IGE) */
+  --aurora-bg: #ffffff;
+  --aurora-surface: #ffffff;
+  --aurora-text: #1E2A39;          /* Azul Marino para títulos y texto principal */
+  --aurora-text-dim: #7D7D7D;      /* Gris para texto secundario */
+  --aurora-border: #E6E6E6;        /* Gris Claro para bordes */
+  --aurora-mesh: none;             /* Sin malla: limpieza visual del manual */
+  --bg-tarjetas: #E6E6E6;          /* Gris Claro para tarjetas/secciones */
+  --border-componentes: #E6E6E6;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html.dark {
+  /* MODO OSCURO — Azul Marino corporativo */
+  --aurora-bg: #1E2A39;
+  --aurora-surface: rgba(30, 42, 57, 0.92);
+  --aurora-text: #ffffff;
+  --aurora-text-dim: #E6E6E6;
+  --aurora-border: rgba(255, 255, 255, 0.12);
+  --aurora-mesh: radial-gradient(at 50% 0%, rgba(139, 30, 35, 0.18) 0px, transparent 50%),
+                 radial-gradient(at 0% 100%, rgba(125, 125, 125, 0.12) 0px, transparent 50%);
+  --bg-tarjetas: #1E2A39;
+  --border-componentes: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* --- ANIMACIONES NATIVAS ACELERADAS POR HARDWARE GPU --- */
+@keyframes aurora-movement {
+  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+  50% { transform: translate(30px, -50px) scale(1.12) rotate(90deg); }
+  100% { transform: translate(-15px, 25px) scale(0.95) rotate(180deg); }
+}
+
+@keyframes fluid-pulse {
+  0%, 100% { filter: blur(80px) opacity(0.8); }
+  50% { filter: blur(110px) opacity(0.95); transform: scale(1.05); }
+}
+
+/* --- ESTILOS BASE DEL BODY --- */
+body {
+  background-color: var(--aurora-bg) !important;
+  color: var(--aurora-text) !important;
+  background-image: var(--aurora-mesh);
+  font-family: var(--font-sans) !important;
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+/* --- EFECTO DE REVELACIÓN FLUIDA POR SCROLL (Scroll-Driven Animations) --- */
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-reveal {
+    animation: fade-in-up linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 30%;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* === LEGACY TOKENS (mantenido para compatibilidad) === */
+/* Nota: Las variables --color-fondo-base y similares están migradas al @theme superior */
 
 @keyframes fadeIn {
   from {
@@ -38,4 +144,35 @@ body {
 
 @utility animate-fadeIn {
   animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* ─── TextPressure: Font-face y estilos de soporte ─── */
+@font-face {
+  font-family: 'Compressa VF';
+  src: url('https://fonts.gstatic.com/s/archivo/v19/k3kQo8UDI-1M0wlSTd7iL0nAMaM.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 62.5% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+.flex-pressure {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stroke-pressure span {
+  position: relative;
+  color: inherit;
+}
+
+.stroke-pressure span::after {
+  content: attr(data-char);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: transparent;
+  z-index: -1;
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: #7c3aed;
 }

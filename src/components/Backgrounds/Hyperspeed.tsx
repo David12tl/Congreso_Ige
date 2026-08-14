@@ -1019,7 +1019,6 @@ class App {
     this.onContextMenu = this.onContextMenu.bind(this);
 
     this.onWindowResize = this.onWindowResize.bind(this);
-    window.addEventListener('resize', this.onWindowResize);
 
     if (container.offsetWidth > 0 && container.offsetHeight > 0) {
       this.hasValidSize = true;
@@ -1222,11 +1221,10 @@ class App {
     }
 
     if (this.renderer) {
-      // Tarea 3: renderer.dispose() y liberar memoria de GPU
       this.renderer.dispose();
       try {
         this.renderer.forceContextLoss();
-      } catch (e) {
+      } catch {
         /* Ignorar si el contexto ya se perdió */
       }
 
@@ -1234,9 +1232,7 @@ class App {
         this.renderer.domElement.width = 0;
         this.renderer.domElement.height = 0;
       }
-      
-      this.renderer.dispose();
-      this.renderer.forceContextLoss();
+
       if (this.renderer.domElement && this.renderer.domElement.parentNode) {
         this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
       }
@@ -1245,7 +1241,7 @@ class App {
       this.composer.dispose();
     }
 
-    // Tarea 3: window.removeEventListener para cada listener activo
+    // window.removeEventListener para cada listener activo
     window.removeEventListener('resize', this.onWindowResize);
     if (this.container) {
       this.container.removeEventListener('mousedown', this.onMouseDown);
@@ -1276,7 +1272,6 @@ class App {
         this.composer.setSize(w, h);
         this.hasValidSize = true;
       } else {
-        // Tarea 2: Asignar el ID en el bucle
         this.animationFrameId = window.requestAnimationFrame(this.tick);
         return;
       }
@@ -1296,7 +1291,6 @@ class App {
       this.update(delta);
     }
 
-    // Tarea 2: Asignar el ID en el bucle
     this.animationFrameId = window.requestAnimationFrame(this.tick);
   }
 }
@@ -1306,15 +1300,15 @@ const DEFAULT_EFFECT_OPTIONS: Partial<HyperspeedOptions> = {};
 const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
   const hyperspeed = useRef<HTMLDivElement>(null);
   const appRef = useRef<App | null>(null);
-  // Tarea 1: Almacenar ID de animación en un useRef
   const animId = useRef<number | null>(null);
 
   useEffect(() => {
+    const container = hyperspeed.current;
+
     // Limpiar cualquier instancia previa antes de crear una nueva
     if (appRef.current) {
       appRef.current.dispose();
       appRef.current = null;
-      const container = hyperspeed.current;
       if (container) {
         while (container.firstChild) {
           container.removeChild(container.firstChild);
@@ -1322,7 +1316,6 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = DEFAULT_EFFECT_OPTION
       }
     }
 
-    const container = hyperspeed.current;
     if (!container) return;
 
     const options: HyperspeedOptions = {
@@ -1339,43 +1332,40 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = DEFAULT_EFFECT_OPTION
 
     let initCancelled = false;
     myApp.loadAssets().then(() => {
-      if (!initCancelled) {
+      if (!initCancelled && !myApp.disposed) {
         myApp.init();
-        // Sincronizar el ID de la clase con el ref del componente
-        const syncFrame = () => {
-          if (!myApp.disposed) {
-            animId.current = myApp.animationFrameId;
-            requestAnimationFrame(syncFrame);
-          }
-        };
-        syncFrame();
       }
     });
 
+    // LIMPIEZA ABSOLUTA DE MEMORIA:
     return () => {
       initCancelled = true;
-      
-      // Tarea 3: Cleanup estricto
-      if (animId.current) {
-        cancelAnimationFrame(animId.current);
-      }
-      
+
+      // Cancelar TODOS los animation frames pendientes antes de dispose()
       if (appRef.current) {
         if (appRef.current.animationFrameId) {
           cancelAnimationFrame(appRef.current.animationFrameId);
+          appRef.current.animationFrameId = 0;
         }
         appRef.current.dispose();
         appRef.current = null;
       }
 
+      // Respaldo extra por si quedó algún frame huérfano
+      if (animId.current) {
+        cancelAnimationFrame(animId.current);
+        animId.current = null;
+      }
+
       // Limpiar físicamente el contenedor para que la nueva instancia
       // arranque desde cero sin residuos del canvas anterior
-      const c = hyperspeed.current;
-      if (c) {
-        while (c.firstChild) {
-          c.removeChild(c.firstChild);
+      if (container) {
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
         }
       }
+
+      console.log("🧹 [MEMORIA]: Hyperspeed — Animación Three.js destruida y RAM liberada correctamente.");
     };
   }, [effectOptions]);
 

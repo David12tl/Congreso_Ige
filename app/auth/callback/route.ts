@@ -1,70 +1,142 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/src/lib/supabase/server";
-import { getUserProfile, syncAuthMetadataWithProfile } from "@/src/db/perfiles";
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { getUserProfile, syncAuthMetadataWithProfile } from '@/db/perfiles';
+import { getSecureRedirectBase, getRequestOrigin } from '@/utils/supabase/get-redirect-url';
+
+/**
+ * ============================================================================
+ * OAuth Callback Route Handler - OWASP Security Best Practices
+ * ============================================================================
+
+/**
+ * Allowed error query parameters (whitelist)
+ * Prevents open redirect by only allowing predefined error messages
+ */
+const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired', 'config-error'] as const;
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.
- *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargado
- *   3 → Usuario      → /dashboard/usuario
+ * Debe coincidir EXACTAMENTE con la función homónima en proxy.ts
+ * para evitar redirecciones inconsistentes tras el login OAuth.
+ *   1 → Administrador → /elige/admin
+ *   2 → Encargado    → /elige/encargados
+ *   3 → Usuario      → /elige/perfil
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return "/dashboard/admin";
-  if (idRol === 2) return "/dashboard/encargado";
-  return "/dashboard/usuario";
+  if (idRol === 1) return '/elige/admin';
+  if (idRol === 2) return '/elige/encargados';
+  return '/elige/perfil';
+}
+
+/**
+ * Sanitizes error parameter for safe redirect
+ * OWASP: Never expose raw error values to prevent injection
+ */
+function sanitizeErrorParam(error: string | null): string {
+  const sanitized = error?.toLowerCase().trim();
+  if (sanitized && ALLOWED_ERROR_PARAMS.includes(sanitized as typeof ALLOWED_ERROR_PARAMS[number])) {
+    return sanitized;
+  }
+  // Default safe error message
+  return 'auth-failed';
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const type = searchParams.get('type'); // 'recovery' for password reset, null for OAuth login
+  
+  // OWASP: Get secure origin from request (dynamic, for serverless environments)
+  // This detects automatically if we're on localhost or your Vercel domain
+  // The origin is validated against the whitelist to prevent Open Redirect
+  const requestOrigin = getRequestOrigin(request);
+  
+  // Priority: env var > validated request origin
+  // This ensures we use NEXT_PUBLIC_SITE_URL if configured, but falls back safely
+  const secureOrigin = getSecureRedirectBase(requestOrigin) || requestOrigin || 'https://congreso-ige.vercel.app';
 
-  if (code) {
-    const supabase = await createClient();
-
-    // Intercambia el código temporal por una sesión real y guarda las cookies
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      // Obtener el usuario ya autenticado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        return NextResponse.redirect(`${origin}/Login?error=auth-callback-failed`);
-      }
-
-      // --- CONSULTAR id_rol REAL DESDE LA BASE DE DATOS ---
-      // Esto es CRÍTICO: leemos el id_rol desde la tabla profiles,
-      // NO desde user_metadata que puede estar desactualizada.
-      const profile = await getUserProfile(user.id);
-
-      // Sincronizar metadata de Auth con el valor real de la BD
-      // para que futuras lecturas de user_metadata también estén correctas
-      await syncAuthMetadataWithProfile(user.id);
-
-      // Asignar land_interest por defecto si no existe (primera vez con Google)
-      const metadata = user?.user_metadata ?? {};
-      if (!metadata.land_interest) {
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { land_interest: "Developer Land" },
-        });
-
-        if (updateError) {
-          console.error(
-            "Error al asignar land_interest por defecto:",
-            updateError.message,
-          );
-        }
-      }
-
-      // Redirigir al dashboard según el id_rol REAL desde la BD
-      return NextResponse.redirect(
-        `${origin}${getDashboardPath(profile.id_rol)}`,
-      );
-    }
+  // Validate that we have an authorization code
+  // OWASP: This prevents processing empty or malformed requests
+  if (!code || code.length === 0) {
+    // No code provided - redirect to login with generic error
+    return NextResponse.redirect(
+      `${secureOrigin}/login?error=${sanitizeErrorParam('invalid-code')}`,
+      { status: 307 }
+    );
   }
 
-  // Si algo falla o no hay código, mándalo al login con un mensaje de error
-  return NextResponse.redirect(`${origin}/Login?error=auth-callback-failed`);
+  // Validate code format to prevent injection attacks
+  // Authorization codes are typically alphanumeric with some special chars
+  if (!/^[a-zA-Z0-9\-_]+$/.test(code)) {
+    // Malformed code - possible attack attempt
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Security] Invalid authorization code format detected');
+    }
+    return NextResponse.redirect(
+      `${secureOrigin}/login?error=${sanitizeErrorParam('invalid-code')}`,
+      { status: 307 }
+    );
+  }
+
+  const supabase = await createClient();
+
+  // Exchange the temporary code for a session
+  // This happens server-side so cookies are set securely with HttpOnly flags
+  const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (exchangeError || !data?.user) {
+    // Code exchange failed - could be expired, invalid, or revoked
+    // OWASP: Use generic error message, don't expose internal details
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Security] OAuth code exchange failed');
+    }
+    return NextResponse.redirect(
+      `${secureOrigin}/login?error=${sanitizeErrorParam('invalid-code')}`,
+      { status: 307 }
+    );
+  }
+
+  const user = data.user;
+
+  // --- FLUJO DE RECUPERACIÓN DE CONTRASEÑA ---
+  // Si el callback viene con type=recovery, redirigir a /update-password
+  // para que el usuario pueda establecer su nueva contraseña
+  if (type === 'recovery') {
+    return NextResponse.redirect(
+      `${secureOrigin}/update-password`,
+      { status: 307 }
+    );
+  }
+
+  try {
+    // --- CRITICAL: Get the REAL id_rol from the database ---
+    // Never trust user_metadata for authorization decisions (OWASP auth security)
+    const profile = await getUserProfile(user.id);
+    
+    // If profile doesn't exist or role is invalid, default to user dashboard
+    const safeIdRol = profile?.id_rol ?? 3;
+
+    // Synchronize auth metadata with the real database value
+    // This ensures future reads of user_metadata will be correct
+    await syncAuthMetadataWithProfile(user.id);
+
+    // Redirect to the appropriate dashboard based on the verified role
+    // Using 307 (Temporary Redirect) to prevent caching of auth responses
+    return NextResponse.redirect(
+      `${secureOrigin}${getDashboardPath(safeIdRol)}`,
+      { status: 307 }
+    );
+  } catch {
+    // Database error - fail securely by redirecting to user dashboard
+    // OWASP: Don't expose database errors to client
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Security] Profile lookup failed during OAuth callback');
+    }
+    
+    // Default safe redirect - perfil dashboard (lowest privilege)
+    return NextResponse.redirect(
+      `${secureOrigin}/elige/perfil`,
+      { status: 307 }
+    );
+  }
 }

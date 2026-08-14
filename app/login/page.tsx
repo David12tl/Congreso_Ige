@@ -1,64 +1,106 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AuthForm from '../../src/components/auth/AuthForm';
+import Footer from '@/components/ui/Footer';
+import Image from 'next/image';
+
+/**
+ * Error message mapping for OAuth/callback errors
+ * OWASP: Only predefined, safe messages are displayed to prevent injection
+ */
+const ERROR_MESSAGES: Record<string, string> = {
+  'invalid-code': 'El código de autenticación expiró o es inválido. Por favor, intenta iniciar sesión nuevamente.',
+  'auth-failed': 'La autenticación falló. Por favor, verifica tus credenciales e intenta de nuevo.',
+  'session-expired': 'Tu sesión expiró. Por favor, inicia sesión nuevamente.',
+  'config-error': 'Error de configuración. Por favor, contacta a soporte.',
+};
+
+/**
+ * Validates that an error parameter is in the allowed whitelist
+ * OWASP: Prevents open redirect by only accepting predefined errors
+ */
+function isValidErrorParam(error: string | null): boolean {
+  if (!error) return true; // No error param is fine
+  return error.toLowerCase().trim() in ERROR_MESSAGES;
+}
+
+/**
+ * Login page component with OAuth error handling
+ */
+function LoginPageContent() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get('error');
+
+  // OWASP: Validate error param against whitelist
+  const error = isValidErrorParam(errorParam) && errorParam 
+    ? ERROR_MESSAGES[errorParam.toLowerCase().trim()] 
+    : null;
+
+  return (
+    <main className="min-h-screen w-full bg-[#FCFCFD] flex flex-col justify-between relative overflow-hidden text-[#1E293B]">
+      
+      {/* Sutil patrón de fondo claro para dar textura (Inspirado en el Register) */}
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-50 pointer-events-none" />
+      
+      {/* Suaves destellos de color corporativo en el fondo */}
+      <div className="absolute top-[-10%] right-[-10%] w-[45%] h-[45%] bg-[#800020]/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[45%] h-[45%] bg-[#b91c1c]/3 blur-[120px] rounded-full pointer-events-none" />
+
+      {/* Header Minimalista con Logo */}
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="Logo de la Empresa"
+            width={100}
+            height={50}
+          />
+        </div>
+        <a 
+          href="./" 
+          className="text-sm font-semibold text-[#4a5568] hover:text-[#800020] transition-colors"
+        >
+          Volver al Inicio
+        </a>
+      </header>
+
+      {/* Contenedor central de la Tarjeta de Login */}
+      <div className="relative z-10 w-full max-w-md mx-auto px-6 my-auto py-12 flex justify-center">
+        <div className="bg-white p-8 md:p-10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 w-full relative">
+          
+          {/* Decoración superior idéntica a la del Register */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[3px] bg-gradient-to-r from-[#800020] to-[#b91c1c] rounded-b-full"></div>
+          
+          {/* Error message banner - only shown for valid whitelisted errors */}
+          {error && (
+            <div className="mb-6 bg-[#fef3c7] border border-[#f59e0b] rounded-lg px-4 py-3 text-sm text-[#92400e] text-center font-medium">
+              {error}
+            </div>
+          )}
+          
+          {/* Formulario de Login */}
+          <AuthForm initialError={error} />
+          
+        </div>
+      </div>
+
+      {/* Footer Minimalista */}
+      <Footer />
+
+    </main>
+  );
+}
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen w-full bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden p-6 text-white">
-      
-      {/* 1. Fondo de Retícula Neón con Movimiento Continuo (Tailwind Native Animation) */}
-      <div 
-        className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-25 pointer-events-none animate-[moveGrid_20s_linear_infinite]" 
-      />
-      
-      {/* 2. Resplandores Ambientales (Neon Blobs) */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#03B3C3]/15 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D856BF]/15 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* 3. Elementos Geométricos con Movimiento Flotante Nativo */}
-      {/* Cuadrado Cian - Movimiento Diagonal + Rotación */}
-      <div 
-        className="absolute top-16 left-16 w-24 h-24 bg-[#050505] border-4 border-[#03B3C3] shadow-[4px_4px_0px_0px_#03B3C3] hidden md:block rounded-md z-0 animate-[floatDiagonalLogin_7s_ease-in-out_infinite]"
-      >
-        <div className="absolute inset-0 bg-[#03B3C3]/5" />
-      </div>
-
-      {/* Cápsula/Óvalo Púrpura - Flotación Vertical */}
-      <div 
-        className="absolute bottom-20 right-16 w-32 h-32 bg-[#050505] border-4 border-[#D856BF] shadow-[0_0_25px_rgba(216,86,191,0.35)] hidden md:block rounded-xl z-0 animate-[floatYLogin_9s_ease-in-out_infinite]"
-      >
-        <div className="absolute inset-0 bg-[#D856BF]/5 rounded-xl" />
-      </div>
-
-      {/* 4. Contenedor central con el formulario */}
-      <div className="relative z-10 w-full max-w-sm transition-transform duration-300 hover:scale-[1.01] drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-        <AuthForm />
-      </div>
-
-      {/* 5. Botón de retorno estilo Dark-Neon */}
-      <a 
-        href="./" 
-        className="absolute bottom-6 left-6 px-4 py-2 bg-black/80 backdrop-blur-md border-2 border-[#03B3C3] shadow-[3px_3px_0px_0px_#03B3C3] text-xs font-bold font-mono text-[#03B3C3] uppercase rounded hover:bg-[#03B3C3] hover:text-black transition-all"
-      >
-        ← Volver al Congreso
-      </a>
-
-      {/* Inyección directa de Keyframes inmunes a los filtros de Next.js */}
-      <style>{`
-        @keyframes moveGrid {
-          0% { background-position: 0px 0px; }
-          100% { background-position: 4rem 4rem; }
-        }
-        @keyframes floatDiagonalLogin {
-          0%, 100% { transform: translate(0px, 0px) rotate(-6deg); }
-          50% { transform: translate(-10px, 15px) rotate(-12deg); }
-        }
-        @keyframes floatYLogin {
-          0%, 100% { transform: translateY(0px) rotate(12deg); }
-          50% { transform: translateY(-25px) rotate(8deg); }
-        }
-      `}</style>
-    </main>
+    <Suspense fallback={
+      <main className="min-h-screen w-full bg-[#FCFCFD] flex items-center justify-center text-[#1E293B]">
+        Cargando...
+      </main>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -1,22 +1,27 @@
-import { createClient } from "@/src/lib/supabase/server";
+export const dynamic = 'force-dynamic';
+
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { signOut } from "@/app/auth/actions";
-import React from "react";
+import { signOut } from "./actions";
+import React, { Suspense } from "react";
 
-// Mapeo de colores basado en la Land de Interés
-const THEME_MAP: Record<string, { color: string; label: string; shadow: string }> = {
-  'dev': { color: "#03B3C3", label: "Developer Land", shadow: "rgba(3,179,195,0.3)" },
-  'creative': { color: "#D856BF", label: "Creative Land", shadow: "rgba(216,86,191,0.3)" },
-  'blockchain': { color: "#ff102a", label: "Blockchain Land", shadow: "rgba(255,16,42,0.3)" },
-  'business': { color: "#f1eece", label: "Business Land", shadow: "rgba(241,238,206,0.3)" },
+// Mapa de colores basado en la Land de Interés
+// Se usa Map en lugar de Record para evitar "security/detect-object-injection"
+const THEME_MAP = new Map<string, { color: string; label: string; shadow: string }>([
+  ['dev',              { color: '#03B3C3', label: 'Developer Land',  shadow: 'rgba(3,179,195,0.3)' }],
+  ['creative',         { color: '#D856BF', label: 'Creative Land',   shadow: 'rgba(216,86,191,0.3)' }],
+  ['blockchain',       { color: '#ff102a', label: 'Blockchain Land', shadow: 'rgba(255,16,42,0.3)' }],
+  ['business',         { color: '#f1eece', label: 'Business Land',   shadow: 'rgba(241,238,206,0.3)' }],
   // Fallbacks por si el string guardado es el nombre completo de la land
-  'Developer Land': { color: "#03B3C3", label: "Developer Land", shadow: "rgba(3,179,195,0.3)" },
-  'Creative Land': { color: "#D856BF", label: "Creative Land", shadow: "rgba(216,86,191,0.3)" },
-  'Blockchain Land': { color: "#ff102a", label: "Blockchain Land", shadow: "rgba(255,16,42,0.3)" },
-  'Business Land': { color: "#f1eece", label: "Business Land", shadow: "rgba(241,238,206,0.3)" },
-};
+  ['Developer Land',   { color: '#03B3C3', label: 'Developer Land',  shadow: 'rgba(3,179,195,0.3)' }],
+  ['Creative Land',    { color: '#D856BF', label: 'Creative Land',   shadow: 'rgba(216,86,191,0.3)' }],
+  ['Blockchain Land',  { color: '#ff102a', label: 'Blockchain Land', shadow: 'rgba(255,16,42,0.3)' }],
+  ['Business Land',    { color: '#f1eece', label: 'Business Land',   shadow: 'rgba(241,238,206,0.3)' }],
+])
 
-export default async function DashboardPage() {
+const THEME_DEFAULT = THEME_MAP.get('dev')!
+
+export default async function AuthPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -28,9 +33,10 @@ export default async function DashboardPage() {
   // Extraer metadatos (configurados en el SignUp)
   const fullName = user.user_metadata?.full_name || "Talento IGE";
   const landKey = user.user_metadata?.land_interest || "dev";
-  const theme = THEME_MAP[landKey] || THEME_MAP['dev'];
+  const theme = THEME_MAP.get(landKey) ?? THEME_DEFAULT;
 
   return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Cargando...</div>}>
     <div className="flex min-h-screen bg-[#000] text-white font-sans selection:bg-white/20">
       {/* Sidebar Minimalista (Google Clean Style) */}
       <aside className="w-72 border-r border-white/10 bg-[#0d0e12] flex flex-col hidden md:flex">
@@ -161,6 +167,7 @@ export default async function DashboardPage() {
         </footer>
       </main>
     </div>
+    </Suspense>
   );
 }
 

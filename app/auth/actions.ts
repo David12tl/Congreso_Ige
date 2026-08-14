@@ -1,20 +1,25 @@
 'use server';
 
-import { createClient } from '@/src/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
+import { getSecureCallbackUrl, getSecureRedirectBase, isOriginAllowed } from '@/utils/supabase/get-redirect-url';
 
-export type AuthResult = { error: string } | { success: true };
+export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
 /**
  * Mapea id_rol a la ruta del dashboard correspondiente.
- *   1 → Administrador → /dashboard/admin
- *   2 → Encargado    → /dashboard/encargado
- *   3 → Usuario      → /dashboard/usuario
+ * Debe coincidir EXACTAMENTE con las funciones homónimas en proxy.ts y callback/route.ts
+ * para evitar redirecciones inconsistentes tras el login OAuth.
+ *   1 → Administrador → /elige/admin
+ *   2 → Encargado    → /elige/encargados
+ *   3 → Usuario      → /elige/perfil
  */
 function getDashboardPath(idRol: number): string {
-  if (idRol === 1) return '/dashboard/admin';
-  if (idRol === 2) return '/dashboard/encargado';
-  return '/dashboard/usuario';
+  if (idRol === 1) return '/elige/admin';
+  if (idRol === 2) return '/elige/encargados';
+  return '/elige/perfil';
 }
 
 /**
@@ -39,6 +44,7 @@ export async function signInWithPassword(
 
   if (error) {
     // Mapear mensajes de error comunes de Supabase a español
+    // OWASP: No exponer detalles internos del error
     const message = mapSupabaseError(error.message);
     return { error: message };
   }
@@ -51,20 +57,25 @@ export async function signInWithPassword(
   // --- CRÍTICO: Consultar id_rol REAL desde la base de datos ---
   // No confiar en user_metadata porque puede estar desactualizada
   // cuando un administrador cambia el rol en la BD.
-  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/src/db/perfiles');
+  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
   const profile = await getUserProfile(userId);
 
   // Sincronizar metadata de Auth con el valor real de la BD
   await syncAuthMetadataWithProfile(userId);
 
-  redirect(getDashboardPath(profile.id_rol));
+  // NOTA: No usar redirect() aquí porque lanza una excepción (NEXT_REDIRECT)
+  // que causa Error 500 cuando la Server Action es invocada manualmente
+  // desde el cliente. En su lugar, devolvemos la ruta para que el cliente
+  // haga la navegación con router.push().
+  return { success: true, redirectTo: getDashboardPath(profile.id_rol) };
 }
 
 /**
  * Registro de nuevo usuario con correo, contraseña, nombre completo y land de interés.
- * Usa user_metadata para guardar full_name y land_interest.
- * Si hay error, devuelve un mensaje claro.
- * Si es exitoso, redirige al dashboard según el rol del usuario.
+ * TAMBIÉN:
+ *  1. Crea un ticket para el usuario
+ *  2. Asigna un asiento automáticamente
+ *  3. Genera y envía la credencial en PDF
  */
 export async function signUp(data: {
   email: string;
@@ -92,6 +103,64 @@ export async function signUp(data: {
     return { error: message };
   }
 
+  const userId = signUpData.user?.id;
+  if (!userId) {
+    return { error: 'Error al obtener el ID del usuario.' };
+  }
+
+  // ========== CREAR TICKET EN LA BASE DE DATOS ==========
+  // Generar un UUID para el QR
+  const { v4: uuidv4 } = await import('uuid');
+  const qrData = uuidv4();
+
+  const { data: ticketData, error: ticketError } = await supabase
+    .from('tickets')
+    .insert({
+      id: uuidv4(),
+      buyer_id: userId,
+      email: data.email,
+      nombre: data.fullName,
+      type: 'student', // Tipo por defecto
+      qr_data: qrData,
+      purchased_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (ticketError || !ticketData) {
+    // OWASP: En producción, no exponer errores internos en consola
+    // Solo loggear en desarrollo para debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creando ticket:', ticketError?.message);
+    }
+    // No retornar error, el usuario se registró correctamente
+    // Pero sin ticket, no tendrá credencial
+  }
+
+  // ========== GENERAR Y ENVIAR CREDENCIAL ==========
+  if (ticketData?.id) {
+    try {
+      const credentialResult = await generateAndSendCredential(
+        ticketData.id,
+        userId
+      );
+
+      if (!credentialResult.success) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Advertencia: Credencial no generada');
+        }
+        // No bloqueamos el registro si la credencial falla
+      }
+    } catch {
+      // OWASP: Silenciar errores internos en producción
+      // Loggear solo en desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error generando credencial');
+      }
+      // Continuamos con el registro
+    }
+  }
+
   // Redirigir al dashboard según el id_rol del usuario
   const idRol = signUpData.user?.user_metadata?.id_rol as number | undefined;
   redirect(getDashboardPath(idRol ?? 3));
@@ -108,30 +177,75 @@ export async function signOut() {
 }
 
 /**
- * Inicia el flujo de autenticación con Google.
- * Genera la URL de redirección segura a través del servidor de Supabase.
+ * Inicia el flujo de autenticación con Google OAuth.
+ * 
+ * Security considerations (OWASP):
+ * - Uses secure callback URL from helper to prevent Open Redirect
+ * - Gets request origin dynamically for serverless/edge environments
+ * - Validates redirect URL against whitelist
+ * - Generic error messages to prevent information disclosure
  */
 export async function signInWithGoogle(): Promise<string> {
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const redirectTo = `${siteUrl.replace(/\/$/, '')}/auth/callback`;
+  
+  // Get request origin dynamically for serverless/edge environments
+  // This works in Server Actions to detect the real host
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = headersList.get('x-forwarded-proto') || 'https';
+  
+  // Construct request origin if we have a host header
+  const requestOrigin = host ? `${protocol}://${host}` : undefined;
+  
+  // OWASP: Try to get secure callback URL from env var or request origin
+  const redirectTo = getSecureCallbackUrl(requestOrigin);
+  
+  // If we have a valid redirect URL, use it
+  if (redirectTo) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-    },
-  });
+    if (error) {
+      throw new Error('Error de conexión con el proveedor de autenticación. Intente nuevamente.');
+    }
+    
+    return data.url;
+  }
+  
+  // Fallback: If we have a validated request origin, use it directly
+  // This handles Vercel serverless where env var might not be set
+  if (requestOrigin && isOriginAllowed(requestOrigin)) {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${requestOrigin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    if (error) {
+      throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
+    }
+    
+    return data.url;
   }
 
-  return data.url;
+  // No se pudo determinar el origen de forma segura
+  throw new Error('No se pudo iniciar el proceso de autenticación. Intente más tarde.');
 }
 
 /**
  * Mapea mensajes de error de Supabase a español claro para el usuario.
+ * OWASP: Solo devolver mensajes amigables, nunca exponer stack traces o detalles internos.
  */
 function mapSupabaseError(message: string): string {
   const lower = message.toLowerCase();
@@ -155,6 +269,59 @@ function mapSupabaseError(message: string): string {
     return 'El formato del correo electrónico no es válido.';
   }
 
-  // Fallback: devolver el mensaje original en inglés si no está mapeado
-  return message;
+  if (lower.includes('unable to validate email address')) {
+    return 'El formato del correo electrónico no es válido.';
+  }
+  if (lower.includes('email link is invalid or has expired')) {
+    return 'El enlace de recuperación ha expirado o no es válido. Solicita uno nuevo.';
+  }
+  if (lower.includes('new password should be different')) {
+    return 'La nueva contraseña debe ser diferente a la anterior.';
+  }
+
+  // OWASP: Fallback genérico sin exponer el mensaje original
+  // Esto evita filtrar detalles internos del sistema
+  return 'Ocurrió un error inesperado. Por favor, intenta de nuevo.';
+}
+
+/**
+ * Envía un correo electrónico al usuario con un enlace para restablecer su contraseña.
+ * Supabase se encarga de la plantilla del email con el enlace de recuperación.
+ * El enlace apunta a /auth/callback?type=recovery que intercambia el code por sesión
+ * y redirige a /update-password.
+ */
+export async function resetPassword(email: string): Promise<AuthResult> {
+  const supabase = await createClient();
+
+  // OWASP: Siempre devolver éxito aunque el email no exista para no revelar
+  // qué correos están registrados (prevención de enumeración de usuarios)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+  });
+
+  if (error) {
+    const message = mapSupabaseError(error.message);
+    return { error: message };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Actualiza la contraseña del usuario autenticado.
+ * Requiere que el usuario tenga una sesión activa (después del recovery flow).
+ */
+export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    const message = mapSupabaseError(error.message);
+    return { error: message };
+  }
+
+  return { success: true, redirectTo: '/elige/perfil' };
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/src/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Determina la ruta del dashboard según el rol del usuario.
@@ -7,11 +7,11 @@ import { createClient } from '@/src/lib/supabase/server';
 function getDashboardPath(role?: string): string {
   switch (role) {
     case 'admin':
-      return '/dashboard/admin';
+      return '/elige/admin';
     case 'encargado':
-      return '/dashboard/encargado';
+      return '/elige/encargado';
     default:
-      return '/dashboard/usuario';
+      return '/elige/usuario';
   }
 }
 

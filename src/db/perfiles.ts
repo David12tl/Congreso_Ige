@@ -1,4 +1,4 @@
-import { createClient } from "@/src/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Consulta el id_rol real del usuario desde la tabla profiles en la base de datos.

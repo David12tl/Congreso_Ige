@@ -1,0 +1,152 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { HiOutlineQrcode, HiOutlineDownload, HiOutlineRefresh, HiOutlineExclamationCircle } from 'react-icons/hi'
+import { GlassCard } from '@/components/ui/GlassCard'
+import { getMiQR } from '../usuario/actions'
+import { descargarTicketPDF } from './actions'
+
+export default function GenerarQRPage() {
+  const [qrData, setQrData] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [descargando, setDescargando] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadQR() {
+      try {
+        const data = await getMiQR()
+        if (isMounted) {
+          setQrData(data)
+        }
+      } catch {
+        if (isMounted) {
+          setError('No se pudo generar el código QR. Asegúrate de tener un ticket activo.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadQR()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 rounded-full border-4 border-cyan-200 border-t-cyan-500 animate-spin" />
+        <p className="text-slate-500 font-light text-xs uppercase tracking-widest">Generando código QR...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-black tracking-tight text-[#0f172a] text-2xl md:text-3xl">
+            <HiOutlineQrcode className="inline-block w-8 h-8 mr-3 text-cyan-700" />
+            Generar{' '}
+            <span className="text-cyan-700">
+              QR
+            </span>
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-cyan-50 border border-cyan-200 rounded-full">
+          <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+          <span className="text-cyan-700 text-xs font-bold uppercase tracking-widest">Listo para escanear</span>
+        </div>
+      </header>
+
+      {/* QR Display */}
+      <GlassCard className="p-8 flex flex-col items-center justify-center text-center" glowColor="cyan">
+        {error ? (
+          <div className="space-y-4">
+            <HiOutlineExclamationCircle className="w-16 h-16 text-amber-700 mx-auto" />
+            <p className="text-amber-700 font-light text-sm">{error}</p>
+            <a 
+              href="/elige/ingresar-token"
+              className="inline-block px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-amber-100 transition-all"
+            >
+              Ingresar Token Primero
+            </a>
+          </div>
+        ) : qrData ? (
+          <div className="space-y-6">
+            <div className="relative">
+              <div className="absolute -inset-4 bg-cyan-100 rounded-full blur-2xl animate-pulse" />
+              <div className="relative w-48 h-48 bg-white border-2 border-cyan-200 rounded-[24px] flex items-center justify-center p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={qrData} 
+                  alt="Código QR de acceso" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-[#0f172a]">Tu Código de Acceso</h2>
+              <p className="text-slate-500 text-xs font-light">Presenta este código en los puntos de control del evento</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  setDescargando(true)
+                  try {
+                    const resultado = await descargarTicketPDF()
+                    if (resultado.success && resultado.pdfBase64) {
+                      const byteCharacters = atob(resultado.pdfBase64)
+                      const byteNumbers = new Array(byteCharacters.length)
+                      for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i)
+                      }
+                      const byteArray = new Uint8Array(byteNumbers)
+                      const blob = new Blob([byteArray], { type: 'application/pdf' })
+                      const url = URL.createObjectURL(blob)
+                      const link = document.createElement('a')
+                      link.href = url
+                      link.download = `ticket-congreso-ige-${Date.now()}.pdf`
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                      URL.revokeObjectURL(url)
+                    } else {
+                      alert(resultado.error || 'No se pudo generar el PDF')
+                    }
+                  } catch {
+                    alert('Error al descargar el ticket')
+                  } finally {
+                    setDescargando(false)
+                  }
+                }}
+                disabled={descargando}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <HiOutlineDownload className="w-4 h-4" />
+                {descargando ? 'Generando...' : 'Descargar'}
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 transition">
+                <HiOutlineRefresh className="w-4 h-4" />
+                Refrescar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <HiOutlineQrcode className="w-16 h-16 text-slate-300 mx-auto" />
+            <p className="text-slate-500 font-light text-sm">No tienes un ticket activo. Ingresa tu token primero.</p>
+          </div>
+        )}
+      </GlassCard>
+    </div>
+  )
+}
