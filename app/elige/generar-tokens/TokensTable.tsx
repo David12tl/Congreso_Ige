@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { TokenCanje, TokenStatus } from './tokens';
 
@@ -6,7 +8,7 @@ interface TokensTableProps {
   isLoading?: boolean;
 }
 
-export const TokensTable: React.FC<TokensTableProps> = ({ tokens, isLoading = false }) => {
+export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
