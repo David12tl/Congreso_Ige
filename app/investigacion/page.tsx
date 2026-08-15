@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { InvestigacionArticleUpload } from '@/components/investigacion/InvestigacionArticleUpload'
 
@@ -28,8 +28,20 @@ export default function InvestigacionPage() {
           </p>
         </header>
 
-        
-        <InvestigacionArticleUpload userEmail="" userId="guest"/>
+        {/* 
+          Envolver en Suspense soluciona el "CSR Bailout" en Vercel.
+          Mientras se leen los searchParams en el cliente, se mostrará un esqueleto de carga básico.
+        */}
+        <Suspense 
+          fallback={
+            <div className="p-8 bg-white border border-[#cbd5e1] rounded-2xl flex flex-col items-center justify-center space-y-3">
+              <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-slate-600 animate-spin" />
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Cargando el portal de recepción...</p>
+            </div>
+          }
+        >
+          <InvestigacionArticleUpload userEmail="" userId="guest"/>
+        </Suspense>
       </div>
     </main>
   )
