@@ -54,11 +54,12 @@ export async function signInWithPassword(
     return { error: 'Error al obtener el usuario autenticado.' };
   }
 
-  // --- CRÍTICO: Consultar id_rol REAL desde la base de datos ---
+  // --- CRÍTICO: CANDADO — Garantizar perfil e id_rol REAL desde la BD ---
   // No confiar en user_metadata porque puede estar desactualizada
   // cuando un administrador cambia el rol en la BD.
-  const { getUserProfile, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
-  const profile = await getUserProfile(userId);
+  // ensureUserAccess: si el usuario NO está en la BD, crea el perfil con id_rol=3.
+  const { ensureUserAccess, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
+  const profile = await ensureUserAccess(userId);
 
   // Sincronizar metadata de Auth con el valor real de la BD
   await syncAuthMetadataWithProfile(userId);
@@ -107,6 +108,14 @@ export async function signUp(data: {
   if (!userId) {
     return { error: 'Error al obtener el ID del usuario.' };
   }
+
+  // ========== CANDADO: Garantizar perfil en la BD con id_rol=3 por defecto ==========
+  // Si el usuario NO está en la tabla `profiles`, se crea con id_rol=3 (Usuario).
+  // Si YA está registrado, se respeta el id_rol real asignado por un admin.
+  // Este candado es la única fuente de verdad para el nivel de acceso.
+  const { ensureUserAccess, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
+  const profile = await ensureUserAccess(userId);
+  await syncAuthMetadataWithProfile(userId);
 
   // ========== CREAR TICKET EN LA BASE DE DATOS ==========
   // Generar un UUID para el QR
@@ -161,9 +170,8 @@ export async function signUp(data: {
     }
   }
 
-  // Redirigir al dashboard según el id_rol del usuario
-  const idRol = signUpData.user?.user_metadata?.id_rol as number | undefined;
-  redirect(getDashboardPath(idRol ?? 3));
+  // Redirigir al dashboard según el id_rol REAL desde la BD (CANDADO)
+  redirect(getDashboardPath(profile.id_rol));
 }
 
 /**

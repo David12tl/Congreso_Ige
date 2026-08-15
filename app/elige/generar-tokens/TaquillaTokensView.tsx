@@ -137,7 +137,6 @@ export function TaquillaTokensView({
   // Formulario para Nuevo Asiento (Venta Directa o Apartado Inicial)
   const [nombreAlumno, setNombreAlumno] = useState('')
   const [emailAlumno, setEmailAlumno] = useState('')
-  const [tipoPago, setTipoPago] = useState<'efectivo' | 'transferencia'>('efectivo')
   const [metodoRegistro, setMetodoRegistro] = useState<'pago' | 'apartado'>('pago')
   const [montoApartado, setMontoApartado] = useState<number>(350)
 
@@ -145,7 +144,6 @@ export function TaquillaTokensView({
   const [infoApartado, setInfoApartado] = useState<ApartadoInfoLocal | null>(null)
   const [loadingApartado, setLoadingApartado] = useState(false)
   const [tipoPagoLiquidacion, setTipoPagoLiquidacion] = useState<'efectivo' | 'transferencia'>('efectivo')
-
   // ─── Estados para la sección "Lista de Apartados Pendientes" ─────────
   const [apartadosPendientes, setApartadosPendientes] = useState<ApartadoPendienteRow[]>([])
   const [loadingApartados, setLoadingApartados] = useState(false)
@@ -955,26 +953,6 @@ export function TaquillaTokensView({
                   <p className="text-[10px] text-[#4a4a4a]">Monto Restante: <span className="text-[#1a1a1a] font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
                 </div>
               )}
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Método de Cobro</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setTipoPago('efectivo')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Efectivo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTipoPago('transferencia')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${tipoPago === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Transferencia
-                  </button>
-                </div>
-              </div>
 
               <div className="flex gap-2 pt-2">
                 <button

@@ -5,8 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useTheme } from '@/components/theme-provider'
-import { FiSun, FiMoon } from 'react-icons/fi'
 import {
   HiOutlineViewGrid,
   HiOutlineTicket,
@@ -25,6 +23,7 @@ import {
   HiOutlineCamera,
   HiOutlineHome,
 } from 'react-icons/hi'
+
 type UserRole = 'admin' | 'encargado' | 'user'
 
 interface SidebarUser {
@@ -163,10 +162,6 @@ export function Sidebar({ user }: { user: SidebarUser }) {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [collapsed, setCollapsed] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const isDark = theme === 'dark'
-
-  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
 
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role),
@@ -194,7 +189,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         ${collapsed ? 'w-20' : 'w-64'}`}
     >
       {/* Header / Logo */}
-     <div className="flex justify-center items-center w-full py-2">
+      <div className="flex justify-center items-center w-full py-2">
         <Image src="/logo.png" alt="Logo" width={50} height={50} />
       </div>
 
@@ -250,23 +245,6 @@ export function Sidebar({ user }: { user: SidebarUser }) {
           <HiOutlineChevronRight className="w-4 h-4" />
         ) : (
           <HiOutlineChevronLeft className="w-4 h-4" />
-        )}
-      </button>
-
-      {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        className="mx-3 mb-2 flex items-center justify-center h-9 rounded-xl text-slate-500 hover:text-[#1E2A39] hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-all duration-200"
-        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-        title={isDark ? 'Modo claro' : 'Modo oscuro'}
-      >
-        {collapsed ? (
-          isDark ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />
-        ) : (
-          <span className="flex items-center gap-3 w-full px-3">
-            {isDark ? <FiSun className="w-4 h-4 shrink-0" /> : <FiMoon className="w-4 h-4 shrink-0" />}
-            <span className="text-sm font-medium">{isDark ? 'Modo claro' : 'Modo oscuro'}</span>
-          </span>
         )}
       </button>
 

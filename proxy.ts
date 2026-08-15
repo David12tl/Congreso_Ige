@@ -66,15 +66,13 @@ function getRequiredRole(pathname: string): number | null {
  * 3. Redirige según las reglas estrictas de jerarquía.
  */
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // --- REGLA DE ESCAPE: Rutas de autenticación de Supabase ---
-  // Estas rutas deben pasar SIEMPRE por el middleware para que Supabase
-  // pueda establecer las cookies de sesión. Si las interceptamos antes,
-  // el flujo OAuth se rompe y redirige a /login.
-  if (pathname.startsWith("/auth")) {
-    return NextResponse.next();
-  }
+  // Creamos una respuesta base que podemos modificar.
+  // Esto es crucial para que las cookies de sesión de Supabase se puedan actualizar.
+  const response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,27 +82,33 @@ export async function proxy(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
+        // La función `setAll` es la clave para que la sesión persista.
+        // Debe escribir las cookies en el objeto `response` que se devolverá.
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
           });
         },
       },
     },
   );
 
+  // Punto CRÍTICO: Refrescar la sesión y obtener el usuario.
+  // `getUser()` actualiza la cookie de sesión si es necesario.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
 
   // --- Rutas públicas que no requieren autenticación ---
   const publicRoutes = [
     "/",
     "/login",
     "/register",
-    "/investigacion",
     "/reset-password",
     "/update-password",
+    "/auth/callback", // El callback de OAuth debe ser público
     "/about-ige",
     "/aboutme",
     "/Conferencias",
@@ -129,7 +133,8 @@ export async function proxy(request: NextRequest) {
     if (isDashboardRoute) {
       loginUrl.searchParams.set("redirect", pathname);
     }
-    return NextResponse.redirect(loginUrl, 307);
+    // Al redirigir, debemos preservar cualquier cookie que Supabase haya querido establecer.
+    return NextResponse.redirect(loginUrl, { headers: response.headers });
   }
 
   // --- REGLA: Usuario autenticado en login/register → redirigir al dashboard ---
@@ -164,10 +169,8 @@ export async function proxy(request: NextRequest) {
         })();
     }
 
-    return NextResponse.redirect(
-      new URL(getDashboardPath(idRol), request.url),
-      307
-    );
+    const redirectUrl = new URL(getDashboardPath(idRol), request.url);
+    return NextResponse.redirect(redirectUrl, { headers: response.headers });
   }
 
   // --- Validación por id_rol (solo aplica si hay sesión y es ruta del dashboard) ---
@@ -222,16 +225,15 @@ export async function proxy(request: NextRequest) {
       // id_rol: 1=admin(más permisos), 2=encargado, 3=usuario(menos permisos)
       // El acceso está permitido si id_rol <= requiredRole (número más bajo = más permisos)
       if (idRol > requiredRole) {
+        const redirectUrl = new URL(getDashboardPath(idRol), request.url);
         // Redirigir al dashboard que le corresponde según su id_rol
-        return NextResponse.redirect(
-          new URL(getDashboardPath(idRol), request.url),
-          307,
-        );
+        return NextResponse.redirect(redirectUrl, { headers: response.headers });
       }
     }
   }
 
-  return NextResponse.next();
+  // Si no hubo redirecciones, devolvemos la respuesta con las cookies actualizadas.
+  return response;
 }
 
 export const config = {

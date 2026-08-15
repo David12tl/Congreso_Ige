@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getUserProfile, syncAuthMetadataWithProfile } from '@/db/perfiles';
+import { ensureUserAccess, syncAuthMetadataWithProfile } from '@/db/perfiles';
 import { getSecureRedirectBase, getRequestOrigin } from '@/utils/supabase/get-redirect-url';
 
 /**
@@ -108,13 +108,14 @@ export async function GET(request: Request) {
     );
   }
 
-  try {
-    // --- CRITICAL: Get the REAL id_rol from the database ---
+    try {
+    // --- CRITICAL: CANDADO — Get the REAL id_rol from the database ---
     // Never trust user_metadata for authorization decisions (OWASP auth security)
-    const profile = await getUserProfile(user.id);
-    
-    // If profile doesn't exist or role is invalid, default to user dashboard
-    const safeIdRol = profile?.id_rol ?? 3;
+    // ensureUserAccess: si el usuario NO está en la BD, crea el perfil con id_rol=3.
+    const profile = await ensureUserAccess(user.id);
+
+    // The gate guarantees an id_rol (3 by default); no null possible
+    const safeIdRol = profile.id_rol;
 
     // Synchronize auth metadata with the real database value
     // This ensures future reads of user_metadata will be correct
