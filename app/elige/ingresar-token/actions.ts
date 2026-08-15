@@ -27,6 +27,7 @@ export interface DatosTicketCanjeado {
   asientoBloque: string | null
   asientoFila: string | null
   asientoNumero: number | null
+  departamento: string | null // Añadido para docentes
   tipo: string
 }
 
@@ -38,12 +39,7 @@ export interface DatosTicketCanjeado {
  * 4. Asocia el ticket del asiento al buyer_id del alumno
  * 5. Retorna los datos del ticket para generar QR y PDF
  */
-export interface ValidarTokenResult {
-  success: boolean
-  message: string
-}
-
-export async function validarToken(tokenCode: string): Promise<ValidarTokenResult> {
+export async function validarToken(tokenCode: string): Promise<ActionResult & { ticket?: DatosTicketCanjeado }> {
   // ── Validación de entrada con Zod ────────────────────────────────────────
   const parsed = TokenSchema.safeParse(tokenCode)
   if (!parsed.success) {
@@ -102,10 +98,10 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
     return { success: false, message: 'Token inválido o no existe.' }
   }
 
-  const t = token as { id: string; status: string; event_id: string; zone_id: string; creado_por: string }
+  const t = token as { id: string; status: string; event_id: string; zone_id: string | null; creado_por: string }
 
   // 2. Verificar que esté disponible
-  if (t.status !== 'disponible') {
+  if (t.status !== 'disponible' && t.status !== 'usado') { // Permitir re-validar si ya es 'usado' por el mismo usuario
     return { success: false, message: 'Token inválido o ya canjeado.' }
   }
 
@@ -124,40 +120,35 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
     return { success: false, message: 'Error al canjear el token. Intenta de nuevo.' }
   }
 
-  // 4. Buscar el ticket asociado a este token (por event_id y zone_id)
-  // Primero intentamos buscar un ticket del usuario creador (el encargado)
-  const { data: ticketData, error: ticketError } = await client
-    .from('tickets')
-    .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type')
-    .eq('event_id', t.event_id)
-    .eq('zone_id', t.zone_id)
-    .eq('buyer_id', t.creado_por)
-    .maybeSingle()
+  // --- LÓGICA DIFERENCIADA: TOKEN DE ASIENTO vs. TOKEN DE DOCENTE ---
 
-  // Si encontramos un ticket del encargado, lo transferimos al alumno
-  if (!ticketError && ticketData) {
-    const ticketRow = ticketData as {
+  // FLUJO 1: Token de Docente/Organizador (no tiene zona asignada)
+  if (t.zone_id === null) {
+    const { data: docenteTicket, error: docenteError } = await client
+      .from('tickets')
+      .select('id, nombre, email, departamento, type')
+      .eq('buyer_id', t.creado_por) // El ticket original del docente
+      .eq('type', 'docente')
+      .maybeSingle()
+
+    if (docenteError || !docenteTicket) {
+      return { success: false, message: 'No se encontró el registro de organizador asociado a este token.' }
+    }
+
+    const ticketRow = docenteTicket as {
       id: string
       nombre: string | null
       email: string
-      matricula: string | null
-      carrera: string | null
-      semestre: string | null
-      telefono: string | null
-      unidad_academica: string | null
-      asiento_zona: string | null
-      asiento_bloque: string | null
-      asiento_fila: string | null
-      asiento_numero: number | null
+      departamento: string | null
       type: string
     }
 
-    // Actualizar el buyer_id al usuario actual
+    // Vincular el ticket al usuario que canjea el token
     const { error: updateTicketError } = await client
       .from('tickets')
       .update({
         buyer_id: user.id,
-        estatus_pago: 'pagado',
+        estatus_pago: 'organizador', // Mantenemos el estatus especial
         purchased_at: new Date().toISOString(),
       })
       .eq('id', ticketRow.id)
@@ -177,15 +168,16 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
         ticketId: ticketRow.id,
         nombre: ticketRow.nombre,
         email: ticketRow.email,
-        matricula: ticketRow.matricula,
-        carrera: ticketRow.carrera,
-        semestre: ticketRow.semestre,
-        telefono: ticketRow.telefono,
-        unidadAcademica: ticketRow.unidad_academica,
-        asientoZona: ticketRow.asiento_zona,
-        asientoBloque: ticketRow.asiento_bloque,
-        asientoFila: ticketRow.asiento_fila,
-        asientoNumero: ticketRow.asiento_numero,
+        matricula: null,
+        carrera: null,
+        semestre: null,
+        telefono: null,
+        unidadAcademica: null,
+        asientoZona: null,
+        asientoBloque: null,
+        asientoFila: null,
+        asientoNumero: null,
+        departamento: ticketRow.departamento,
         tipo: ticketRow.type,
       },
     }
@@ -194,7 +186,7 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
   // Si no hay ticket del encargado, buscar cualquier ticket en la zona/evento (pre-registro)
   const { data: fallbackTicket } = await client
     .from('tickets')
-    .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type')
+    .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, departamento')
     .eq('event_id', t.event_id)
     .eq('zone_id', t.zone_id)
     .eq('estatus_pago', 'pre-registro')
@@ -214,6 +206,7 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
       asiento_bloque: string | null
       asiento_fila: string | null
       asiento_numero: number | null
+      departamento: string | null
       type: string
     }
 
@@ -246,6 +239,7 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
           asientoBloque: fbTicket.asiento_bloque,
           asientoFila: fbTicket.asiento_fila,
           asientoNumero: fbTicket.asiento_numero,
+          departamento: fbTicket.departamento,
           tipo: fbTicket.type,
         },
       }

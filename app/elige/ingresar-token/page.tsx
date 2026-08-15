@@ -1,35 +1,35 @@
  'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useTransition } from 'react'
 import { HiOutlineKey, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineArrowRight } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { validarToken } from './actions'
 
 export default function IngresarTokenPage() {
   const [token, setToken] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
-    setSuccess(false)
+    setFeedback(null)
 
-    try {
+    startTransition(async () => {
       const result = await validarToken(token)
       if (result.success) {
-        setSuccess(true)
+        // Lógica para diferenciar el mensaje de éxito
+        const successMessage = result.ticket?.tipo === 'docente'
+          ? 'Gafete de organizador activado correctamente.'
+          : 'Token validado correctamente. ¡Tu ticket está activo!'
+
+        setFeedback({ type: 'success', message: successMessage })
         setToken('')
       } else {
-        setError(result.message)
+        setFeedback({ type: 'error', message: result.message })
       }
-    } catch {
-      setError('Error al validar el token. Inténtalo de nuevo.')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -69,26 +69,26 @@ export default function IngresarTokenPage() {
             />
           </div>
 
-          {error && (
+          {feedback?.type === 'error' && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-light">
               <HiOutlineExclamationCircle className="w-4 h-4" />
-              {error}
+              {feedback.message}
             </div>
           )}
 
-          {success && (
+          {feedback?.type === 'success' && (
             <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-light">
               <HiOutlineCheckCircle className="w-4 h-4" />
-              Token validado correctamente. ¡Tu ticket está activo!
+              {feedback.message}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white font-bold rounded-xl uppercase tracking-widest hover:bg-amber-500 transition shadow-sm disabled:opacity-40"
           >
-            {loading ? (
+            {isPending ? (
               'Validando...'
             ) : (
               <>
