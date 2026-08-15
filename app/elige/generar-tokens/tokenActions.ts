@@ -749,7 +749,7 @@ export async function liquidarRestoAsiento(
 
       const updateTokenPayload = { estado_pago: 'completado' }
       
-                              const { error: tokenUpdateError } = await supabase
+      const { error: tokenUpdateError } = await supabase
         .from('tokens_canje')
         .update(updateTokenPayload as never)
         .eq('zone_id', ticket.zone_id ?? '')
