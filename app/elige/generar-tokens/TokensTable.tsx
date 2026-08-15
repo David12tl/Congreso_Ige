@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { TokenCanje, TokenStatus } from './tokens';
+
+// Tipos e interfaces integrados
+export type TokenStatus = 'disponible' | 'usado' | 'expirado';
+export type EstadoPago = 'sin_pago' | 'pagado' | 'pendiente' | string;
+
+export interface TokenCanje {
+  id: string;
+  token_code: string;
+  status: TokenStatus | string;
+  estado_pago: EstadoPago;
+  total_abonado: number | string;
+  created_at: string;
+  cliente_nombre?: string; 
+  cliente_correo?: string;
+}
 
 interface TokensTableProps {
   tokens: TokenCanje[];
@@ -12,14 +26,15 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
-  // Ahora la búsqueda también filtrará por el nombre o correo del cliente
+  // Filtrado en tiempo real por Código, Nombre o Correo del cliente
   const filteredTokens = tokens.filter((token) => {
     const searchLower = searchTerm.toLowerCase();
-    const matchesCode = token.token_code.toLowerCase().includes(searchLower);
-    const matchesCliente = token.cliente_nombre?.toLowerCase().includes(searchLower) || 
-                           token.cliente_correo?.toLowerCase().includes(searchLower);
     
-    const matchesSearch = matchesCode || matchesCliente;
+    const matchesCode = token.token_code.toLowerCase().includes(searchLower);
+    const matchesNombre = token.cliente_nombre?.toLowerCase().includes(searchLower) || false;
+    const matchesCorreo = token.cliente_correo?.toLowerCase().includes(searchLower) || false;
+    
+    const matchesSearch = matchesCode || matchesNombre || matchesCorreo;
     const matchesStatus = statusFilter === 'todos' || token.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -71,7 +86,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
           <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-600 tracking-wider">
             <tr>
               <th className="px-6 py-4">Código Token</th>
-              <th className="px-6 py-4">Cliente Asignado</th> {/* Nueva Columna */}
+              <th className="px-6 py-4">Cliente Asignado</th>
               <th className="px-6 py-4">Estado Canje</th>
               <th className="px-6 py-4">Estado Pago</th>
               <th className="px-6 py-4">Monto Abonado</th>
@@ -90,22 +105,26 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
             ) : (
               filteredTokens.map((token) => (
                 <tr key={token.id} className="hover:bg-gray-50 transition-colors">
+                  {/* Código en monoespacio */}
                   <td className="px-6 py-4 font-mono font-bold text-gray-900 select-all">
                     {token.token_code}
                   </td>
                   
-                  {/* Celda del Cliente */}
+                  {/* Información del Cliente plano desde SQL */}
                   <td className="px-6 py-4">
                     {token.cliente_nombre ? (
                       <div>
                         <div className="font-medium text-gray-900">{token.cliente_nombre}</div>
-                        <div className="text-xs text-gray-500">{token.cliente_correo}</div>
+                        {token.cliente_correo && (
+                          <div className="text-xs text-gray-500">{token.cliente_correo}</div>
+                        )}
                       </div>
                     ) : (
-                      <span className="text-gray-400 italic text-xs">Sin asignar</span>
+                      <span className="text-gray-400 italic text-xs">Disponible / Sin usar</span>
                     )}
                   </td>
                   
+                  {/* Badge Estado de Canje */}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       token.status === 'disponible' ? 'bg-green-100 text-green-800' :
@@ -115,6 +134,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
+                  {/* Badge Estado de Pago */}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       token.estado_pago === 'pagado' ? 'bg-emerald-100 text-emerald-800' :
@@ -124,16 +144,19 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
+                  {/* Total Abonado */}
                   <td className="px-6 py-4 font-medium text-gray-700">
                     ${Number(token.total_abonado).toFixed(2)}
                   </td>
                   
+                  {/* Fecha de Creación */}
                   <td className="px-6 py-4 text-gray-500">
                     {new Date(token.created_at).toLocaleDateString('es-MX', {
                       day: '2-digit', month: 'short', year: 'numeric'
                     })}
                   </td>
 
+                  {/* Acciones */}
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => {
@@ -152,6 +175,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         </table>
       </div>
       
+      {/* Contador de pie de tabla */}
       <div className="mt-4 text-xs text-gray-500 text-right">
         Mostrando {filteredTokens.length} de {tokens.length} tokens registrados.
       </div>
