@@ -4,13 +4,11 @@ export type EstadoPago = 'sin_pago' | 'pagado' | 'pendiente' | string; // Ajusta
 export interface TokenCanje {
   id: string;
   token_code: string;
-  zone_id: string | null;
-  creado_por: string;
-  created_at: string;
-  utilizado_por: string | null;
-  status: TokenStatus;
-  utilizado_el: string | null;
+  status: string;
+  estado_pago: string;
   total_abonado: number;
-  estado_pago: EstadoPago;
-  event_id: string;
+  created_at: string;
+  // Agrega estos campos para saber de quién es:
+  cliente_nombre?: string; 
+  cliente_correo?: string;
 }

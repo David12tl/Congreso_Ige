@@ -12,10 +12,16 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
-  // Filtrado en tiempo real para agilizar la búsqueda en el panel
+  // Ahora la búsqueda también filtrará por el nombre o correo del cliente
   const filteredTokens = tokens.filter((token) => {
-    const matchesSearch = token.token_code.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesCode = token.token_code.toLowerCase().includes(searchLower);
+    const matchesCliente = token.cliente_nombre?.toLowerCase().includes(searchLower) || 
+                           token.cliente_correo?.toLowerCase().includes(searchLower);
+    
+    const matchesSearch = matchesCode || matchesCliente;
     const matchesStatus = statusFilter === 'todos' || token.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -40,8 +46,8 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Buscar por código..."
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-48"
+            placeholder="Buscar por código o cliente..."
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -65,6 +71,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
           <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-600 tracking-wider">
             <tr>
               <th className="px-6 py-4">Código Token</th>
+              <th className="px-6 py-4">Cliente Asignado</th> {/* Nueva Columna */}
               <th className="px-6 py-4">Estado Canje</th>
               <th className="px-6 py-4">Estado Pago</th>
               <th className="px-6 py-4">Monto Abonado</th>
@@ -76,19 +83,29 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
           <tbody className="divide-y divide-gray-200 bg-white">
             {filteredTokens.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
                   No se encontraron tokens que coincidan con la búsqueda.
                 </td>
               </tr>
             ) : (
               filteredTokens.map((token) => (
                 <tr key={token.id} className="hover:bg-gray-50 transition-colors">
-                  {/* Código en monoespacio para mejor legibilidad */}
                   <td className="px-6 py-4 font-mono font-bold text-gray-900 select-all">
                     {token.token_code}
                   </td>
                   
-                  {/* Badge Estado de Canje */}
+                  {/* Celda del Cliente */}
+                  <td className="px-6 py-4">
+                    {token.cliente_nombre ? (
+                      <div>
+                        <div className="font-medium text-gray-900">{token.cliente_nombre}</div>
+                        <div className="text-xs text-gray-500">{token.cliente_correo}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 italic text-xs">Sin asignar</span>
+                    )}
+                  </td>
+                  
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       token.status === 'disponible' ? 'bg-green-100 text-green-800' :
@@ -98,7 +115,6 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
-                  {/* Badge Estado de Pago */}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       token.estado_pago === 'pagado' ? 'bg-emerald-100 text-emerald-800' :
@@ -108,19 +124,16 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
-                  {/* Total Abonado formateado */}
                   <td className="px-6 py-4 font-medium text-gray-700">
                     ${Number(token.total_abonado).toFixed(2)}
                   </td>
                   
-                  {/* Fecha de Creación */}
                   <td className="px-6 py-4 text-gray-500">
                     {new Date(token.created_at).toLocaleDateString('es-MX', {
                       day: '2-digit', month: 'short', year: 'numeric'
                     })}
                   </td>
 
-                  {/* Acciones de Copiado / Asignación */}
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => {
@@ -139,7 +152,6 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         </table>
       </div>
       
-      {/* Contador de pie de tabla */}
       <div className="mt-4 text-xs text-gray-500 text-right">
         Mostrando {filteredTokens.length} de {tokens.length} tokens registrados.
       </div>
