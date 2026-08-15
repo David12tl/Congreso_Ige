@@ -4,8 +4,6 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useTheme } from '@/components/theme-provider'
-import { FiSun, FiMoon } from 'react-icons/fi'
 import {
   HiMenu,
   HiX,
@@ -156,10 +154,6 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const { theme, setTheme } = useTheme()
-  const isDark = theme === 'dark'
-
-  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
 
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role),
@@ -177,7 +171,7 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
   return (
     <>
       {/* Mobile Top Navbar */}
-      <div className="flex md:hidden items-center justify-between px-4 h-16 bg-white dark:bg-[#2a2a2f] border-b border-slate-200 dark:border-slate-700 shrink-0">
+      <div className="sticky top-0 z-30 flex md:hidden items-center justify-between px-4 h-16 bg-white dark:bg-[#2a2a2f] border-b border-slate-200 dark:border-slate-700 shrink-0">
         <button
           onClick={() => setIsOpen(true)}
           className="p-2 text-[#1E2A39] dark:text-slate-100 hover:text-[#8B1E23] transition-colors"
@@ -194,13 +188,6 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#1E2A39] dark:text-yellow-300 transition-colors"
-            aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-          >
-            {isDark ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
-          </button>
           <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-[#1E2A39] dark:text-slate-100 uppercase">
             {user.name.charAt(0)}
           </div>
@@ -229,13 +216,6 @@ export function MobileNavbar({ user }: { user: MobileNavbarUser }) {
                 <span className="text-[#1E2A39] dark:text-slate-100 font-semibold text-base">ELIGE 2026</span>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 text-slate-400 dark:text-slate-300 hover:text-[#1E2A39] dark:hover:text-yellow-300 transition-colors rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
-                  aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-                >
-                  {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-                </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-[#1E2A39] transition-colors rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"

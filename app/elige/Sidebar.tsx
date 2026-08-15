@@ -23,7 +23,6 @@ import {
   HiOutlineCamera,
   HiOutlineHome,
 } from 'react-icons/hi'
-
 type UserRole = 'admin' | 'encargado' | 'user'
 
 interface SidebarUser {
@@ -189,7 +188,7 @@ export function Sidebar({ user }: { user: SidebarUser }) {
         ${collapsed ? 'w-20' : 'w-64'}`}
     >
       {/* Header / Logo */}
-      <div className="flex justify-center items-center w-full py-2">
+     <div className="flex justify-center items-center w-full py-2">
         <Image src="/logo.png" alt="Logo" width={50} height={50} />
       </div>
 

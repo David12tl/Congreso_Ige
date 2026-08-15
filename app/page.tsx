@@ -365,7 +365,8 @@ export default function CongresoPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
                 <button 
                   style={{ backgroundColor: tokens.tertiary }}
-                  className="text-white text-[15px] font-bold px-10 py-4 rounded-xl active:scale-95 transition-all shadow-md shadow-[#8B1E23]/30"
+                  className=" text-white text-[15px] font-bold px-10 py-4 rounded-xl active:scale-95 transition-all shadow-md shadow-[#8B1E23]/30"
+                  
                 >
                   Registrarme Ahora
                 </button>
