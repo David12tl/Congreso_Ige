@@ -61,6 +61,12 @@ export async function signInWithPassword(
   const { ensureUserAccess, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
   const profile = await ensureUserAccess(userId);
 
+  // --- CANDADO DE ACCESO: Solo permitir inicio de sesión a usuarios con id_rol = 3 ---
+  // Si el rol es de Administrador (1) o Encargado (2), no se les permite iniciar sesión desde aquí.
+  if (profile.id_rol !== 3) {
+    return { error: 'Acceso no autorizado para este tipo de cuenta.' };
+  }
+
   // Sincronizar metadata de Auth con el valor real de la BD
   await syncAuthMetadataWithProfile(userId);
 
