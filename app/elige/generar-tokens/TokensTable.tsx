@@ -18,6 +18,14 @@ export interface TokenCanje {
   cliente_correo?: string;
 }
 
+// Interfaz interna para mapear de forma segura posibles variaciones de mayúsculas desde SQL sin usar 'any'
+interface TokenConVariantes extends TokenCanje {
+  Cliente_Nombre?: string;
+  CLIENTE_NOMBRE?: string;
+  Cliente_Correo?: string;
+  CLIENTE_CORREO?: string;
+}
+
 interface TokensTableProps {
   tokens: TokenCanje[];
   isLoading?: boolean;
@@ -27,8 +35,24 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
-  // Filtrado combinando código del token, nombre o correo del alumno/cliente
-  const filteredTokens = tokens.filter((token) => {
+  // Procesamos los tokens para asegurar que React encuentre las propiedades
+  // sin importar variaciones de mayúsculas/minúsculas de la consulta SQL original
+  const filteredTokens = (tokens as TokenConVariantes[]).map((t: TokenConVariantes): TokenCanje => {
+    const nombre = t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || '';
+    const correo = t.cliente_correo || t.Cliente_Correo || t.CLIENTE_CORREO || '';
+    
+    return {
+      id: t.id,
+      token_code: t.token_code,
+      status: t.status,
+      estado_pago: t.estado_pago,
+      total_abonado: t.total_abonado,
+      created_at: t.created_at,
+      utilizado_el: t.utilizado_el,
+      cliente_nombre: nombre,
+      cliente_correo: correo
+    };
+  }).filter((token: TokenCanje) => {
     const searchLower = searchTerm.toLowerCase();
     
     const matchesCode = token.token_code.toLowerCase().includes(searchLower);
@@ -104,7 +128,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                 </td>
               </tr>
             ) : (
-              filteredTokens.map((token) => (
+              filteredTokens.map((token: TokenCanje) => (
                 <tr key={token.id} className="hover:bg-gray-50 transition-colors">
                   {/* Código en fuente Mono */}
                   <td className="px-6 py-4 font-mono font-bold text-gray-900 select-all">
@@ -113,7 +137,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                   
                   {/* Cliente que usó el token */}
                   <td className="px-6 py-4">
-                    {token.cliente_nombre ? (
+                    {token.cliente_nombre && token.cliente_nombre.trim() !== "" ? (
                       <div>
                         <div className="font-medium text-gray-900 uppercase text-xs tracking-wider">
                           {token.cliente_nombre}
@@ -139,7 +163,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
-                  {/* Badge de Estado de Pago (Adaptado a tus valores reales) */}
+                  {/* Badge de Estado de Pago */}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
                       token.estado_pago === 'completado' ? 'bg-emerald-100 text-emerald-800' :
