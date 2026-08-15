@@ -90,6 +90,9 @@ export async function ensureUserAccess(userId: string): Promise<{ id_rol: number
 
   // 2. CANDADO ABIERTO: el usuario YA está en la BD → respetar id_rol real
   if (profile) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[ensureUserAccess] Profile found for user ${userId}. id_rol: ${profile.id_rol}`);
+    }
     return { id_rol: profile.id_rol };
   }
 
@@ -105,6 +108,9 @@ export async function ensureUserAccess(userId: string): Promise<{ id_rol: number
       .maybeSingle();
 
     if (insertError || !inserted) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`[ensureUserAccess] Failed to create profile for user ${userId}. Error: ${insertError?.message ?? 'unknown'}`);
+      }
       // Fail-secure: si no se pudo crear el perfil, cerrar el candado en memoria
       console.warn(
         `[ensureUserAccess] No se pudo crear el perfil para user ${userId} (insertError: ${insertError?.message ?? 'unknown'}). Aplicando CANDADO cerrado: id_rol=${DEFAULT_ROLE_ID}.`,
@@ -112,9 +118,15 @@ export async function ensureUserAccess(userId: string): Promise<{ id_rol: number
       return { id_rol: DEFAULT_ROLE_ID };
     }
 
-    console.info(
-      `[ensureUserAccess] CANDADO aplicado: perfil creado para user ${userId} con id_rol=${DEFAULT_ROLE_ID}.`,
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.info(
+        `[ensureUserAccess] CANDADO aplicado: perfil creado para user ${userId} con id_rol=${inserted.id_rol}.`,
+      );
+    } else {
+      // Keep info log for production, but without user ID for security
+      console.info(`[ensureUserAccess] CANDADO aplicado: perfil creado con id_rol=${inserted.id_rol}.`);
+    }
+
     return { id_rol: inserted.id_rol };
   }
 

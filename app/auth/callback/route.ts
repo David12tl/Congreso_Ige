@@ -114,6 +114,10 @@ export async function GET(request: Request) {
     // ensureUserAccess: si el usuario NO está en la BD, crea el perfil con id_rol=3.
     const profile = await ensureUserAccess(user.id);
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[OAuth Callback] User ${user.id} (email: ${user.email}) - id_rol from ensureUserAccess: ${profile.id_rol}`);
+    }
+
     // The gate guarantees an id_rol (3 by default); no null possible
     const safeIdRol = profile.id_rol;
 
@@ -122,16 +126,20 @@ export async function GET(request: Request) {
     await syncAuthMetadataWithProfile(user.id);
 
     // Redirect to the appropriate dashboard based on the verified role
+    const redirectPath = getDashboardPath(safeIdRol);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[OAuth Callback] Redirecting user ${user.id} to: ${secureOrigin}${redirectPath}`);
+    }
     // Using 307 (Temporary Redirect) to prevent caching of auth responses
     return NextResponse.redirect(
-      `${secureOrigin}${getDashboardPath(safeIdRol)}`,
+      `${secureOrigin}${redirectPath}`,
       { status: 307 }
     );
   } catch {
     // Database error - fail securely by redirecting to user dashboard
     // OWASP: Don't expose database errors to client
     if (process.env.NODE_ENV === 'development') {
-      console.warn('[Security] Profile lookup failed during OAuth callback');
+      console.warn(`[Security] Profile lookup failed during OAuth callback for user ${user?.id || 'unknown'}. Redirecting to default.`);
     }
     
     // Default safe redirect - perfil dashboard (lowest privilege)

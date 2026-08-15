@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
 import { getSecureCallbackUrl, getSecureRedirectBase, isOriginAllowed } from '@/utils/supabase/get-redirect-url';
+import { ensureUserAccess, syncAuthMetadataWithProfile } from '@/db/perfiles';
+import { v4 as uuidv4 } from 'uuid';
 
 export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
@@ -58,7 +60,6 @@ export async function signInWithPassword(
   // No confiar en user_metadata porque puede estar desactualizada
   // cuando un administrador cambia el rol en la BD.
   // ensureUserAccess: si el usuario NO está en la BD, crea el perfil con id_rol=3.
-  const { ensureUserAccess, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
   const profile = await ensureUserAccess(userId);
 
   // --- CANDADO DE ACCESO: Solo permitir inicio de sesión a usuarios con id_rol = 3 ---
@@ -92,6 +93,11 @@ export async function signUp(data: {
 }): Promise<AuthResult> {
   const supabase = await createClient();
 
+  // Defensive check for email
+  if (!data.email || !data.fullName) {
+    return { error: 'El correo electrónico y el nombre completo son obligatorios.' };
+  }
+
   const { data: signUpData, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
@@ -106,7 +112,7 @@ export async function signUp(data: {
   });
 
   if (error) {
-    const message = mapSupabaseError(error.message);
+    const message = mapSupabaseError(error.message || 'Error desconocido durante el registro.');
     return { error: message };
   }
 
@@ -119,13 +125,10 @@ export async function signUp(data: {
   // Si el usuario NO está en la tabla `profiles`, se crea con id_rol=3 (Usuario).
   // Si YA está registrado, se respeta el id_rol real asignado por un admin.
   // Este candado es la única fuente de verdad para el nivel de acceso.
-  const { ensureUserAccess, syncAuthMetadataWithProfile } = await import('@/db/perfiles');
   const profile = await ensureUserAccess(userId);
   await syncAuthMetadataWithProfile(userId);
 
   // ========== CREAR TICKET EN LA BASE DE DATOS ==========
-  // Generar un UUID para el QR
-  const { v4: uuidv4 } = await import('uuid');
   const qrData = uuidv4();
 
   const { data: ticketData, error: ticketError } = await supabase
@@ -153,7 +156,7 @@ export async function signUp(data: {
   }
 
   // ========== GENERAR Y ENVIAR CREDENCIAL ==========
-  if (ticketData?.id) {
+  if (ticketData && ticketData.id) {
     try {
       const credentialResult = await generateAndSendCredential(
         ticketData.id,
