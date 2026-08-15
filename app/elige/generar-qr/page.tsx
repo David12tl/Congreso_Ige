@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { HiOutlineQrcode, HiOutlineDownload, HiOutlineRefresh, HiOutlineExclamationCircle } from 'react-icons/hi'
+import type { DatosTicketParaQR } from './actions'
 import { GlassCard } from '@/components/ui/GlassCard'
-import { getMiQR } from '../usuario/actions'
-import { descargarTicketPDF } from './actions'
+import { obtenerQRData, descargarTicketPDF, descargarGafeteDocentePDF } from './actions'
 
 export default function GenerarQRPage() {
   const [qrData, setQrData] = useState<string | null>(null)
+  const [ticketInfo, setTicketInfo] = useState<DatosTicketParaQR | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [descargando, setDescargando] = useState(false)
@@ -17,9 +18,14 @@ export default function GenerarQRPage() {
 
     async function loadQR() {
       try {
-        const data = await getMiQR()
+        const result = await obtenerQRData()
         if (isMounted) {
-          setQrData(data)
+          if (result.success && result.ticket) {
+            setQrData(result.ticket.qrData)
+            setTicketInfo(result.ticket)
+          } else {
+            setError(result.message)
+          }
         }
       } catch {
         if (isMounted) {
@@ -102,10 +108,19 @@ export default function GenerarQRPage() {
                 onClick={async () => {
                   setDescargando(true)
                   try {
-                    const resultado = await descargarTicketPDF()
+                    // Lógica condicional para descargar el PDF correcto
+                    const esDocente = ticketInfo?.tipo === 'docente'
+                    const resultado = esDocente
+                      ? await descargarGafeteDocentePDF()
+                      : await descargarTicketPDF()
+
                     if (resultado.success && resultado.pdfBase64) {
                       const byteCharacters = atob(resultado.pdfBase64)
                       const byteNumbers = new Array(byteCharacters.length)
+                      const fileName = esDocente
+                        ? `gafete-organizador-${Date.now()}.pdf`
+                        : `ticket-congreso-ige-${Date.now()}.pdf`
+
                       for (let i = 0; i < byteCharacters.length; i++) {
                         byteNumbers[i] = byteCharacters.charCodeAt(i)
                       }
@@ -113,8 +128,8 @@ export default function GenerarQRPage() {
                       const blob = new Blob([byteArray], { type: 'application/pdf' })
                       const url = URL.createObjectURL(blob)
                       const link = document.createElement('a')
-                      link.href = url
-                      link.download = `ticket-congreso-ige-${Date.now()}.pdf`
+                      link.href = url;
+                      link.download = fileName
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)
@@ -132,7 +147,7 @@ export default function GenerarQRPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <HiOutlineDownload className="w-4 h-4" />
-                {descargando ? 'Generando...' : 'Descargar'}
+                {descargando ? 'Generando...' : ticketInfo?.tipo === 'docente' ? 'Descargar Gafete' : 'Descargar Ticket'}
               </button>
               <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                 <HiOutlineRefresh className="w-4 h-4" />

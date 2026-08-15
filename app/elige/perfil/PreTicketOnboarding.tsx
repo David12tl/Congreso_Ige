@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { crearRegistroDocente } from './actions-docente'
 import { HiUser, HiOfficeBuilding, HiCheckCircle, HiExclamationCircle, HiLockClosed, HiClock } from 'react-icons/hi'
 
 // Estructura de datos para el formulario local
@@ -16,6 +17,7 @@ interface TicketFormData {
   carrera: string | null
   semestre: string | null
   empresa: string | null
+  departamento: string | null // Nuevo campo para docentes
 }
 
 export function PreTicketOnboarding({ userId, userEmail }: { userId: string; userEmail: string }) {
@@ -23,17 +25,19 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
   const [isPending, startTransition] = useTransition()
   
   // Estados de flujo y control
-  const [step, setStep] = useState<'checking' | 'selection' | 'form' | 'success' | 'already_registered'>('checking')
-  const [type, setType] = useState<'alumno' | 'empresa'>('alumno')
+  const [step, setStep] = useState<'checking' | 'selection' | 'form' | 'success' | 'already_registered' | 'docente_success'>('checking')
+  const [type, setType] = useState<'alumno' | 'empresa' | 'docente'>('alumno')
   const [existingStatus, setExistingStatus] = useState<string | null>(null)
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null)
 
   // Estados del Formulario
   const [nombre, setNombre] = useState('')
   const [matricula, setMatricula] = useState('')
   const [carrera, setCarrera] = useState('')
   const [semestre, setSemestre] = useState('')
-  const [empresa, setEmpresa] = useState('') 
+  const [empresa, setEmpresa] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [departamento, setDepartamento] = useState('') // Nuevo estado para el departamento del docente
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -77,28 +81,47 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     }
 
     startTransition(async () => {
-      const payload: TicketFormData = {
-        buyer_id: userId,
-        email: userEmail,
-        type: type,
-        nombre: nombre.trim(),
-        telefono: telefono.trim() || null,
-        estatus_pago: 'pending', 
-        matricula: type === 'alumno' ? matricula.trim() : null,
-        carrera: type === 'alumno' ? carrera.trim() : null,
-        semestre: type === 'alumno' ? semestre.trim() : null,
-        empresa: type === 'empresa' ? empresa.trim() : null,
-      }
+      // --- LÓGICA DIFERENCIADA PARA DOCENTES ---
+      if (type === 'docente') {
+        if (!departamento.trim()) {
+          setErrorMsg('El departamento es obligatorio para docentes.')
+          return
+        }
+        const result = await crearRegistroDocente({
+          userId,
+          userEmail,
+          nombre: nombre.trim(),
+          telefono: telefono.trim() || null,
+          departamento: departamento.trim(),
+        })
 
-      // Usamos 'as any' para evitar el error estricto de tipado del .insert() de Supabase
-      const { error } = await supabase
-        .from('tickets')
-        .insert(payload as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-
-      if (error) {
-        setErrorMsg('Error al procesar tu pre-registro. Es posible que ya tengas un ticket asignado.')
+        if (result.success && result.token) {
+          setGeneratedToken(result.token)
+          setStep('docente_success')
+        } else {
+          setErrorMsg(result.message)
+        }
       } else {
-        setStep('success')
+        // --- Lógica original para alumnos y externos ---
+        const payload: Omit<TicketFormData, 'type' | 'departamento' | 'estatus_pago'> & { type: 'alumno' | 'empresa' } = {
+          buyer_id: userId,
+          email: userEmail,
+          type: type as 'alumno' | 'empresa',
+          nombre: nombre.trim(),
+          telefono: telefono.trim() || null,
+          matricula: type === 'alumno' ? matricula.trim() : null,
+          carrera: type === 'alumno' ? carrera.trim() : null,
+          semestre: type === 'alumno' ? semestre.trim() : null,
+          empresa: type === 'empresa' ? empresa.trim() : null,
+        }
+
+        const { error } = await supabase.from('tickets').insert(payload)
+
+        if (error) {
+          setErrorMsg('Error al procesar tu pre-registro. Es posible que ya tengas un ticket asignado.')
+        } else {
+          setStep('success')
+        }
       }
     })
   }
@@ -162,6 +185,24 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
     )
   }
 
+  // 3.5 Éxito para Docentes (con token)
+  if (step === 'docente_success') {
+    return (
+      <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-emerald-500 rounded-[24px] p-6 text-center text-[#1E2A39] dark:text-white shadow-sm animate-fadeIn">
+        <HiCheckCircle className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
+        <h3 className="text-base font-black uppercase tracking-wider text-emerald-700">¡Registro de Docente Exitoso!</h3>
+        <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-2 font-light">
+          Se ha generado tu token de acceso para tu gafete de organizador.
+        </p>
+        <div className="text-center bg-emerald-50 border border-emerald-200 p-4 rounded-xl mt-4">
+          <p className="text-[11px] text-emerald-800 font-bold uppercase tracking-wider">Tu Token de Acceso:</p>
+          <p className="text-lg font-mono font-bold text-emerald-900 tracking-widest mt-1">{generatedToken}</p>
+          <p className="text-[10px] text-emerald-700 mt-2">Ingresa este token en la sección &quot;Canjear Token&quot; para generar tu gafete digital.</p>
+        </div>
+      </div>
+    )
+  }
+
   // 4. Formulario
   return (
     <div className="max-w-md mx-auto bg-white dark:bg-[#2a2a2f] border border-[#E6E6E6] dark:border-slate-700 rounded-[24px] p-6 text-[#1E2A39] dark:text-white shadow-sm">
@@ -172,7 +213,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
             <p className="text-xs text-[#7D7D7D] dark:text-slate-400 mt-1 font-light">Selecciona tu perfil para iniciar tu registro</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button
               onClick={() => { setType('alumno'); setStep('form') }}
               className="flex flex-col items-center justify-center p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#8B1E23] rounded-xl transition group text-center"
@@ -190,13 +231,23 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Externo</span>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-light">(Empresas)</span>
             </button>
+
+            <button
+              onClick={() => { setType('docente'); setStep('form') }} // Nuevo botón para Docente
+              className="flex flex-col items-center justify-center p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#8B1E23] rounded-xl transition group text-center"
+            >
+              <HiUser className="w-8 h-8 text-slate-400 dark:text-slate-500 group-hover:text-[#8B1E23] transition mb-2" /> {/* Puedes usar un ícono diferente si lo deseas */}
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Docente</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-light">(Personal Académico)</span>
+            </button>
+
           </div>
         </>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3 mb-2">
             <h3 className="font-black uppercase tracking-wider text-[#8B1E23]">
-              Pre-Registro: {type === 'alumno' ? 'Interno' : 'Externo'}
+              Pre-Registro: {type === 'alumno' ? 'Interno' : type === 'empresa' ? 'Externo' : 'Docente'}
             </h3>
             <button type="button" onClick={() => setStep('selection')} className="text-[10px] text-slate-500 dark:text-slate-400 hover:underline">
               Cambiar
@@ -227,6 +278,13 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           {type === 'empresa' && (
             <div className="space-y-3">
               <input type="text" required value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Institución / Empresa" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+              <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+            </div>
+          )}
+
+          {type === 'docente' && ( // Nuevo bloque para docentes
+            <div className="space-y-3">
+              <input type="text" required value={departamento} onChange={(e) => setDepartamento(e.target.value)} placeholder="Departamento" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
               <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
             </div>
           )}

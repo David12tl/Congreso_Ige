@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
 import type { ActionResult } from '@/components/asientos/types'
 import { generateCredentialPDF } from '@/lib/credentials/pdf-generator'
 
@@ -262,6 +263,67 @@ function estructurarRespuestaExitosa(t: Record<string, unknown>): ResultadoValid
       asiento: asientoFormateado,
       tipo: (t.type as string) || 'alumno'
     }
+  }
+}
+
+/**
+ * 4. GENERAR Y DESCARGAR PDF DEL GAFETE DE DOCENTE/ORGANIZADOR
+ */
+export async function descargarGafeteDocentePDF(): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, error: 'Debes iniciar sesión para descargar el gafete.' }
+    }
+
+    // 1. Buscamos el ticket del docente.
+    const { data: ticket, error: ticketError } = await supabase
+      .from('tickets')
+      .select('id, nombre, email, type, qr_data, event_id, zone_id, semestre, carrera, matricula, asiento_zona')
+      .eq('buyer_id', user.id)
+      .eq('type', 'docente')
+      .single()
+
+    if (ticketError) throw ticketError;
+    if (!ticket) {
+      return { success: false, error: 'No se encontró un registro de organizador para este usuario.' }
+    }
+
+    // Validaciones para asegurar que es un gafete de organizador sin asiento asignado
+    const isOrganizador =
+      ticket.type === 'docente' &&
+      ticket.event_id === CONGRESO_IGE_EVENT_ID &&
+      ticket.zone_id === null &&
+      ticket.semestre === null &&
+      ticket.carrera === null &&
+      ticket.matricula === null &&
+      ticket.asiento_zona === null
+
+    if (!isOrganizador) {
+      return { success: false, error: 'Este ticket no corresponde a un gafete de organizador.' }
+    }
+
+    const credentialData = {
+      nombre: ticket.nombre || 'Organizador',
+      matricula: 'ORGANIZADOR', // Placeholder para el campo de matrícula
+      carrera: 'Staff del Evento',
+      asiento_zona: '', // Se envía vacío para que no se muestre en el PDF
+      asiento_fila: '', // Se envía vacío para que no se muestre en el PDF
+      asiento_numero: 0, // Se envía 0 para que no se muestre en el PDF
+      qr_data: ticket.qr_data || ticket.id,
+      email: ticket.email || user.email || '',
+      isOrganizador: true, // Flag para la plantilla especial del PDF
+    }
+
+    const pdfBuffer = await generateCredentialPDF(credentialData)
+    const pdfBase64 = pdfBuffer.toString('base64')
+
+    return { success: true, pdfBase64 }
+  } catch (error) {
+    console.error('Error generando PDF de gafete de docente:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Error desconocido al generar el PDF' }
   }
 }
 
