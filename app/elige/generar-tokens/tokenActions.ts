@@ -697,62 +697,65 @@ export async function liquidarRestoAsiento(
       .eq('id', ticketId)
       .single()
 
-    if (tErr || !ticket?.purchase_id) {
-      console.error('[liquidarRestoAsiento] Error al obtener ticket o purchase_id:', tErr?.message)
-      throw new Error('No se pudo encontrar la compra vinculada a este asiento.')
+    if (tErr || !ticket) {
+      console.error('[liquidarRestoAsiento] Error al obtener ticket:', tErr?.message)
+      throw new Error('No se pudo encontrar el asiento vinculado a este apartado.')
     }
 
-    const { data: purchase, error: pErr } = await (supabase
-      .from('purchases')
-      .select('amount_paid, total')
-      .eq('id', ticket.purchase_id)
-      .single() as unknown as Promise<{ data: Record<string, unknown> | null; error: DbError | null }>)
+    // 1) Actualizar la compra vinculada si existe.
+    // Los apartados creados por createManualSeatTicket pueden tener purchase_id = null,
+    // por lo que este paso es opcional y nunca debe romper la liquidación.
+    if (ticket.purchase_id) {
+      const { data: purchase, error: pErr } = await (supabase
+        .from('purchases')
+        .select('amount_paid, total')
+        .eq('id', ticket.purchase_id)
+        .single() as unknown as Promise<{ data: Record<string, unknown> | null; error: DbError | null }>)
 
-    if (pErr) {
-      console.error('[liquidarRestoAsiento] Error al obtener purchase:', pErr.message)
-      throw pErr
-    }
+      if (pErr) {
+        console.error('[liquidarRestoAsiento] Error al obtener purchase:', pErr.message)
+      } else {
+        const currentPurchase = purchase as unknown as { amount_paid: number | null; total: number | null }
+        const montoPrevio = currentPurchase.amount_paid || 0
+        const nuevoTotalPagado = montoPrevio + montoRecibido
+        const totalEsperadoBoleto = currentPurchase.total || PRECIO_POR_BOLETO
+        const esPagoCompleto = nuevoTotalPagado >= totalEsperadoBoleto
 
-    const currentPurchase = purchase as unknown as { amount_paid: number | null; total: number | null }
-    const montoPrevio = currentPurchase.amount_paid || 0
-    const nuevoTotalPagado = montoPrevio + montoRecibido
-    const totalEsperadoBoleto = currentPurchase.total || PRECIO_POR_BOLETO
-    const esPagoCompleto = nuevoTotalPagado >= totalEsperadoBoleto
+        const { error: upErr } = await supabase
+          .from('purchases')
+          .update({
+            amount_paid: nuevoTotalPagado,
+            status: esPagoCompleto ? 'completed' : 'pending',
+          } as never)
+          .eq('id', ticket.purchase_id)
 
-    const updatePurchasePayload = {
-      amount_paid: nuevoTotalPagado,
-      status: esPagoCompleto ? 'completed' : 'pending'
-    }
-
-    const { error: upErr } = await supabase
-      .from('purchases')
-      .update(updatePurchasePayload as never)
-      .eq('id', ticket.purchase_id)
-
-    if (upErr) {
-      console.error('[liquidarRestoAsiento] Error al actualizar purchase:', upErr.message)
-      throw upErr
-    }
-
-    if (esPagoCompleto) {
-      const updateTicketPayload = { estatus_pago: 'pagado', purchased_at: new Date().toISOString() }
-      
-      const { error: ticketUpdateError } = await supabase
-        .from('tickets')
-        .update(updateTicketPayload as never)
-        .eq('id', ticketId)
-
-      if (ticketUpdateError) {
-        console.error('[liquidarRestoAsiento] Error al actualizar ticket a pagado:', ticketUpdateError.message)
-        throw ticketUpdateError
+        if (upErr) {
+          console.error('[liquidarRestoAsiento] Error al actualizar purchase:', upErr.message)
+        }
       }
+    }
 
+    // 2) Marcar el ticket como pagado: liquidar el resto completa el boleto.
+    const updateTicketPayload = { estatus_pago: 'pagado', purchased_at: new Date().toISOString() }
+
+    const { error: ticketUpdateError } = await supabase
+      .from('tickets')
+      .update(updateTicketPayload as never)
+      .eq('id', ticketId)
+
+    if (ticketUpdateError) {
+      console.error('[liquidarRestoAsiento] Error al actualizar ticket a pagado:', ticketUpdateError.message)
+      throw ticketUpdateError
+    }
+
+    // 3) Marcar el token asociado como completado (best effort).
+    if (ticket.zone_id) {
       const updateTokenPayload = { estado_pago: 'completado' }
-      
+
       const { error: tokenUpdateError } = await supabase
         .from('tokens_canje')
         .update(updateTokenPayload as never)
-        .eq('zone_id', ticket.zone_id ?? '')
+        .eq('zone_id', ticket.zone_id)
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -761,16 +764,22 @@ export async function liquidarRestoAsiento(
       }
     }
 
-    const { data: token, error: tokenFetchError } = await supabase
-      .from('tokens_canje')
-      .select('token_code')
-      .eq('zone_id', ticket.zone_id ?? '')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    // 4) Obtener el token para devolverlo al cliente (best effort).
+    let tokenCode: string | null = null
+    if (ticket.zone_id) {
+      const { data: token, error: tokenFetchError } = await supabase
+        .from('tokens_canje')
+        .select('token_code')
+        .eq('zone_id', ticket.zone_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-    if (tokenFetchError) {
-      console.error('[liquidarRestoAsiento] Error al buscar token:', tokenFetchError.message)
+      if (tokenFetchError) {
+        console.error('[liquidarRestoAsiento] Error al buscar token:', tokenFetchError.message)
+      } else {
+        tokenCode = (token as { token_code: string } | null)?.token_code ?? null
+      }
     }
 
     revalidateTokenPaths()
@@ -778,7 +787,7 @@ export async function liquidarRestoAsiento(
     return {
       success: true,
       message: 'Cobro liquidado correctamente.',
-      token: (token as { token_code: string } | null)?.token_code
+      token: tokenCode ?? undefined,
     }
   } catch (err: unknown) {
     const errorDetails = err as Error

@@ -273,6 +273,8 @@ export function TaquillaTokensView({
   const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) => {
     setErrorMsg(null)
     setTokenGenerado(null)
+    setInfoApartado(null)
+    setSelectedTicketId(null)
 
     if (!row.zoneCode || !row.bloque || !row.fila || row.numero === null || !row.zoneId) {
       setErrorMsg('No se pudo reconstruir la información del asiento para liquidar.')
@@ -330,6 +332,8 @@ export function TaquillaTokensView({
 
     if (status === 'apartado' || status === 'pendiente') {
       setSelectedSeat(seat)
+      setSelectedTicketId(null)
+      setInfoApartado(null)
       setLoadingApartado(true)
       setModalMode('liquidar')
 
@@ -349,6 +353,10 @@ export function TaquillaTokensView({
         if (error || !data) {
           setErrorMsg('No se encontró el ticket asociado al asiento apartado.')
           setLoadingApartado(false)
+          setSelectedSeat(null)
+          setSelectedTicketId(null)
+          setInfoApartado(null)
+          setModalMode(null)
           return
         }
 
@@ -554,7 +562,10 @@ export function TaquillaTokensView({
 
   // Confirmar Liquidación de un Asiento Reservado/Apartado
   const handleConfirmarLiquidacion = () => {
-    if (!selectedTicketId || !selectedSeat || !infoApartado) return
+    if (!selectedTicketId || !selectedSeat || !infoApartado) {
+      setErrorMsg('No se pudo identificar el asiento para liquidar. Vuelve a seleccionarlo.')
+      return
+    }
     setErrorMsg(null)
 
     startTransition(async () => {
@@ -972,7 +983,7 @@ export function TaquillaTokensView({
               </div>
             </form>
           </div>
-        ) : modalMode === 'liquidar' && selectedSeat && infoApartado ? (
+        ) : modalMode === 'liquidar' && selectedSeat && selectedTicketId && infoApartado ? (
           /* LIQUIDACIÓN DE UN APARTADO EXISTENTE */
           <div className="rounded-3xl border border-amber-500/30 bg-[#f5f5f5]/60 p-6 backdrop-blur-xl shadow-sm animate-fadeIn">
             <div className="mb-4 border-b border-amber-500/20 pb-3">
@@ -1059,6 +1070,12 @@ export function TaquillaTokensView({
         ) : (
           /* PANEL VACÍO */
           <div className="rounded-3xl border border-dashed border-[#e5e5e5] bg-[#f5f5f5]/10 p-8 text-center shadow-inner">
+            {errorMsg && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-[11px] text-red-600 flex items-start gap-2 text-left">
+                <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
             <HiInformationCircle className="mx-auto h-8 w-8 text-[#4a4a4a]/40 mb-2" />
             <p className="text-xs font-bold uppercase tracking-wider text-[#4a4a4a]">Monitoreo de Asientos</p>
             <p className="mt-1 text-[11px] text-[#4a4a4a]/70">Selecciona cualquier asiento en el mapa del teatro para desplegar los controles de taquilla física, buscador de pre-registros y cobro.</p>
