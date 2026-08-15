@@ -78,63 +78,55 @@ export async function getUserProfile(userId: string): Promise<{ id_rol: number }
  * @param userId - ID del usuario autenticado en Supabase Auth (uuid)
  * @returns El `id_rol` verificado desde la base de datos (3 si no existe)
  */
-export async function ensureUserAccess(userId: string): Promise<{ id_rol: number }> {
+export async function ensureUserAccess(
+  userId: string,
+  email?: string,
+): Promise<{ id_rol: number }> {
   const supabase = await createClient();
 
-  // 1. Intentar obtener el perfil existente desde la BD
-  const { data: profile, error: fetchError } = await supabase
+  // 1. Consultar perfil existente.
+  const { data: existingProfile, error: fetchError } = await supabase
     .from("profiles")
     .select("id_rol")
     .eq("id", userId)
     .maybeSingle();
 
-  // 2. CANDADO ABIERTO: el usuario YA está en la BD → respetar id_rol real
-  if (profile) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[ensureUserAccess] Profile found for user ${userId}. id_rol: ${profile.id_rol}`);
-    }
-    return { id_rol: profile.id_rol };
+  if (fetchError) {
+    console.error(
+      `[ensureUserAccess] Error consultando perfil para user ${userId}: ${fetchError.message}. Aplicando CANDADO cerrado: id_rol=${DEFAULT_ROLE_ID}.`,
+    );
+    return { id_rol: DEFAULT_ROLE_ID };
   }
 
-  // 3. No hay error de lectura pero tampoco perfil → CREAR con candado cerrado (rol 3)
-  if (!fetchError) {
-    const { data: inserted, error: insertError } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,
-        id_rol: DEFAULT_ROLE_ID,
-      })
-      .select("id_rol")
-      .maybeSingle();
-
-    if (insertError || !inserted) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error(`[ensureUserAccess] Failed to create profile for user ${userId}. Error: ${insertError?.message ?? 'unknown'}`);
-      }
-      // Fail-secure: si no se pudo crear el perfil, cerrar el candado en memoria
-      console.warn(
-        `[ensureUserAccess] No se pudo crear el perfil para user ${userId} (insertError: ${insertError?.message ?? 'unknown'}). Aplicando CANDADO cerrado: id_rol=${DEFAULT_ROLE_ID}.`,
-      );
-      return { id_rol: DEFAULT_ROLE_ID };
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.info(
-        `[ensureUserAccess] CANDADO aplicado: perfil creado para user ${userId} con id_rol=${inserted.id_rol}.`,
-      );
-    } else {
-      // Keep info log for production, but without user ID for security
-      console.info(`[ensureUserAccess] CANDADO aplicado: perfil creado con id_rol=${inserted.id_rol}.`);
-    }
-
-    return { id_rol: inserted.id_rol };
+  // 2. CANDADO ABIERTO: Si el perfil existe y tiene un rol válido (1, 2, 3), se respeta.
+  if (existingProfile && [1, 2, 3].includes(existingProfile.id_rol)) {
+    return { id_rol: existingProfile.id_rol };
   }
 
-  // 4. Fetch error inesperado → fail-secure (candado cerrado)
-  console.error(
-    `[ensureUserAccess] Error consultando perfil para user ${userId}: ${fetchError.message}. Aplicando CANDADO cerrado: id_rol=${DEFAULT_ROLE_ID}.`,
+  // 3. CANDADO CERRADO: Si no existe perfil, o existe pero con id_rol nulo/inválido,
+  // se fuerza un `upsert` para (re)establecer el rol por defecto (3).
+  const { data: upsertedProfile, error: upsertError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: userId,
+      email, // Opcional, se guardará si se provee
+      id_rol: DEFAULT_ROLE_ID,
+    })
+    .select("id_rol")
+    .single();
+
+  if (upsertError || !upsertedProfile) {
+    console.error(
+      `[ensureUserAccess] Error en upsert para user ${userId}: ${upsertError?.message ?? "unknown"}. Aplicando CANDADO: id_rol=${DEFAULT_ROLE_ID}.`,
+    );
+    return { id_rol: DEFAULT_ROLE_ID }; // Fail-secure
+  }
+
+  console.info(
+    `[ensureUserAccess] CANDADO CERRADO: Perfil (re)establecido para user ${userId} con id_rol=${upsertedProfile.id_rol}.`,
   );
-  return { id_rol: DEFAULT_ROLE_ID };
+
+  return { id_rol: upsertedProfile.id_rol };
 }
 
 /**
@@ -149,6 +141,8 @@ export async function syncAuthMetadataWithProfile(userId: string) {
   const { error } = await supabase.auth.updateUser({
     data: {
       id_rol: profile.id_rol,
+      // Limpieza explícita: elimina el campo 'role' para evitar conflictos.
+      role: null,
     },
   });
 

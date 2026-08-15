@@ -25,7 +25,7 @@ const ALLOWED_ERROR_PARAMS = ['invalid-code', 'auth-failed', 'session-expired', 
 function getDashboardPath(idRol: number): string {
   if (idRol === 1) return '/elige/admin';
   if (idRol === 2) return '/elige/encargados';
-  return '/elige/perfil';
+  return '/elige/perfil'; // La ruta para usuarios es /elige/perfil
 }
 
 /**
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
     
     // Default safe redirect - perfil dashboard (lowest privilege)
     return NextResponse.redirect(
-      `${secureOrigin}/elige/perfil`,
+      `${secureOrigin}${getDashboardPath(3)}`,
       { status: 307 }
     );
   }

@@ -1,10 +1,11 @@
-// app/elige/generar-tokens/page.tsx
 import { TaquillaTokensView } from './TaquillaTokensView'
+import { TokensTable } from './TokensTable' // Ajusta la ruta relativa si moviste el componente
 import { createClient } from '@/lib/supabase/server'
 import { getSeatKey } from '@/config/auditorioConfig'
 import { getAssignmentContext } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
 import type { SeatStatus } from '@/components/asientos/AuditorioSeatMap'
+import type { TokenCanje } from './TokensTable' // Apuntamos al tipo correcto exportado por la tabla
 
 export default async function GenerarTokensPage() {
   const supabase = await createClient()
@@ -13,7 +14,6 @@ export default async function GenerarTokensPage() {
   const assignmentContext: AssignmentContext | null = await getAssignmentContext()
 
   // 2. Consultar asientos ocupados inicialmente desde Supabase para evitar parpadeos (SSR)
-  // Usamos unknown para evitar errores de tipado con Supabase
   const { data: tickets } = await (supabase
     .from('tickets')
     .select('asiento_zona, asiento_bloque, asiento_fila, asiento_numero, estatus_pago') as unknown as Promise<{
@@ -45,20 +45,26 @@ export default async function GenerarTokensPage() {
     }
   })
 
-  // 3. Estadisticas iniciales de tokens
-  const { data: tokenStats } = await (supabase
-    .from('tokens_canje')
-    .select('status') as unknown as Promise<{ data: Array<{ status: string }> | null }>)
-  const tokens = (tokenStats ?? []) as Array<{ status: string }>
+  // 3. Obtenemos los datos COMPLETOS de la vista detallada de SQL pasándola por unknown para evitar bloqueos estrictos de TS/ESLint
+  const nombreVista = 'vista_tokens_detalles' as unknown as 'tokens_canje'
+
+  const { data: dbTokens } = await (supabase
+    .from(nombreVista)
+    .select('*')
+    .order('created_at', { ascending: false }) as unknown as Promise<{ data: TokenCanje[] | null }>)
+
+  const tokensList = dbTokens ?? []
+
+  // Calculamos las estadísticas usando el array completo para ahorrar una petición extra a la base de datos
   const initialStats = {
-    total: tokens.length,
-    disponibles: tokens.filter((t) => t.status === 'disponible').length,
-    usados: tokens.length - tokens.filter((t) => t.status === 'disponible').length,
+    total: tokensList.length,
+    disponibles: tokensList.filter((t) => t.status === 'disponible').length,
+    usados: tokensList.filter((t) => t.status === 'usado').length,
   }
 
   return (
-    <div className="container mx-auto py-8">
-      {/* Renderizamos el componente que de verdad contiene el mapa SVG y la logica de cobro */}
+    <div className="container mx-auto py-8 space-y-10">
+      {/* Vista principal con el mapa interactivo de asientos */}
       <TaquillaTokensView 
         assignmentContext={assignmentContext ?? {
           userId: '',
@@ -71,6 +77,12 @@ export default async function GenerarTokensPage() {
         initialSeatStatusMap={initialSeatStatusMap}
         initialStats={initialStats}
       />
+
+      {/* Separador visual limpio */}
+      <hr className="border-gray-200" />
+
+      {/* Renderizado de la tabla de control pasándole la data obtenida por SSR */}
+      <TokensTable tokens={tokensList} />
     </div>
   )
-}
+}  

@@ -351,7 +351,7 @@ export default function PerfilPage() {
         {requiereCompletarUA ? (
           <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-[#2a2a2f] rounded-[24px] border border-dashed border-[#cbd5e1] dark:border-slate-700 opacity-75">
             <HiOutlineClipboardList className="w-10 h-10 text-[#475569] dark:text-slate-400 mx-auto mb-2" />
-            <h4 className="text-xs font-black uppercase tracking-widest text-[#475569] dark:text-slate-300">Onboarding Bloqueado</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-[#475569] dark:text-slate-300">Bloqueado</h4>
             <p className="text-[11px] text-[#475569] dark:text-slate-400 mt-1 font-medium">
               Asigna tu Unidad Académica arriba para habilitar la solicitud del ticket.
             </p>
