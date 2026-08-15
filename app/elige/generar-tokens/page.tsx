@@ -85,4 +85,4 @@ export default async function GenerarTokensPage() {
       <TokensTable tokens={tokensList} />
     </div>
   )
-}
+}  
