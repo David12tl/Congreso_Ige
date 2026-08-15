@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useTransition, useMemo, useCallback, useEffect } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { createClient } from '@/lib/supabase/client'
 import { AuditorioSeatMap, type SeatStatus } from '@/components/asientos/AuditorioSeatMap'
 import { getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
@@ -341,7 +342,7 @@ export function TaquillaTokensView({
           .eq('asiento_zona', seat.zoneCode)
           .eq('asiento_bloque', seat.bloque)
           .eq('asiento_fila', seat.fila)
-          .eq('asiento_numero', String(seat.numero))
+          .eq('asiento_numero', seat.numero)
           .order('purchased_at', { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -791,6 +792,16 @@ export function TaquillaTokensView({
               <p className="text-4xl font-black tracking-wider text-[#1a1a1a]">
                 {tokenGenerado}
               </p>
+            </div>
+            
+            <div className="mx-auto my-5 inline-block rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <QRCodeSVG
+                value={tokenGenerado}
+                size={160}
+                bgColor="#ffffff"
+                fgColor="#0f172a"
+                level="H"
+              />
             </div>
 
             <button

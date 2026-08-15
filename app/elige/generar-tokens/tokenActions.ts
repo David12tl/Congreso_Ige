@@ -749,7 +749,7 @@ export async function liquidarRestoAsiento(
 
       const updateTokenPayload = { estado_pago: 'completado' }
       
-      const { error: tokenUpdateError } = await supabase
+                        const { error: tokenUpdateError } = await supabase
         .from('tokens_canje')
         .update(updateTokenPayload as never)
         .eq('zone_id', ticket.zone_id ?? '')
@@ -816,7 +816,7 @@ export async function getApartadoInfo(ticketId: string): Promise<ActionResult & 
       .from('tokens_canje')
       .select('token_code')
       .eq('event_id', CONGRESO_IGE_EVENT_ID)
-      .eq('zone_id', t.zone_id)
+      .eq('zone_id', t.zone_id!) // CORRECCIÓN: Usamos '!' para asegurar a TypeScript que t.zone_id no es nulo aquí.
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
