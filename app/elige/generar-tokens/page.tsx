@@ -1,4 +1,3 @@
-// app/elige/generar-tokens/page.tsx
 import { TaquillaTokensView } from './TaquillaTokensView'
 import { TokensTable } from './TokensTable' // Ajusta la ruta relativa si moviste el componente
 import { createClient } from '@/lib/supabase/server'
@@ -6,7 +5,7 @@ import { getSeatKey } from '@/config/auditorioConfig'
 import { getAssignmentContext } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
 import type { SeatStatus } from '@/components/asientos/AuditorioSeatMap'
-import type { TokenCanje } from './tokens' // Importamos tu tipo de datos
+import type { TokenCanje } from './TokensTable' // Apuntamos al tipo correcto exportado por la tabla
 
 export default async function GenerarTokensPage() {
   const supabase = await createClient()
@@ -46,10 +45,12 @@ export default async function GenerarTokensPage() {
     }
   })
 
-  // 3. Obtenemos los datos COMPLETOS de los tokens para alimentar la tabla y calcular estadísticas
+  // 3. Obtenemos los datos COMPLETOS de la vista detallada de SQL pasándola por unknown para evitar bloqueos estrictos de TS/ESLint
+  const nombreVista = 'vista_tokens_detalles' as unknown as 'tokens_canje'
+
   const { data: dbTokens } = await (supabase
-    .from('tokens_canje')
-    .select('id, token_code, zone_id, creado_por, created_at, utilizado_por, status, utilizado_el, total_abonado, estado_pago, event_id')
+    .from(nombreVista)
+    .select('*')
     .order('created_at', { ascending: false }) as unknown as Promise<{ data: TokenCanje[] | null }>)
 
   const tokensList = dbTokens ?? []
