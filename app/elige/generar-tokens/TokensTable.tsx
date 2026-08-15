@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 
-// Tipos e interfaces integrados
+// Tipos adaptados al 100% a tus datos reales de la BD
 export type TokenStatus = 'disponible' | 'usado' | 'expirado';
-export type EstadoPago = 'sin_pago' | 'pagado' | 'pendiente' | string;
+export type EstadoPago = 'faltante' | 'completado' | string;
 
 export interface TokenCanje {
   id: string;
@@ -13,6 +13,7 @@ export interface TokenCanje {
   estado_pago: EstadoPago;
   total_abonado: number | string;
   created_at: string;
+  utilizado_el?: string | null;
   cliente_nombre?: string; 
   cliente_correo?: string;
 }
@@ -26,7 +27,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
 
-  // Filtrado en tiempo real por Código, Nombre o Correo del cliente
+  // Filtrado combinando código del token, nombre o correo del alumno/cliente
   const filteredTokens = tokens.filter((token) => {
     const searchLower = searchTerm.toLowerCase();
     
@@ -51,17 +52,17 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-      {/* Barra de Herramientas / Filtros */}
+      {/* Encabezado y Herramientas */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Control de Tokens de Canje</h2>
-          <p className="text-sm text-gray-500">Monitorea y asigna los tokens para clientes con pagos pendientes.</p>
+          <p className="text-sm text-gray-500">Monitorea y asigna los tokens para clientes con pagos pendientes o completados.</p>
         </div>
         
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Buscar por código o cliente..."
+            placeholder="Buscar por código, nombre o correo..."
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -80,7 +81,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         </div>
       </div>
 
-      {/* Contenedor de la Tabla */}
+      {/* Tabla Principal */}
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-600 tracking-wider">
@@ -99,24 +100,28 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
             {filteredTokens.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                  No se encontraron tokens que coincidan con la búsqueda.
+                  No se encontraron registros coincidentes.
                 </td>
               </tr>
             ) : (
               filteredTokens.map((token) => (
                 <tr key={token.id} className="hover:bg-gray-50 transition-colors">
-                  {/* Código en monoespacio */}
+                  {/* Código en fuente Mono */}
                   <td className="px-6 py-4 font-mono font-bold text-gray-900 select-all">
                     {token.token_code}
                   </td>
                   
-                  {/* Información del Cliente plano desde SQL */}
+                  {/* Cliente que usó el token */}
                   <td className="px-6 py-4">
                     {token.cliente_nombre ? (
                       <div>
-                        <div className="font-medium text-gray-900">{token.cliente_nombre}</div>
+                        <div className="font-medium text-gray-900 uppercase text-xs tracking-wider">
+                          {token.cliente_nombre}
+                        </div>
                         {token.cliente_correo && (
-                          <div className="text-xs text-gray-500">{token.cliente_correo}</div>
+                          <div className="text-xs text-gray-500 font-mono mt-0.5">
+                            {token.cliente_correo}
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -124,9 +129,9 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     )}
                   </td>
                   
-                  {/* Badge Estado de Canje */}
+                  {/* Badge de Estado Canje */}
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
                       token.status === 'disponible' ? 'bg-green-100 text-green-800' :
                       token.status === 'usado' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                     }`}>
@@ -134,34 +139,34 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                     </span>
                   </td>
                   
-                  {/* Badge Estado de Pago */}
+                  {/* Badge de Estado de Pago (Adaptado a tus valores reales) */}
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      token.estado_pago === 'pagado' ? 'bg-emerald-100 text-emerald-800' :
-                      token.estado_pago === 'sin_pago' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                      token.estado_pago === 'completado' ? 'bg-emerald-100 text-emerald-800' :
+                      token.estado_pago === 'faltante' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {token.estado_pago?.replace('_', ' ')}
+                      {token.estado_pago}
                     </span>
                   </td>
                   
-                  {/* Total Abonado */}
+                  {/* Monto formateado a moneda */}
                   <td className="px-6 py-4 font-medium text-gray-700">
                     ${Number(token.total_abonado).toFixed(2)}
                   </td>
                   
                   {/* Fecha de Creación */}
-                  <td className="px-6 py-4 text-gray-500">
+                  <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
                     {new Date(token.created_at).toLocaleDateString('es-MX', {
                       day: '2-digit', month: 'short', year: 'numeric'
                     })}
                   </td>
 
-                  {/* Acciones */}
-                  <td className="px-6 py-4 text-right">
+                  {/* Acciones del renglón */}
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(token.token_code);
-                        alert(`¡Código ${token.token_code} copiado al portapapeles!`);
+                        alert(`¡Código ${token.token_code} copiado!`);
                       }}
                       className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
                     >
@@ -175,7 +180,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         </table>
       </div>
       
-      {/* Contador de pie de tabla */}
+      {/* Paginación / Resumen de conteos */}
       <div className="mt-4 text-xs text-gray-500 text-right">
         Mostrando {filteredTokens.length} de {tokens.length} tokens registrados.
       </div>
