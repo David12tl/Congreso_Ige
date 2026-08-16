@@ -577,7 +577,7 @@ export function TaquillaTokensView({
         )
 
         if (res.success) {
-          setTokenGenerado(res.token ?? 'TOKEN-LIQ')
+          setTokenGenerado(res.tokenCode ?? 'TOKEN-LIQ')
           const seatKey = getSeatKey(selectedSeat)
           setSeatStatusMap((prev) => ({
             ...prev,
