@@ -47,25 +47,20 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
 
   if (!user) return []
 
-  // Verificar permisos de encargado/admin
+  // 1. Obtenemos el perfil completo del usuario que está consultando
   const { data: perfil } = await supabase
     .from('profiles')
     .select('id_rol, unidad_academica_id')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (!perfil || (perfil as { id_rol: number }).id_rol !== 2) {
-    return []
-  }
+  if (!perfil) return []
 
+  const rolUsuario = (perfil as { id_rol: number }).id_rol
   const unidadId = (perfil as { unidad_academica_id: number | null }).unidad_academica_id
 
-  if (!unidadId) {
-    return []
-  }
-
-  // Traemos la relación unidades_academicas(nombre) mediante el ID de la UA
-  const { data: tickets, error } = await supabase
+  // 2. Preparamos la consulta base uniendo la relación de unidades_academicas
+  const query = supabase
     .from('tickets')
     .select(`
       id, 
@@ -77,8 +72,17 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
       type,
       unidades_academicas:unidad_academica_id(nombre)
     `)
-    .eq('unidad_academica_id', unidadId)
-    .order('created_at', { ascending: false })
+
+  // 3. Filtrado por rol
+  if (rolUsuario === 2) {
+    if (!unidadId) return [] // Si es encargado sin UA asignada, no ve nada
+    query.eq('unidad_academica_id', unidadId)
+  } else if (rolUsuario !== 1) {
+    return [] // Si no es Admin ni Encargado, acceso denegado
+  }
+
+  // 4. CORRECCIÓN AQUÍ: Ordenamos por 'purchased_at' que sí existe en tu tabla
+  const { data: tickets, error } = await query.order('purchased_at', { ascending: false })
 
   if (error) {
     console.error('[getAsistentesPorUA] Error:', error.message)
@@ -87,7 +91,7 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
 
   if (!tickets) return []
 
-  // INTERFAZ DE TIPADO PARA REMOVER EL 'ANY' QUE EVALÚA ESLINT
+  // Interfaz estricta para evitar el error de ESLint 'no-explicit-any'
   interface QueryTicketRow {
     id: string
     nombre: string | null
@@ -99,7 +103,7 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
     unidades_academicas: { nombre: string } | null
   }
 
-  // Mapeamos los datos utilizando el nuevo tipo estricto en lugar de 'any'
+  // 5. Devolvemos el array formateado para el Front-end
   return (tickets as unknown as QueryTicketRow[]).map((t: QueryTicketRow) => ({
     id: t.id,
     nombre: t.nombre,
