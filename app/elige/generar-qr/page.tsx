@@ -5,6 +5,8 @@ import { HiOutlineQrcode, HiOutlineDownload, HiOutlineRefresh, HiOutlineExclamat
 import type { DatosTicketParaQR } from './actions'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { obtenerQRData, descargarTicketPDF, descargarGafeteDocentePDF } from './actions'
+// 1. IMPORTAR LA LIBRERÍA INSTALADA
+import { QRCodeSVG } from 'qrcode.react'
 
 export default function GenerarQRPage() {
   const [qrData, setQrData] = useState<string | null>(null)
@@ -91,12 +93,17 @@ export default function GenerarQRPage() {
             <div className="relative">
               <div className="absolute -inset-4 bg-cyan-100 rounded-full blur-2xl animate-pulse" />
               <div className="relative w-48 h-48 bg-white dark:bg-[#2a2a2f] border-2 border-cyan-200 rounded-[24px] flex items-center justify-center p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={qrData} 
-                  alt="Código QR de acceso" 
-                  className="w-full h-full object-contain"
-                />
+                
+                {/* 2. REEMPLAZO DE LA IMAGEN ROTA POR EL VECTOR SVG AUTOGENERADO */}
+              <QRCodeSVG 
+                value={qrData} 
+                size={160}
+                bgColor="#ffffff"       // Color de fondo plano (blanco)
+                fgColor="#0f172a"       // Color del QR plano (azul oscuro de tu tema)
+                className="w-full h-full"
+                level="H"
+              />
+
               </div>
             </div>
             <div className="space-y-2">
@@ -108,7 +115,6 @@ export default function GenerarQRPage() {
                 onClick={async () => {
                   setDescargando(true)
                   try {
-                    // Lógica condicional para descargar el PDF correcto
                     const esDocente = ticketInfo?.tipo === 'docente'
                     const resultado = esDocente
                       ? await descargarGafeteDocentePDF()
