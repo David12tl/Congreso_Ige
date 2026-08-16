@@ -96,10 +96,15 @@ export default function GenerarQRPage() {
                 
                 {/* 2. REEMPLAZO DE LA IMAGEN ROTA POR EL VECTOR SVG AUTOGENERADO */}
               <QRCodeSVG 
-                value={qrData} 
+                // Modificamos el value para meter los datos del ticketInfo
+                value={
+                  ticketInfo 
+                    ? `Nombre: ${ticketInfo.nombre || 'N/A'}\nCorreo: ${ticketInfo.email || 'N/A'}\nTipo: ${ticketInfo.tipo || 'Externo'}\nID: ${qrData}`
+                    : qrData || "SIN-DATOS"
+                } 
                 size={160}
-                bgColor="#ffffff"       // Color de fondo plano (blanco)
-                fgColor="#0f172a"       // Color del QR plano (azul oscuro de tu tema)
+                bgColor="#ffffff"
+                fgColor="#0f172a"
                 className="w-full h-full"
                 level="H"
               />
