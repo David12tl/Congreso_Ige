@@ -271,38 +271,43 @@ export function TaquillaTokensView({
   }, [selectedZone])
 
   // Handler para abrir el panel de liquidación desde la tabla de pendientes
-  const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) => {
-    setErrorMsg(null)
-    setTokenGenerado(null)
-    setInfoApartado(null)
-    setSelectedTicketId(null)
+  // ─── Acción de la Tabla a Liquidación (Tu función original integrada) ───
+const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) => {
+  setErrorMsg(null)
+  setTokenGenerado(null)
+  setInfoApartado(null)
+  setSelectedTicketId(null)
 
-    if (!row.zoneCode || !row.bloque || !row.fila || row.numero === null || !row.zoneId) {
-      setErrorMsg('No se pudo reconstruir la información del asiento para liquidar.')
-      return
-    }
+  // Validación estricta del asiento antes de proceder
+  if (!row.zoneCode || !row.bloque || !row.fila || row.numero === null || !row.zoneId) {
+    setErrorMsg('No se pudo reconstruir la información del asiento para liquidar.')
+    return
+  }
 
-    const seat: SeatIdentity = {
-      zoneCode: row.zoneCode,
-      zoneId: row.zoneId,
-      bloque: row.bloque,
-      fila: row.fila,
-      numero: row.numero,
-    }
+  const seat = {
+    zoneCode: row.zoneCode,
+    zoneId: row.zoneId,
+    bloque: row.bloque,
+    fila: row.fila,
+    numero: row.numero,
+  }
 
-    setSelectedSeat(seat)
-    setSelectedTicketId(row.ticketId)
-    setNombreAlumno(row.nombre ?? '')
-    setEmailAlumno(row.email ?? '')
+  // Seteo de estados concurrentes para la interfaz reactiva
+  setSelectedSeat(seat)
+  setSelectedTicketId(row.ticketId)
+  setNombreAlumno(row.nombre ?? '')
+  setEmailAlumno(row.email ?? '')
 
-    await cargarInfoApartado(row.ticketId, {
-      id: row.ticketId,
-      nombre: row.nombre,
-      email: row.email,
-    })
+  // Carga de la información financiera del backend/Supabase
+  await cargarInfoApartado(row.ticketId, {
+    id: row.ticketId,
+    nombre: row.nombre,
+    email: row.email,
+  })
 
-    setModalMode('liquidar')
-  }, [cargarInfoApartado])
+  // Transición visual al formulario lateral de cobro
+  setModalMode('liquidar')
+}, [cargarInfoApartado])
 
   // Handler al dar click en cualquier asiento del mapa
   const handleSeatClick = useCallback(async (seat: SeatIdentity) => {
