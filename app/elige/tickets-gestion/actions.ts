@@ -64,19 +64,54 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
     return []
   }
 
-  const { data: tickets, error } = await (supabase
+  // Traemos la relación unidades_academicas(nombre) mediante el ID de la UA
+  const { data: tickets, error } = await supabase
     .from('tickets')
-    .select('id, nombre, email, matricula, carrera, semestre, unidad_academica, type')
+    .select(`
+      id, 
+      nombre, 
+      email, 
+      matricula, 
+      carrera, 
+      semestre, 
+      type,
+      unidades_academicas:unidad_academica_id(nombre)
+    `)
     .eq('unidad_academica_id', unidadId)
-    .order('created_at', { ascending: false }) as unknown as Promise<{ data: AsistenteTicket[] | null; error: unknown }>)
+    .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('[getAsistentesPorUA] Error:', (error as { message: string }).message)
+    console.error('[getAsistentesPorUA] Error:', error.message)
     return []
   }
 
-  return tickets || []
+  if (!tickets) return []
+
+  // INTERFAZ DE TIPADO PARA REMOVER EL 'ANY' QUE EVALÚA ESLINT
+  interface QueryTicketRow {
+    id: string
+    nombre: string | null
+    email: string
+    matricula: string | null
+    carrera: string | null
+    semestre: string | null
+    type: string
+    unidades_academicas: { nombre: string } | null
+  }
+
+  // Mapeamos los datos utilizando el nuevo tipo estricto en lugar de 'any'
+  return (tickets as unknown as QueryTicketRow[]).map((t: QueryTicketRow) => ({
+    id: t.id,
+    nombre: t.nombre,
+    email: t.email,
+    matricula: t.matricula,
+    carrera: t.carrera,
+    semestre: t.semestre,
+    type: t.type,
+    unidad_academica: t.unidades_academicas?.nombre || 'No Especificada'
+  })) as AsistenteTicket[]
 }
+
 
 export async function obtenerTicketsPorRol() {
   const supabase = await createClient()
