@@ -104,7 +104,7 @@ const navItems: NavItem[] = [
     label: 'Tickets',
     href: '/elige/tickets-gestion',
     icon: <HiOutlineTicket className="w-5 h-5" />,
-    roles: ['admin', 'encargado'],
+    roles: ['encargado'],
   },
   {
     label: 'Taquilla y Tokens',
