@@ -5,6 +5,7 @@ import Footer from '@/components/ui/Footer';
 import Navbar from '@/components/ui/navbar';
 import AliadosYPatrocinadores from '@/components/ui/AliadosYPatrocinadores';
 import { InfiniteSliderBasic as InfiniteSlider } from '@/components/ui/infinite-slider';
+import Image from 'next/image';
 
 export default function ProgramaPage() {
   
@@ -44,6 +45,16 @@ export default function ProgramaPage() {
     iconSettings: {
       fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24"
     }
+  };
+
+  const tokens = {
+    bg: 'bg-[#FFFFFF]',
+    text: 'text-[#1E2A39]',
+    primary: '#1E2A39',
+    secondary: '#8B1E23',
+    tertiary: '#8B1E23',
+    surfaceContainer: 'bg-[#E6E6E6]',
+    variant: '#7D7D7D',
   };
 
   return (
@@ -97,7 +108,7 @@ export default function ProgramaPage() {
       </section>
 
       {/* ─── MESAS DE TRABAJO ─── */}
-      <section className="py-12 max-w-5xl mx-auto px-4 md:px-8 z-20 relative mb-20">
+      <section className="py-12 max-w-5xl mx-auto px-4 md:px-8 z-20 relative mb-12">
         <div className="text-center max-w-2xl mx-auto mb-12 animate-on-scroll">
           <span className="text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-[#E6E6E6] text-[#7D7D7D] border border-[#E6E6E6]">
             Ejes Temáticos Científicos
@@ -176,16 +187,78 @@ export default function ProgramaPage() {
         </div>
       </section>
 
-      {/* ─── CTA FINAL INSTITUCIONAL ─── */}
-      <section className="py-20 bg-white border-t border-slate-200/60">
+      {/* ─── CORRECCIÓN SECCIÓN: SEDE OFICIAL (DISEÑO LIMPIO DE 50% / 50%) ─── */}
+      <section className="w-full bg-[#E6E6E6]/40 border-t border-b border-slate-200/60 z-10 relative overflow-hidden">
+        <div className="w-full max-w-[1440px] mx-auto animate-on-scroll">
+          <div className="grid grid-cols-1 md:grid-cols-2 items-stretch">
+            
+            {/* Columna Texto con Padding Adecuado */}
+            <div className="flex flex-col justify-center py-16 px-6 md:py-24 md:px-16 lg:px-24 bg-white md:bg-transparent">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <span style={{ backgroundColor: tokens.secondary }} className="w-8 h-[3px] rounded-full"></span>
+                <span style={{ color: tokens.secondary }} className="text-xs font-bold tracking-widest uppercase font-sans">
+                  Sede Oficial
+                </span>
+              </div>
+              
+              <h2 style={{ color: tokens.primary }} className="text-3xl md:text-5xl font-black tracking-tight mb-2 leading-[1.15]">
+                Auditorio Metropolitano
+              </h2>
+              
+              <div className="flex flex-wrap gap-2.5 mb-6 mt-3">
+                <span className="px-3.5 py-1.5 bg-[#1E2A39]/5 text-[#1E2A39] rounded-lg text-[11px] font-bold border border-[#1E2A39]/10">Lugar Más Grande de Veracruz</span>
+                <span className="px-3.5 py-1.5 bg-[#8B1E23]/10 text-[#8B1E23] rounded-lg text-[11px] font-bold">Recinto Cultural</span>
+                <span className="px-3.5 py-1.5 bg-[#7D7D7D]/10 text-[#7D7D7D] rounded-lg text-[11px] font-bold border border-[#7D7D7D]/20">Orizaba, Veracruz</span>
+              </div>
+              
+              <p className="text-sm md:text-base text-gray-700 mb-8 max-w-lg leading-relaxed font-normal">
+                Ubicado en Orizaba, Veracruz, el **Auditorio Metropolitano** se consolida como el complejo cultural y de convenciones más imponente del estado. Con instalaciones de vanguardia, acústica perfecta y accesibilidad total, garantiza una experiencia inmersiva para estudiantes, docentes e investigadores de todo el mundo.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  style={{ backgroundColor: tokens.tertiary }}
+                  className="text-white text-[14px] font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-red-900/20 hover:brightness-110 active:scale-95 transition-all"
+                >
+                  Registrarme Ahora
+                </button>
+                <a 
+                  href="#schedule" 
+                  style={{ color: tokens.primary }}
+                  className="flex items-center gap-1.5 text-[14px] font-bold hover:text-[#8B1E23] transition-colors py-3"
+                >
+                  <span className="material-symbols-outlined text-xl" style={styles.iconSettings}>near_me</span>
+                  Cómo Llegar
+                </a>
+              </div>
+            </div>
+            
+            {/* Columna Imagen completa (Abarca todo el alto y ancho del div sin sobreponerse) */}
+            <div className="relative w-full h-[350px] md:h-auto min-h-[450px] md:min-h-[600px] select-none z-10">
+              <Image 
+                src="/teatro.jpeg" 
+                alt="Exterior del Auditorio Metropolitano Orizaba" 
+                fill
+                priority
+                sizes="(max-w-768px) 100vw, 50vw"
+                className="object-cover object-center pointer-events-none" 
+              />
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PATROCINADORES E INSTITUCIONES ─── */}
+      <section className="py-20 bg-white border-t border-slate-200/60 z-10 relative">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <AliadosYPatrocinadores />
-          <InfiniteSlider />
+          <div className="mt-12">
+            <InfiniteSlider />
+          </div>
         </div>
       </section>
         
-
-
       <Footer />
     </div>
   );

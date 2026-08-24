@@ -13,6 +13,7 @@ export default function TicketsGestionPage() {
   const [search, setSearch] = useState('')
   const [selectedUA, setSelectedUA] = useState('') // Inicializado vacío para auto-detectar
   const [listaUAs, setListaUAs] = useState<string[]>([])
+  const [modalidadFilter, setModalidadFilter] = useState<'todos' | 'escolarizado' | 'mixto'>('todos')
 
   useEffect(() => {
     let isMounted = true
@@ -56,8 +57,17 @@ export default function TicketsGestionPage() {
 
     const matchesUA = selectedUA === 'TODAS' || asistente.unidad_academica === selectedUA
 
-    return matchesSearch && matchesUA
+    const matchesModalidad =
+      modalidadFilter === 'todos' ||
+      (asistente.type === 'alumno' && asistente.modalidad === modalidadFilter)
+
+    return matchesSearch && matchesUA && matchesModalidad
   })
+
+  // Métricas de modalidad (sobre los datos cargados de la Unidad Académica)
+  const alumnosRaw = asistentes.filter((a) => a.type === 'alumno')
+  const countEscolarizado = alumnosRaw.filter((a) => a.modalidad === 'escolarizado').length
+  const countMixto = alumnosRaw.filter((a) => a.modalidad === 'mixto').length
 
   if (loading) {
     return (
@@ -89,8 +99,30 @@ export default function TicketsGestionPage() {
         </div>
       </header>
 
+      {/* Métricas de Modalidad */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="bg-[#1E2A39]/10 p-6 rounded-3xl border border-[#1E2A39]/20 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#7D7D7D] tracking-widest">Escolarizado</p>
+            <p className="text-3xl font-black text-[#1E2A39]">{countEscolarizado}</p>
+          </div>
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-sm font-black text-[#1E2A39] border border-[#1E2A39]/20">
+            E
+          </div>
+        </div>
+        <div className="bg-[#8B1E23]/10 p-6 rounded-3xl border border-[#8B1E23]/20 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#7D7D7D] tracking-widest">Mixto</p>
+            <p className="text-3xl font-black text-[#8B1E23]">{countMixto}</p>
+          </div>
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-sm font-black text-[#8B1E23] border border-[#8B1E23]/20">
+            M
+          </div>
+        </div>
+      </div>
+
       {/* Barra de Filtros y Búsqueda */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Input Buscador */}
         <div className="md:col-span-2 relative">
           <HiOutlineSearch className="absolute left-3 top-3.5 text-slate-400 dark:text-slate-500 w-5 h-5" />
@@ -118,6 +150,20 @@ export default function TicketsGestionPage() {
             {listaUAs.length === 0 && <option value="NINGUNA">Sin Unidad Asignada</option>}
           </select>
         </div>
+
+        {/* Selector de Modalidad */}
+        <div className="relative">
+          <HiOutlineFilter className="absolute left-3 top-3.5 text-slate-400 dark:text-slate-500 w-5 h-5 pointer-events-none" />
+          <select
+            value={modalidadFilter}
+            onChange={(e) => setModalidadFilter(e.target.value as 'todos' | 'escolarizado' | 'mixto')}
+            className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-[#0f172a] dark:text-white focus:outline-none transition-all"
+          >
+            <option value="todos">Todas las modalidades</option>
+            <option value="escolarizado">Escolarizado</option>
+            <option value="mixto">Mixto</option>
+          </select>
+        </div>
       </div>
 
       {/* Tabla de Resultados */}
@@ -138,12 +184,13 @@ export default function TicketsGestionPage() {
                 <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Carrera / Semestre</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Unidad Académica</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Tipo</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Modalidad</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {asistentesFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
                     Ningún asistente coincide con la búsqueda en esta unidad.
                   </td>
                 </tr>
@@ -182,6 +229,19 @@ export default function TicketsGestionPage() {
                           <HiOutlineBriefcase className="w-3 h-3" /> Empresa
                         </span>
                       )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-row items-center gap-2 pr-4">
+                        {asistente.type === 'alumno' ? (
+                          <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${
+                            asistente.modalidad === 'escolarizado' ? 'bg-[#1E2A39]/10 text-[#1E2A39]' : 'bg-[#8B1E23]/10 text-[#8B1E23]'
+                          }`}>
+                            {asistente.modalidad === 'escolarizado' ? 'Escolarizado' : 'Mixto'}
+                          </span>
+                        ) : (
+                          <span className="text-[#7D7D7D] text-xs font-bold uppercase tracking-wider">N/A</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

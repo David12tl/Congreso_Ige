@@ -9,9 +9,42 @@ export interface UsuarioUA {
   carrera: string | null
   semestre: string | null
   matricula: string | null
+  modalidad: 'escolarizado' | 'mixto' | null
   unidad_academica: string | null
   id_rol: string | null
   created_at: string
+}
+
+// Tipos de fila de las tablas consultadas (evitan el uso de `any`)
+interface ProfileFila {
+  id: string
+  email: string | null
+  id_rol: number
+  role_id?: number | null
+  unidad_academica_id?: number | null
+  created_at: string
+}
+
+interface RoleFila {
+  id_rol: number
+  nombre_rol: string
+}
+
+interface UnidadAcademicaFila {
+  id: number
+  nombre: string
+}
+
+interface TicketFila {
+  id: string
+  buyer_id: string
+  nombre: string | null
+  email: string
+  carrera: string | null
+  semestre: string | null
+  matricula: string | null
+  modalidad: 'escolarizado' | 'mixto' | null
+  unidad_academica_id: number | null
 }
 
 export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
@@ -29,12 +62,12 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
     return []
   }
 
-  const profilesData = profilesRes.data
-  const rolesData = rolesRes.data || []
-  const uaData = uaRes.data || []
+  const profilesData = profilesRes.data as ProfileFila[]
+  const rolesData = (rolesRes.data as RoleFila[]) || []
+  const uaData = (uaRes.data as UnidadAcademicaFila[]) || []
 
   // 2. Filtrar estrictamente los usuarios con rol 3 (id_rol o role_id)
-  const perfilesUsuarios = profilesData.filter((p: any) => {
+  const perfilesUsuarios = profilesData.filter((p) => {
     return Number(p.id_rol) === 3 || Number(p.role_id) === 3
   })
 
@@ -43,7 +76,7 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
   }
 
   // 3. Obtener los IDs de los usuarios para consultar sus tickets usando 'buyer_id'
-  const userIds = perfilesUsuarios.map((p: any) => p.id)
+  const userIds = perfilesUsuarios.map((p) => p.id)
 
   const { data: ticketsData, error: ticketsError } = await supabase
     .from('tickets')
@@ -54,23 +87,23 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
     console.error('Error al obtener tickets:', ticketsError)
   }
 
-  const ticketsList = ticketsData || []
+  const ticketsList = (ticketsData as TicketFila[]) || []
 
   // 4. Crear mapas para traducir IDs numéricos a nombres legibles
-  const rolesMap = new Map()
-  rolesData.forEach((r: any) => {
+  const rolesMap = new Map<number, string>()
+  rolesData.forEach((r) => {
     rolesMap.set(Number(r.id_rol), r.nombre_rol)
   })
 
-  const uaMap = new Map()
-  uaData.forEach((ua: any) => {
+  const uaMap = new Map<number, string>()
+  uaData.forEach((ua) => {
     uaMap.set(Number(ua.id), ua.nombre)
   })
 
   // 5. Mapear y fusionar toda la información correctamente
-  return perfilesUsuarios.map((p: any): UsuarioUA => {
+  return perfilesUsuarios.map((p): UsuarioUA => {
     // Relacionar perfil con ticket mediante buyer_id
-    const ticket = ticketsList.find((t: any) => t.buyer_id === p.id)
+    const ticket = ticketsList.find((t) => t.buyer_id === p.id)
 
     // Obtener el nombre de la unidad académica (puede estar en el perfil o en el ticket)
     const uaId = p.unidad_academica_id || ticket?.unidad_academica_id
@@ -87,6 +120,7 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
       carrera: ticket?.carrera || null,
       semestre: ticket?.semestre ? String(ticket.semestre) : null,
       matricula: ticket?.matricula || null,
+      modalidad: ticket?.modalidad || null,
       unidad_academica: nombreUA,
       id_rol: nombreRol,
       created_at: p.created_at,

@@ -106,80 +106,80 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
       </div>
 
       {/* Tabla Principal */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-600 tracking-wider">
+      <div className="w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+        <table className="w-full border-collapse text-left text-sm text-slate-500">
+          <thead className="bg-[#1E2A39]/5 text-[11px] font-black uppercase tracking-widest text-[#1E2A39]">
             <tr>
-              <th className="px-6 py-4">Código Token</th>
-              <th className="px-6 py-4">Cliente Asignado</th>
-              <th className="px-6 py-4">Estado Canje</th>
-              <th className="px-6 py-4">Estado Pago</th>
-              <th className="px-6 py-4">Monto Abonado</th>
-              <th className="px-6 py-4">Creado El</th>
-              <th className="px-6 py-4 text-right">Acción</th>
+              <th scope="col" className="px-6 py-4">Código Token</th>
+              <th scope="col" className="px-6 py-4">Cliente Asignado</th>
+              <th scope="col" className="px-6 py-4">Estado Canje</th>
+              <th scope="col" className="px-6 py-4">Estado Pago</th>
+              <th scope="col" className="px-6 py-4">Monto Abonado</th>
+              <th scope="col" className="px-6 py-4">Creado El</th>
+              <th scope="col" className="px-6 py-4 text-right">Acción</th>
             </tr>
           </thead>
-          
-          <tbody className="divide-y divide-gray-200 bg-white">
+
+          <tbody className="divide-y divide-slate-100 border-t border-slate-100 font-medium text-slate-900">
             {filteredTokens.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-medium">
                   No se encontraron registros coincidentes.
                 </td>
               </tr>
             ) : (
               filteredTokens.map((token: TokenCanje) => (
-                <tr key={token.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={token.id} className="hover:bg-slate-50/50 transition-colors">
                   {/* Código en fuente Mono */}
-                  <td className="px-6 py-4 font-mono font-bold text-gray-900 select-all">
+                  <td className="px-6 py-4 font-mono font-bold text-[#1E2A39] select-all">
                     {token.token_code}
                   </td>
-                  
+
                   {/* Cliente que usó el token */}
-                  <td className="px-6 py-4">
-                    {token.cliente_nombre && token.cliente_nombre.trim() !== "" ? (
+                  <td className="px-6 py-4 text-[#7D7D7D]">
+                    {token.cliente_nombre && token.cliente_nombre.trim() !== '' ? (
                       <div>
-                        <div className="font-medium text-gray-900 uppercase text-xs tracking-wider">
+                        <div className="font-medium text-slate-900 uppercase text-xs tracking-wider">
                           {token.cliente_nombre}
                         </div>
                         {token.cliente_correo && (
-                          <div className="text-xs text-gray-500 font-mono mt-0.5">
+                          <div className="text-xs text-slate-400 font-mono mt-0.5">
                             {token.cliente_correo}
                           </div>
                         )}
                       </div>
                     ) : (
-                      <span className="text-gray-400 italic text-xs">Disponible / Sin usar</span>
+                      <span className="text-slate-400 italic text-xs">Usuario Registrado</span>
                     )}
                   </td>
-                  
+
                   {/* Badge de Estado Canje */}
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                      token.status === 'disponible' ? 'bg-green-100 text-green-800' :
-                      token.status === 'usado' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold uppercase ring-1 ring-inset ${
+                      token.status === 'disponible' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/10' :
+                      token.status === 'usado' ? 'bg-blue-50 text-blue-700 ring-blue-700/10' : 'bg-slate-50 text-slate-600 ring-slate-500/10'
                     }`}>
                       {token.status}
                     </span>
                   </td>
-                  
+
                   {/* Badge de Estado de Pago */}
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                      token.estado_pago === 'completado' ? 'bg-emerald-100 text-emerald-800' :
-                      token.estado_pago === 'faltante' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold uppercase ring-1 ring-inset ${
+                      token.estado_pago === 'completado' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/10' :
+                      token.estado_pago === 'faltante' ? 'bg-amber-50 text-amber-700 ring-amber-600/10' : 'bg-red-50 text-red-700 ring-red-600/10'
                     }`}>
                       {token.estado_pago}
                     </span>
                   </td>
-                  
+
                   {/* Monto formateado a moneda */}
-                  <td className="px-6 py-4 font-medium text-gray-700">
+                  <td className="px-6 py-4 font-semibold text-[#1E2A39]">
                     ${Number(token.total_abonado).toFixed(2)}
                   </td>
-                  
+
                   {/* Fecha de Creación */}
-                  <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
+                  <td className="px-6 py-4 text-xs text-[#7D7D7D] whitespace-nowrap">
                     {new Date(token.created_at).toLocaleDateString('es-MX', {
                       day: '2-digit', month: 'short', year: 'numeric'
                     })}

@@ -131,6 +131,7 @@ export type Database = {
           event_id: string | null
           id: string
           matricula: string | null
+          modalidad: 'escolarizado' | 'mixto' | null
           nombre: string | null
           pdf_path: string | null
           purchase_id: string | null
@@ -154,6 +155,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           matricula?: string | null
+          modalidad?: 'escolarizado' | 'mixto' | null
           nombre?: string | null
           pdf_path?: string | null
           purchase_id?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           matricula?: string | null
+          modalidad?: 'escolarizado' | 'mixto' | null
           nombre?: string | null
           pdf_path?: string | null
           purchase_id?: string | null

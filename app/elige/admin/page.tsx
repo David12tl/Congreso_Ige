@@ -226,6 +226,7 @@ export default function AdminDashboardPage() {
                 <tr>
                   <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Comprador</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tipo</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Modalidad</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">UA / Fecha</th>
                 </tr>
               </thead>
@@ -244,6 +245,17 @@ export default function AdminDashboardPage() {
                           {t.type === 'alumno' ? 'Alumno' : 'Empresa'}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        {t.type === 'alumno' ? (
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                            t.modalidad === 'escolarizado' ? 'bg-[#1E2A39]/10 text-[#1E2A39]' : 'bg-[#8B1E23]/10 text-[#8B1E23]'
+                          }`}>
+                            {t.modalidad === 'escolarizado' ? 'Escolarizado' : 'Mixto'}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">N/A</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-[11px]">
                         <span className="text-slate-700 dark:text-slate-200 block">{t.unidad_academica ?? 'Externa'}</span>
                         <span className="text-slate-500 dark:text-slate-400 font-light text-[10px]">
@@ -254,7 +266,7 @@ export default function AdminDashboardPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400 font-light">
+                    <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400 font-light">
                       Sin ventas recientes.
                     </td>
                   </tr>

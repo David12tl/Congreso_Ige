@@ -10,6 +10,7 @@ export interface Ticket {
   purchase_id: string | null
   buyer_id: string | null
   type: 'alumno' | 'empresa' | string
+  modalidad?: 'escolarizado' | 'mixto' | null
   nombre: string | null
   semestre: string | null
   carrera: string | null

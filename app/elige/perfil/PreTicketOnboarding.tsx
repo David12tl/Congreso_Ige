@@ -16,6 +16,7 @@ interface TicketFormData {
   matricula: string | null
   carrera: string | null
   semestre: string | null
+  modalidad: 'escolarizado' | 'mixto' | null
   empresa: string | null
   departamento: string | null // Nuevo campo para docentes
 }
@@ -38,6 +39,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
   const [empresa, setEmpresa] = useState('')
   const [telefono, setTelefono] = useState('')
   const [departamento, setDepartamento] = useState('') // Nuevo estado para el departamento del docente
+  const [modalidad, setModalidad] = useState<'escolarizado' | 'mixto'>('escolarizado')
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -112,6 +114,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           matricula: type === 'alumno' ? matricula.trim() : null,
           carrera: type === 'alumno' ? carrera.trim() : null,
           semestre: type === 'alumno' ? semestre.trim() : null,
+          modalidad: type === 'alumno' ? modalidad : null,
           empresa: type === 'empresa' ? empresa.trim() : null,
         }
 
@@ -272,6 +275,23 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
                <input type="text" required value={carrera} onChange={(e) => setCarrera(e.target.value)} placeholder="Carrera" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
                <input type="text" required value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="Semestre" className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm" />
+            </div>
+          )}
+
+          {type === 'alumno' && (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-[#1E2A39] uppercase">
+                Modalidad de Estudio <span className="text-[#8B1E23]">*</span>
+              </label>
+              <select
+                value={modalidad}
+                onChange={(e) => setModalidad(e.target.value as 'escolarizado' | 'mixto')}
+                className="p-3 rounded-xl border border-slate-200 bg-white text-sm text-[#1E2A39] focus:outline-none focus:border-[#8B1E23] transition-colors"
+                required
+              >
+                <option value="escolarizado">Escolarizado</option>
+                <option value="mixto">Mixto</option>
+              </select>
             </div>
           )}
 

@@ -7,6 +7,7 @@ export interface TicketGestionado {
   nombre: string
   email: string
   matricula: string | null
+  modalidad: 'escolarizado' | 'mixto' | null
   asiento_zona: string | null
   asiento_bloque: string | null
   asiento_fila: string | null
@@ -34,6 +35,7 @@ export interface AsistenteTicket {
   matricula: string | null
   carrera: string | null
   semestre: string | null
+  modalidad: 'escolarizado' | 'mixto' | null
   unidad_academica: string | null
   type: string
 }
@@ -69,6 +71,7 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
       matricula, 
       carrera, 
       semestre, 
+      modalidad,
       type,
       unidades_academicas:unidad_academica_id(nombre)
     `)
@@ -99,6 +102,7 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
     matricula: string | null
     carrera: string | null
     semestre: string | null
+    modalidad: 'escolarizado' | 'mixto' | null
     type: string
     unidades_academicas: { nombre: string } | null
   }
@@ -111,6 +115,7 @@ export async function getAsistentesPorUA(): Promise<AsistenteTicket[]> {
     matricula: t.matricula,
     carrera: t.carrera,
     semestre: t.semestre,
+    modalidad: t.modalidad,
     type: t.type,
     unidad_academica: t.unidades_academicas?.nombre || 'No Especificada'
   })) as AsistenteTicket[]
@@ -169,7 +174,8 @@ export async function obtenerTicketsPorRol() {
       asiento_bloque, 
       asiento_fila, 
       asiento_numero, 
-      type, 
+      type,
+      modalidad,
       created_at:purchased_at, 
       unidad_academica_id, 
       unidades_academicas:unidad_academica_id(nombre)

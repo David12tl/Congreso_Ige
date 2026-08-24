@@ -23,6 +23,7 @@ export interface AdminDashboardData {
     nombre: string | null
     email: string
     type: string
+    modalidad: 'escolarizado' | 'mixto' | null
     purchased_at: string | null
     unidad_academica: string | null
   }>
@@ -101,7 +102,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   // 8. Últimos 5 tickets comprados (actividad reciente)
   const { data: ticketsRecientesRaw } = await supabase
     .from('tickets')
-    .select('id, nombre, email, type, purchased_at, unidades_academicas!tickets_unidad_academica_id_fkey(nombre)')
+    .select('id, nombre, email, type, modalidad, purchased_at, unidades_academicas!tickets_unidad_academica_id_fkey(nombre)')
     .order('purchased_at', { ascending: false, nullsFirst: false })
     .limit(5)
 
@@ -110,6 +111,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     nombre: string | null
     email: string
     type: string
+    modalidad: 'escolarizado' | 'mixto' | null
     purchased_at: string | null
     unidades_academicas: { nombre: string } | null
   }>
@@ -134,6 +136,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       nombre: t.nombre,
       email: t.email,
       type: t.type,
+      modalidad: t.modalidad,
       purchased_at: t.purchased_at,
       unidad_academica: t.unidades_academicas?.nombre ?? null,
     })),

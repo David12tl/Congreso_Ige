@@ -1,9 +1,19 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { HiOutlineUsers, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter } from 'react-icons/hi'
+import { HiOutlineUsers, HiOutlineSearch, HiOutlineFilter } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getUsuariosPorUA, UsuarioUA } from './action'
+
+// Deriva la modalidad de estudio a partir del campo directo o heurísticas de respaldo (carrera 'MIXTO' o matrícula '266W')
+function derivarModalidad(usuario: UsuarioUA): 'mixto' | 'escolarizado' {
+  const carrera = (usuario.carrera || '').toUpperCase()
+  const matricula = (usuario.matricula || '').toUpperCase()
+
+  if (usuario.modalidad === 'mixto') return 'mixto'
+  if (carrera.includes('MIXTO') || matricula.startsWith('266W')) return 'mixto'
+  return 'escolarizado'
+}
 
 export default function UsuariosUAPage() {
   const [usuarios, setUsuarios] = useState<UsuarioUA[]>([])
@@ -119,56 +129,62 @@ export default function UsuariosUAPage() {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+        <div className="w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <table className="w-full border-collapse text-left text-sm text-slate-500">
+            <thead className="bg-[#1E2A39]/5 text-[11px] font-black uppercase tracking-widest text-[#1E2A39]">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Usuario / Correo</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Matrícula</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Carrera / Semestre</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Unidad Académica</th>
-                <th className="px-6 py-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Rol</th>
+                <th scope="col" className="px-6 py-4">Usuario / Correo</th>
+                <th scope="col" className="px-6 py-4">Matrícula</th>
+                <th scope="col" className="px-6 py-4">Carrera / Semestre</th>
+                <th scope="col" className="px-6 py-4">Unidad Académica</th>
+                <th scope="col" className="px-6 py-4 text-right">Rol / Modalidad</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            <tbody className="divide-y divide-slate-100 bg-white text-sm text-slate-900">
               {usuariosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium">
                     Ningún usuario con rol 3 coincide con los criterios de búsqueda actuales.
                   </td>
                 </tr>
               ) : (
-                usuariosFiltrados.map((usuario) => (
-                  <tr key={usuario.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-light text-slate-700 dark:text-slate-200 group-hover:text-purple-700 transition-colors">
-                          {usuario.nombre || 'Sin Nombre Registrado'}
+                usuariosFiltrados.map((usuario) => {
+                  const modalidad = derivarModalidad(usuario)
+                  return (
+                    <tr key={usuario.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-[#1E2A39] text-base leading-tight">{usuario.nombre || 'Sin Nombre Registrado'}</div>
+                        <div className="text-xs text-[#7D7D7D] font-medium mt-0.5">{usuario.email}</div>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-semibold text-[#1E2A39]">
+                        {usuario.matricula || '——'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-[#1E2A39]">{usuario.carrera || 'No Especificada'}</div>
+                        <div className="text-xs text-[#7D7D7D] mt-0.5">{usuario.semestre ? `${usuario.semestre}° Semestre` : '——'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-[#1E2A39]">
+                          {usuario.unidad_academica || 'No Especificada'}
                         </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 font-light">{usuario.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-light text-slate-500 dark:text-slate-400">
-                      {usuario.matricula || '—'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs text-slate-700 dark:text-slate-200 font-light">{usuario.carrera || '—'}</span>
-                        {usuario.semestre && (
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-light">{usuario.semestre}° Semestre</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-light">
-                      {usuario.unidad_academica || 'No Especificada'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
-                        <HiOutlineAcademicCap className="w-3 h-3" /> {usuario.id_rol}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 text-right space-y-1.5">
+                        <div className="text-xs font-bold text-[#7D7D7D] uppercase tracking-wider">
+                          {usuario.id_rol || 'Usuario'}
+                        </div>
+
+                        {/* BADGE DE MODALIDAD DINÁMICO */}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-md tracking-wider ${
+                          modalidad === 'mixto'
+                            ? 'bg-[#8B1E23]/10 text-[#8B1E23]'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-600/10'
+                        }`}>
+                          {modalidad === 'mixto' ? 'Mixto' : 'Escolarizado'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

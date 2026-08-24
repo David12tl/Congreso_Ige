@@ -273,17 +273,32 @@ export default function TicketsVendidosPage() {
               ) : (
                 filteredTickets.map((ticket) => (
                   <tr key={ticket.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3">
-                      <div className="font-bold text-slate-900 dark:text-white">{ticket.nombre || 'Sin nombre'}</div>
-                      <div className="text-slate-400 dark:text-slate-500 text-[11px]">{ticket.email}</div>
-                      <div className="mt-1">
+                    <td className="px-6 py-4 space-y-1.5">
+                      <div>
+                        <h4 className="font-bold text-[#1E2A39] text-base leading-tight">{ticket.nombre || 'Sin nombre'}</h4>
+                        <p className="text-xs text-[#7D7D7D] font-medium">{ticket.email}</p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Badge Tipo Base */}
                         {ticket.type === 'alumno' ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded">
-                            <HiOutlineAcademicCap className="w-3 h-3" /> Alumno
+                          <span className="px-2.5 py-0.5 bg-[#1E2A39]/10 text-[#1E2A39] text-[11px] font-extrabold uppercase rounded-md tracking-wider">
+                            <HiOutlineAcademicCap className="w-3 h-3 inline-block" /> Alumno
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded">
-                            <HiOutlineOfficeBuilding className="w-3 h-3" /> Empresa
+                          <span className="px-2.5 py-0.5 bg-[#8B1E23]/10 text-[#8B1E23] text-[11px] font-extrabold uppercase rounded-md tracking-wider">
+                            <HiOutlineOfficeBuilding className="w-3 h-3 inline-block" /> Empresa
+                          </span>
+                        )}
+
+                        {/* BADGE DE MODALIDAD DINÁMICO REQUERIDO */}
+                        {ticket.type === 'alumno' && (
+                          <span className={`px-2.5 py-0.5 text-[11px] font-extrabold uppercase rounded-md tracking-wider ${
+                            ticket.modalidad === 'mixto'
+                              ? 'bg-[#8B1E23]/10 text-[#8B1E23]'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-600/10'
+                          }`}>
+                            {ticket.modalidad === 'mixto' ? 'Mixto' : 'Escolarizado'}
                           </span>
                         )}
                       </div>
