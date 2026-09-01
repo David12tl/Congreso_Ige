@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSeatKey } from '@/config/auditorioConfig'
 import { getAssignmentContext } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
-import type { SeatStatus } from '@/components/asientos/AuditorioSeatMap'
+import type { SeatEstatusPago as SeatStatus } from '@/components/asientos/types'
 import type { TokenCanje } from './TokensTable' // Apuntamos al tipo correcto exportado por la tabla
 
 export default async function GenerarTokensPage() {

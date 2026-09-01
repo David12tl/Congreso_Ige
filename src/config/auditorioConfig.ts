@@ -6,6 +6,10 @@ export type ZoneCode =
   | 'PALCOS'
   | 'GENERAL PLANTA BAJA'
   | 'GENERAL PLANTA ALTA'
+  | 'ZONA_1'
+  | 'ZONA_2'
+  | 'ZONA_3'
+  | 'ZONA_4'
 
 export interface SeatRowConfig {
   fila: string

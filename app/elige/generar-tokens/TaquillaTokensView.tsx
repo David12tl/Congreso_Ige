@@ -1,30 +1,19 @@
 'use client'
 
 import React, { useState, useTransition, useMemo, useCallback, useEffect } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
 import { createClient } from '@/lib/supabase/client'
-import { AuditorioSeatMap, type SeatStatus } from '@/components/asientos/AuditorioSeatMap'
-import { getSeatKey, getZoneByCode, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
+import { CONGRESO_IGE_EVENT_ID, getSeatKey, getZoneByCode, auditorioConfig, type SeatIdentity, type ZoneCode } from '@/config/auditorioConfig'
+import type { SeatEstatusPago as SeatStatus } from '@/components/asientos/types'
+import SeatMap, { type SeatSelectionInfo } from '@/components/asientos/zonaExternos'
 import {
   cobrarAsientoYGenerarToken,
   liquidarRestoAsiento,
   getApartadoInfo,
 } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
-import {
-  HiExclamationCircle,
-  HiOutlineCheckCircle,
-  HiInformationCircle,
-  HiClock,
-  HiSearch,
-  HiUser,
-  HiTrash,
-  HiClipboardList,
-  HiX,
-  HiCurrencyDollar,
-  HiRefresh,
-} from 'react-icons/hi'
-
+import ZonaGrid, { type ZonaSeatSelectionInfo } from '@/components/asientos/ZonaGrid'
+import { ApartadosPendientesPanel } from './ApartadosPendientesPanel'
+import { PanelCobroLateral } from './PanelCobroLateral'
 // ─── Interfaces de Datos Estrictas ────────────────────────────────────
 
 interface TicketInsertPayload {
@@ -38,7 +27,7 @@ interface TicketInsertPayload {
   estatus_pago?: string | null
 }
 
-interface ApartadoInfoLocal {
+export interface ApartadoInfoLocal {
   ticketId: string
   purchaseId: string | null
   totalAbonado: number
@@ -57,7 +46,7 @@ interface TaquillaTokensViewProps {
   initialStats: { total: number; disponibles: number; usados: number }
 }
 
-interface TicketSelectResponse {
+export interface TicketSelectResponse {
   id: string
   nombre: string | null
   email: string | null
@@ -65,7 +54,7 @@ interface TicketSelectResponse {
   type?: string | null
 }
 
-interface ApartadoPendienteRow {
+export interface ApartadoPendienteRow {
   ticketId: string
   purchaseId: string | null
   zoneId: string | null
@@ -82,7 +71,7 @@ interface ApartadoPendienteRow {
   purchasedAt: string | null
 }
 
-interface ExtendedZoneConfig {
+export interface ExtendedZoneConfig {
   id: string
   code: ZoneCode
   name?: string
@@ -110,6 +99,17 @@ function parseInsertedSeat(row: TicketInsertPayload): SeatIdentity | null {
   }
 }
 
+// Pestañas de zonas visibles en la taquilla (interacción directa, sin modales).
+const ZONA_TABS = ['EXTERNOS', 'ZONA_1', 'ZONA_2', 'ZONA_3', 'ZONA_4'] as const
+
+// Fila de la tabla `zones` de Supabase para las zonas ZONA_1…ZONA_4.
+interface ZonaSupabaseRow {
+  id: string
+  name: string
+  price: number
+  capacity: number
+}
+
 // ─── Componente principal ─────────────────────────────────────────────
 
 export function TaquillaTokensView({
@@ -120,6 +120,12 @@ export function TaquillaTokensView({
 }: TaquillaTokensViewProps) {
   const supabase = useMemo(() => createClient(), [])
   const [isPending, startTransition] = useTransition()
+
+  // Zona activa visible en pantalla (pestañas directas, sin modales)
+  const [zonaActiva, setZonaActiva] = useState<string>('EXTERNOS')
+
+  // Zonas ZONA_1…ZONA_4 traídas de Supabase (capacidad y precio por zona)
+  const [zonasSupabase, setZonasSupabase] = useState<ZonaSupabaseRow[]>([])
 
   // Estado del mapa
   const [occupiedSeatKeys, setOccupiedSeatKeys] = useState(() => new Set(initialOccupiedSeatKeys))
@@ -158,11 +164,128 @@ export function TaquillaTokensView({
   // Estadísticas
   const [, setStats] = useState(initialStats)
 
-  // Zona del Asiento Actual
-  const selectedZone = useMemo(() => {
+  // Asiento seleccionado vía los mapas de zona (formato FILA-NUMERO, ej. "A-5")
+  const [asientoSeleccionado, setAsientoSeleccionado] = useState<string | null>(null)
+
+  // Asientos ocupados en el formato que esperan zonaExternos / ZonaGrid ("FILA-NUMERO")
+  const asientosOcupados = useMemo(
+    () =>
+      Array.from(occupiedSeatKeys).map((key) => {
+        const [, , fila, numero] = key.split('|')
+        return fila && numero ? `${fila}-${numero}` : key
+      }),
+    [occupiedSeatKeys],
+  )
+
+  // Carga de zonas ZONA_1…ZONA_4 desde Supabase (tabla `zones` del evento actual).
+  useEffect(() => {
+    void (async () => {
+      const { data, error } = await (supabase
+        .from('zones')
+        .select('id, name, price, capacity')
+        .eq('event_id', CONGRESO_IGE_EVENT_ID) as unknown as Promise<{
+          data: ZonaSupabaseRow[] | null
+          error: { message: string } | null
+        }>)
+
+      if (error) {
+        console.error('[cargarZonas] Error:', error.message)
+        return
+      }
+
+      setZonasSupabase(data ?? [])
+    })()
+  }, [supabase])
+
+  // Localiza la fila de Supabase correspondiente a un código de zona (ZONA_1…ZONA_4).
+  // Acepta nombres como "Zona 1", "ZONA_1" o "zona-1".
+  const getZonaRow = useCallback((code: string): ZonaSupabaseRow | null => {
+    const digit = code.replace('ZONA_', '').trim()
+    return (
+      zonasSupabase.find(
+        (z) => z.name.replace(/[\s_-]/g, '').toLowerCase() === `zona${digit}`,
+      ) ?? null
+    )
+  }, [zonasSupabase])
+
+  // Ocupación de una zona en formato "FILA-NUMERO" (igual que zonaExternos / ZonaGrid).
+  const getZonaOcupados = useCallback((code: string): string[] => {
+    const prefix = `${code}|`
+    return Array.from(occupiedSeatKeys)
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => {
+        const [, , fila, numero] = key.split('|')
+        return fila && numero ? `${fila}-${numero}` : key
+      })
+  }, [occupiedSeatKeys])
+
+  // Estatus de pago por asiento de una zona en formato "FILA-NUMERO".
+  const getZonaStatuses = useCallback((code: string): Record<string, string> => {
+    const prefix = `${code}|`
+    const out: Record<string, string> = {}
+    for (const [key, status] of Object.entries(seatStatusMap)) {
+      if (!key.startsWith(prefix)) continue
+      const [, , fila, numero] = key.split('|')
+      if (fila && numero) {
+        // eslint-disable-next-line security/detect-object-injection -- clave derivada de getSeatKey
+        out[`${fila}-${numero}`] = status
+      }
+    }
+    return out
+  }, [seatStatusMap])
+
+  // Datos de la zona activa para el render condicional del mapa central.
+  const zonaActivaRow = useMemo(
+    () => (zonaActiva === 'EXTERNOS' ? null : getZonaRow(zonaActiva)),
+    [zonaActiva, getZonaRow],
+  )
+  const zonaActivaOcupados = useMemo<string[]>(
+    () => (zonaActiva === 'EXTERNOS' ? [] : getZonaOcupados(zonaActiva)),
+    [zonaActiva, getZonaOcupados],
+  )
+  const zonaActivaStatuses = useMemo<Record<string, string>>(
+    () => (zonaActiva === 'EXTERNOS' ? {} : getZonaStatuses(zonaActiva)),
+    [zonaActiva, getZonaStatuses],
+  )
+
+  // Convierte la estructura del mapa abstracto del modal (bloque/fila/numero)
+  // en un SeatIdentity real de la configuración del auditorio.
+  // Nota: las filas A–E → PREFERENTE, F–J → LUNETA y K–O → GENERAL PLANTA BAJA
+  // son únicas por zona, por lo que la resolución de la zona es determinista.
+  const resolveSeatIdentityFromModal = useCallback((info: SeatSelectionInfo): SeatIdentity | null => {
+    for (const zone of auditorioConfig) {
+      for (const bloque of zone.bloques) {
+        const filaConfig = bloque.filas.find((f) => f.fila === info.fila)
+        if (filaConfig && info.numero <= filaConfig.asientos) {
+          return {
+            zoneCode: zone.code,
+            zoneId: zone.zoneId,
+            bloque: bloque.id,
+            fila: info.fila,
+            numero: info.numero,
+          }
+        }
+      }
+    }
+    return null
+  }, [])
+
+
+  // Zona del Asiento Actual. Las zonas ZONA_1…ZONA_4 no viven en
+  // auditorioConfig, así que se resuelven contra los datos de Supabase
+  // para que el panel lateral de cobro tenga nombre y precio.
+  const selectedZone = useMemo((): ExtendedZoneConfig | null => {
     if (!selectedSeat) return null
-    return getZoneByCode(selectedSeat.zoneCode) as ExtendedZoneConfig | undefined
-  }, [selectedSeat])
+    const configZone = getZoneByCode(selectedSeat.zoneCode)
+    if (configZone) {
+      return { id: configZone.zoneId, code: configZone.code, name: configZone.nombre }
+    }
+    const zonaRow = getZonaRow(selectedSeat.zoneCode)
+    if (zonaRow) {
+      return { id: zonaRow.id, code: selectedSeat.zoneCode, name: zonaRow.name, price: zonaRow.price }
+    }
+    return null
+  }, [selectedSeat, getZonaRow])
 
   // ─── Cargar lista de Apartados Pendientes desde Supabase ────────────
   const cargarApartadosPendientes = useCallback(async () => {
@@ -317,6 +440,9 @@ const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) =
     setUsuariosPendientes([])
     setUsuarioSeleccionado(null)
 
+    // Sincroniza la selección con el feedback del modal de asientos
+    setAsientoSeleccionado(`${seat.fila}-${seat.numero}`)
+
     const key = getSeatKey(seat)
     const occupied = occupiedSeatKeys.has(key)
     const status = seatStatusMap[key]
@@ -382,6 +508,80 @@ const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) =
       }
     }
   }, [occupiedSeatKeys, seatStatusMap, supabase, cargarInfoApartado])
+
+  // Handler de selección desde el mapa trapezoidal de EXTERNOS (SeatMap):
+  // guarda la etiqueta legible y delega en handleSeatClick para abrir el panel
+  // de cobro, apartado o liquidación.
+  const handleModalSeatSelect = useCallback(
+    (seatId: string, seatInfo: SeatSelectionInfo) => {
+      setAsientoSeleccionado(seatId)
+
+      const identity = resolveSeatIdentityFromModal(seatInfo)
+      if (!identity) {
+        setErrorMsg('No se pudo mapear el asiento seleccionado a una zona del auditorio.')
+        return
+      }
+
+      void handleSeatClick(identity)
+    },
+    [resolveSeatIdentityFromModal, handleSeatClick],
+  )
+
+  // Handler de selección directa desde los grids de ZONA_1…ZONA_4: construye la
+  // identidad completa del asiento y abre de inmediato el panel lateral de
+  // venta, apartado o liquidación (sin ningún modal flotante).
+  const handleZonaSeatSelect = useCallback(
+    (zonaCode: string, zoneId: string, seatId: string, info: ZonaSeatSelectionInfo) => {
+      setAsientoSeleccionado(seatId)
+
+      void handleSeatClick({
+        zoneCode: zonaCode as ZoneCode,
+        zoneId,
+        bloque: zonaCode,
+        fila: info.fila,
+        numero: info.numero,
+      })
+    },
+    [handleSeatClick],
+  )
+
+  // Selecciona un usuario pre-registrado y lo vincula al formulario de cobro
+  const handleSeleccionarUsuario = useCallback((u: TicketSelectResponse) => {
+    setUsuarioSeleccionado(u)
+    setNombreAlumno(u.nombre || '')
+    setEmailAlumno(u.email || '')
+    setUsuariosPendientes([])
+    setBusqueda('')
+  }, [])
+
+  // Desvincula el usuario pre-registrado del formulario
+  const handleDeseleccionarUsuario = useCallback(() => {
+    setUsuarioSeleccionado(null)
+    setNombreAlumno('')
+    setEmailAlumno('')
+  }, [])
+
+  // Cierra la pantalla de éxito del token y limpia la selección
+  const cerrarVentanaToken = useCallback(() => {
+    setTokenGenerado(null)
+    setSelectedSeat(null)
+    setSelectedTicketId(null)
+    setModalMode(null)
+    setAsientoSeleccionado(null)
+  }, [])
+
+  // Cancela el registro de un nuevo asiento
+  const cancelarNuevoCobro = useCallback(() => {
+    setSelectedSeat(null)
+    setModalMode(null)
+    setAsientoSeleccionado(null)
+  }, [])
+
+  // Regresa desde la pantalla de liquidación
+  const regresarLiquidacion = useCallback(() => {
+    setSelectedSeat(null)
+    setModalMode(null)
+  }, [])
 
   // Realtime Subscriptions
   useEffect(() => {
@@ -629,474 +829,131 @@ const handleLiquidarDesdeTabla = useCallback(async (row: ApartadoPendienteRow) =
       <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl xl:col-span-2 shadow-sm">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black uppercase tracking-wider text-[#00a354]">Taquilla Física y Control de Asientos</h2>
-            <p className="text-xs text-[#4a4a4a]">Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.</p>
-            <span className="mt-2 inline-block rounded-md bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] px-3 py-1.5 text-xs text-[#4a4a4a] font-medium shadow-sm">
-              Rol: <strong className="text-[#1a1a1a]">{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
-            </span>
+            <h2 className="text-lg font-black uppercase tracking-wider text-[#00a354]">
+              Taquilla Física y Control de Asientos
+            </h2>
+            <p className="text-xs text-[#4a4a4a]">
+              Haz clic en un asiento disponible para registrar una venta, apartado o cargar un pre-registro.
+            </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="inline-block rounded-md bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] px-3 py-1.5 text-xs text-[#4a4a4a] font-medium shadow-sm">
+                Rol: <strong className="text-[#1a1a1a]">{assignmentContext.role}</strong> {assignmentContext.unidadAcademicaNombre && `(${assignmentContext.unidadAcademicaNombre})`}
+              </span>
+
+              {/* Barra de pestañas de zonas: cada pestaña activa su mapa
+                  directamente en pantalla, sin modales ni portales. */}
+              <div className="flex flex-wrap items-center gap-2">
+                {ZONA_TABS.map((tab) => {
+                  const isActive = zonaActiva === tab
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setZonaActiva(tab)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all duration-150 ${
+                        isActive
+                          ? 'bg-[#00a354] border-[#00a354] text-white shadow-md'
+                          : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a] hover:border-[#00a354] hover:text-[#00a354]'
+                      }`}
+                    >
+                      {tab === 'EXTERNOS' ? 'Externos' : `Zona ${tab.replace('ZONA_', '')}`}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {asientoSeleccionado && (
+              <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-lg">
+                <span>Asiento asignado:</span>
+                <span className="font-mono text-sm bg-emerald-200/60 px-2 py-0.5 rounded text-emerald-950">
+                  {asientoSeleccionado}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl bg-white dark:bg-[#2a2a2f] p-4 border border-[#e5e5e5] shadow-inner">
-          <AuditorioSeatMap
-            mode="assign"
-            occupiedSeatKeys={occupiedSeatKeys}
-            selectedSeatKey={selectedSeat ? getSeatKey(selectedSeat) : null}
-            onSeatClick={handleSeatClick}
-            seatStatusMap={seatStatusMap}
-          />
+        {/* Mapa interactivo de la zona activa. El clic en cualquier butaca
+            dispara de inmediato el panel lateral de venta, apartado o
+            liquidación (sin modales flotantes). */}
+        <div
+          id="taquilla-zona-interaccion"
+          className="rounded-2xl bg-white dark:bg-[#2a2a2f] p-4 border border-[#e5e5e5] shadow-inner"
+        >
+          {zonaActiva === 'EXTERNOS' ? (
+            <SeatMap
+              occupiedSeats={asientosOcupados}
+              onSeatSelect={handleModalSeatSelect}
+            />
+          ) : zonaActivaRow ? (
+            <ZonaGrid
+              zoneCode={zonaActiva}
+              zoneName={zonaActivaRow.name}
+              capacity={zonaActivaRow.capacity}
+              occupiedSeats={zonaActivaOcupados}
+              seatStatuses={zonaActivaStatuses}
+              onSeatSelect={(seatId, info) =>
+                handleZonaSeatSelect(zonaActiva, zonaActivaRow.id, seatId, info)
+              }
+            />
+          ) : (
+            <div className="py-12 text-center text-sm text-[#4a4a4a]">
+              No se encontró la zona <strong>{zonaActiva}</strong> en la tabla{' '}
+              <code>zones</code> de Supabase. Verifica su nombre y capacidad.
+            </div>
+          )}
         </div>
 
         {/* ─── Panel inferior: Lista de Apartados Pendientes ─── */}
-        <div className="mt-6 rounded-2xl border border-amber-500/30 bg-white dark:bg-[#2a2a2f] shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[#e5e5e5]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                <HiClipboardList className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-amber-600">Apartados Pendientes</h3>
-                <p className="text-[10px] text-[#4a4a4a]">Personas que aún deben liquidar el resto de su asiento.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-[9px] uppercase tracking-widest text-[#4a4a4a] font-bold">Pendientes</p>
-                <p className="text-lg font-black text-amber-600 leading-none">{totalPendientes}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] uppercase tracking-widest text-[#4a4a4a] font-bold">Adeudo Total</p>
-                <p className="text-lg font-black text-rose-600 leading-none">${totalAdeudo.toLocaleString('es-MX')} MXN</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => void cargarApartadosPendientes()}
-                className="bg-[#f5f5f5] hover:bg-[#e5e5e5] border border-[#e5e5e5] text-[#1a1a1a] rounded-lg p-2 transition shadow-sm"
-                title="Refrescar lista"
-              >
-                <HiRefresh className={`h-4 w-4 ${loadingApartados ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          {errorApartados && (
-            <div className="m-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-600">
-              <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{errorApartados}</span>
-            </div>
-          )}
-
-          <div className="p-4">
-            <div className="mb-3 flex items-center gap-2 bg-[#f5f5f5] border border-[#e5e5e5] rounded-xl px-3 py-2">
-              <HiSearch className="w-4 h-4 text-[#4a4a4a]" />
-              <input
-                type="text"
-                value={filtroNombre}
-                onChange={(e) => setFiltroNombre(e.target.value)}
-                placeholder="Filtrar por nombre o correo..."
-                className="flex-1 bg-transparent text-xs text-[#1a1a1a] focus:outline-none placeholder:text-[#4a4a4a]/60"
-              />
-              {filtroNombre && (
-                <button
-                  type="button"
-                  onClick={() => setFiltroNombre('')}
-                  className="text-[#4a4a4a] hover:text-[#1a1a1a]"
-                >
-                  <HiX className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-
-            {loadingApartados && apartadosPendientes.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
-                <p className="text-xs text-[#4a4a4a] font-mono">Cargando lista de apartados pendientes...</p>
-              </div>
-            ) : apartadosFiltrados.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-[#e5e5e5] rounded-xl">
-                <HiOutlineCheckCircle className="mx-auto h-8 w-8 text-[#00a354]/40 mb-2" />
-                <p className="text-xs font-bold uppercase tracking-wider text-[#4a4a4a]">
-                  {totalPendientes === 0 ? '¡No hay apartados pendientes!' : 'Sin coincidencias para el filtro.'}
-                </p>
-                {totalPendientes === 0 && (
-                  <p className="mt-1 text-[11px] text-[#4a4a4a]/70">Todos los asientos apartados han sido liquidados.</p>
-                )}
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-[#e5e5e5]">
-                <table className="w-full text-[11px]">
-                  <thead className="bg-[#f5f5f5] border-b border-[#e5e5e5] text-[#4a4a4a] uppercase tracking-wider text-[9px]">
-                    <tr>
-                      <th className="px-3 py-2.5 text-left font-black">Alumno</th>
-                      <th className="px-3 py-2.5 text-left font-black">Correo</th>
-                      <th className="px-3 py-2.5 text-left font-black">Asiento</th>
-                      <th className="px-3 py-2.5 text-right font-black">Abonado</th>
-                      <th className="px-3 py-2.5 text-right font-black">Restante</th>
-                      <th className="px-3 py-2.5 text-center font-black">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#e5e5e5]">
-                    {apartadosFiltrados.map((row) => (
-                      <tr key={row.ticketId} className="hover:bg-[#f5f5f5]/30 transition">
-                        <td className="px-3 py-2.5">
-                          <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-[10px] shrink-0">
-                              {row.nombre?.charAt(0).toUpperCase() || '?'}
-                            </div>
-                            <span className="font-bold text-[#1a1a1a] truncate max-w-[140px]" title={row.nombre ?? ''}>
-                              {row.nombre || '—'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5 text-[#4a4a4a] font-mono text-[10px] truncate max-w-[180px]" title={row.email ?? ''}>
-                          {row.email || '—'}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <div className="flex flex-col">
-                            <span className="text-[#1a1a1a] font-black">
-                              {row.zoneCode} · {row.bloque}{row.fila}{row.numero}
-                            </span>
-                            <span className="text-[#4a4a4a] text-[9px]">
-                              Bloque {row.bloque} · Fila {row.fila} · Num {row.numero}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <span className="text-[#00a354] font-black">${row.totalAbonado.toLocaleString('es-MX')}</span>
-                          <span className="text-[#4a4a4a] text-[9px] block">de ${row.total.toLocaleString('es-MX')}</span>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <span className="text-rose-600 font-black">${row.montoRestante.toLocaleString('es-MX')}</span>
-                          <span className="text-[#4a4a4a] text-[9px] block">MXN</span>
-                        </td>
-                        <td className="px-3 py-2.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => void handleLiquidarDesdeTabla(row)}
-                            disabled={isPending}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider text-[10px] px-3 py-1.5 hover:opacity-90 disabled:opacity-50 transition shadow-sm"
-                          >
-                            <HiCurrencyDollar className="w-3 h-3" />
-                            Liquidar Saldo
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+        <ApartadosPendientesPanel
+          apartadosFiltrados={apartadosFiltrados}
+          totalPendientes={totalPendientes}
+          totalAdeudo={totalAdeudo}
+          filtroNombre={filtroNombre}
+          onFiltroNombreChange={setFiltroNombre}
+          loadingApartados={loadingApartados}
+          errorApartados={errorApartados}
+          isPending={isPending}
+          onRecargar={() => void cargarApartadosPendientes()}
+          onLiquidar={(row) => void handleLiquidarDesdeTabla(row)}
+        />
 
       {/* Columna Derecha: Panel de Control Dinámico */}
-      <div className="space-y-6">
-        {tokenGenerado ? (
-          /* PANTALLA DE ÉXITO */
-          <div className="rounded-3xl border border-[#00a354]/30 bg-white dark:bg-[#2a2a2f] p-6 text-center shadow-md animate-fadeIn">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#00a354]/10 text-[#00a354]">
-              <HiOutlineCheckCircle className="h-6 w-6" />
-            </div>
-            <h3 className="mt-4 text-sm font-black uppercase tracking-wider text-[#00a354]">
-              {metodoRegistro === 'apartado' && modalMode === 'nuevo' ? '¡Apartado Registrado!' : '¡Pago Procesado Exitosamente!'}
-            </h3>
-            <p className="mt-1 text-xs text-[#4a4a4a]">Proporciona este código de acceso al alumno:</p>
-
-            <div className="mx-auto my-5 inline-block rounded-xl border border-[#00a354]/20 bg-[#00a354]/5 px-6 py-4">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-[#00a354] mb-1">Token de Inscripción</p>
-              <p className="text-4xl font-black tracking-wider text-[#1a1a1a]">
-                {tokenGenerado}
-              </p>
-            </div>
-            
-            <div className="mx-auto my-5 inline-block rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <QRCodeSVG
-                value={tokenGenerado}
-                size={160}
-                bgColor="#ffffff"
-                fgColor="#0f172a"
-                level="H"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setTokenGenerado(null)
-                setSelectedSeat(null)
-                setSelectedTicketId(null)
-                setModalMode(null)
-              }}
-              className="mt-5 w-full rounded-xl bg-[#1a1a1a] py-3 text-xs font-bold text-white hover:bg-[#4a4a4a] transition"
-            >
-              Cerrar Ventana
-            </button>
-          </div>
-        ) : modalMode === 'nuevo' && selectedSeat && selectedZone ? (
-          /* REGISTRAR UN NUEVO ASIENTO */
-          <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl shadow-sm animate-fadeIn">
-            <div className="mb-4 border-b border-[#e5e5e5] pb-3">
-              <span className="inline-block rounded-full bg-[#00a354]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#00a354]">
-                Selección Activa
-              </span>
-              <h3 className="mt-1 text-sm font-black uppercase text-[#1a1a1a]">
-                Zona {selectedZone.name} — Bloque {selectedSeat.bloque} Fila {selectedSeat.fila} Num {selectedSeat.numero}
-              </h3>
-              <p className="text-[11px] text-[#4a4a4a] mt-0.5">Precio Neto: <span className="text-[#00a354] font-bold">${selectedZone.price} MXN</span></p>
-            </div>
-
-            {errorMsg && (
-              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2 text-[11px] text-red-600">
-                <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* BUSCADOR DE PRE-REGISTROS */}
-            <div className="mb-4 bg-white dark:bg-[#2a2a2f] p-3 rounded-xl border border-[#e5e5e5] shadow-sm">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[#00a354] mb-1.5">
-                ¿Tiene Pre-Registro? Buscar Usuario
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar por Correo o Nombre..."
-                  className="flex-1 bg-[#f5f5f5] border border-[#e5e5e5] rounded-lg px-3 py-1.5 text-xs text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
-                />
-                <button
-                  type="button"
-                  onClick={handleBuscarPreRegistro}
-                  className="bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-[#4a4a4a] transition flex items-center gap-1"
-                >
-                  <HiSearch className="w-3 h-3" /> Buscar
-                </button>
-              </div>
-
-              {usuariosPendientes.length > 0 && (
-                <div className="mt-2 max-h-32 overflow-y-auto border border-[#e5e5e5] bg-white dark:bg-[#2a2a2f] rounded-lg divide-y divide-[#e5e5e5] text-[11px]">
-                  {usuariosPendientes.map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => {
-                        setUsuarioSeleccionado(u)
-                        setNombreAlumno(u.nombre || '')
-                        setEmailAlumno(u.email || '')
-                        setUsuariosPendientes([])
-                        setBusqueda('')
-                      }}
-                      className="w-full text-left px-2.5 py-2 hover:bg-[#f5f5f5] transition flex justify-between items-center"
-                    >
-                      <div className="truncate pr-2">
-                        <span className="font-bold text-[#1a1a1a] block truncate">{u.nombre}</span>
-                        <span className="text-[#4a4a4a] font-mono text-[10px] block truncate">{u.email}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {usuarioSeleccionado && (
-                <div className="mt-2 bg-[#00a354]/10 border border-[#00a354]/20 rounded-lg p-2 flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5 text-[#00a354] truncate">
-                    <HiUser className="w-4 h-4 shrink-0" />
-                    <p className="truncate">
-                      Vinculado: <span className="font-bold text-[#1a1a1a]">{usuarioSeleccionado.nombre}</span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUsuarioSeleccionado(null)
-                      setNombreAlumno('')
-                      setEmailAlumno('')
-                    }}
-                    className="text-red-600 hover:text-red-500 p-1"
-                  >
-                    <HiTrash className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* FORMULARIO DE COBRO */}
-            <form onSubmit={handleConfirmarNuevoCobro} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1">Nombre del Asistente</label>
-                <input
-                  type="text"
-                  required
-                  value={nombreAlumno}
-                  onChange={(e) => setNombreAlumno(e.target.value)}
-                  className="w-full bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1">Correo Electrónico</label>
-                <input
-                  type="email"
-                  required
-                  value={emailAlumno}
-                  onChange={(e) => setEmailAlumno(e.target.value)}
-                  className="w-full bg-white dark:bg-[#2a2a2f] border border-[#e5e5e5] rounded-xl px-4 py-2 text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Esquema de Adquisición</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setMetodoRegistro('pago')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'pago' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Pago Total
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMetodoRegistro('apartado')}
-                    className={`p-2.5 rounded-xl font-bold border transition text-center ${metodoRegistro === 'apartado' ? 'bg-amber-500/10 border-amber-500 text-amber-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Dejar Apartado
-                  </button>
-                </div>
-              </div>
-
-              {metodoRegistro === 'apartado' && (
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-3 space-y-2 animate-fadeIn">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-600">Monto del Anticipo (MXN)</label>
-                  <input
-                    type="number"
-                    min={200}
-                    max={(selectedZone.price ?? 650) - 50}
-                    value={montoApartado}
-                    onChange={(e) => setMontoApartado(Number(e.target.value))}
-                    className="w-full bg-white dark:bg-[#2a2a2f] border border-amber-300 rounded-lg px-3 py-1.5 text-[#1a1a1a] focus:outline-none"
-                  />
-                  <p className="text-[10px] text-[#4a4a4a]">Monto Restante: <span className="text-[#1a1a1a] font-bold">${(selectedZone.price ?? 650) - montoApartado} MXN</span></p>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedSeat(null); setModalMode(null) }}
-                  className="w-1/3 bg-[#f5f5f5] border border-[#e5e5e5] text-[#1a1a1a] rounded-xl font-bold py-3 hover:bg-[#e5e5e5] transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="flex-1 bg-gradient-to-r from-[#00a354] to-[#00a34d] text-white font-black uppercase tracking-wider rounded-xl py-3 hover:opacity-90 disabled:opacity-50 transition"
-                >
-                  {isPending ? 'Procesando...' : metodoRegistro === 'apartado' ? 'Registrar Apartado' : 'Completar Inscripción'}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : modalMode === 'liquidar' && selectedSeat && selectedTicketId && infoApartado ? (
-          /* LIQUIDACIÓN DE UN APARTADO EXISTENTE */
-          <div className="rounded-3xl border border-amber-500/30 bg-[#f5f5f5]/60 p-6 backdrop-blur-xl shadow-sm animate-fadeIn">
-            <div className="mb-4 border-b border-amber-500/20 pb-3">
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
-                <HiClock className="w-3 h-3" /> Asiento Apartado
-              </span>
-              <h3 className="mt-1 text-sm font-black uppercase text-[#1a1a1a]">
-                Bloque {selectedSeat.bloque} — Fila {selectedSeat.fila} Num {selectedSeat.numero}
-              </h3>
-            </div>
-
-            <div className="bg-white dark:bg-[#2a2a2f] rounded-xl p-4 border border-[#e5e5e5] space-y-2.5 text-xs mb-4 shadow-sm">
-              <div>
-                <p className="text-[10px] text-[#4a4a4a] uppercase tracking-widest font-bold">Asistente</p>
-                <p className="text-[#1a1a1a] font-bold text-sm">{infoApartado.nombre || '—'}</p>
-                <p className="text-[#4a4a4a] font-mono text-[11px]">{infoApartado.email || '—'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 border-t border-[#e5e5e5] pt-2 text-center">
-                <div className="bg-[#f5f5f5] p-2 rounded-lg border border-[#e5e5e5]">
-                  <p className="text-[9px] text-[#4a4a4a] uppercase font-bold">Abonado</p>
-                  <p className="text-[#00a354] font-black text-sm">${infoApartado.totalAbonado} MXN</p>
-                </div>
-                <div className="bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
-                  <p className="text-[9px] text-amber-600 uppercase font-bold">Saldo Restante</p>
-                  <p className="text-[#1a1a1a] font-black text-sm">${infoApartado.montoRestante} MXN</p>
-                </div>
-              </div>
-            </div>
-
-            {errorMsg && (
-              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-[11px] text-red-600 flex items-start gap-2">
-                <HiExclamationCircle className="h-4 w-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-[#4a4a4a] mb-1.5">Método para Liquidar Saldo</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setTipoPagoLiquidacion('efectivo')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'efectivo' ? 'bg-[#00a354]/10 border-[#00a354] text-[#00a354]' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Efectivo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTipoPagoLiquidacion('transferencia')}
-                    className={`p-2 text-xs font-bold border transition text-center rounded-xl ${tipoPagoLiquidacion === 'transferencia' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'bg-white dark:bg-[#2a2a2f] border-[#e5e5e5] text-[#4a4a4a]'}`}
-                  >
-                    Transferencia
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedSeat(null); setModalMode(null) }}
-                  className="w-1/3 bg-[#f5f5f5] border border-[#e5e5e5] text-[#1a1a1a] rounded-xl font-bold py-3 text-xs hover:bg-[#e5e5e5] transition"
-                >
-                  Regresar
-                </button>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={handleConfirmarLiquidacion}
-                  className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider text-xs rounded-xl py-3 hover:opacity-90 transition shadow-md"
-                >
-                  {isPending ? 'Liquidando...' : `Liquidar $${infoApartado.montoRestante} MXN`}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : loadingApartado ? (
-          /* LOADING APARTADO */
-          <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/40 p-8 text-center backdrop-blur-xl">
-            <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-500 animate-spin mx-auto mb-3" />
-            <p className="text-xs text-[#4a4a4a] font-mono">Consultando historial de abonos y pre-registros...</p>
-          </div>
-        ) : (
-          /* PANEL VACÍO */
-          <div className="rounded-3xl border border-dashed border-[#e5e5e5] bg-[#f5f5f5]/10 p-8 text-center shadow-inner">
-            {errorMsg && (
-              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-[11px] text-red-600 flex items-start gap-2 text-left">
-                <HiExclamationCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-            <HiInformationCircle className="mx-auto h-8 w-8 text-[#4a4a4a]/40 mb-2" />
-            <p className="text-xs font-bold uppercase tracking-wider text-[#4a4a4a]">Monitoreo de Asientos</p>
-            <p className="mt-1 text-[11px] text-[#4a4a4a]/70">Selecciona cualquier asiento en el mapa del teatro para desplegar los controles de taquilla física, buscador de pre-registros y cobro.</p>
-          </div>
-        )}
+      <PanelCobroLateral
+        tokenGenerado={tokenGenerado}
+        modalMode={modalMode}
+        selectedSeat={selectedSeat}
+        selectedTicketId={selectedTicketId}
+        selectedZone={selectedZone}
+        infoApartado={infoApartado}
+        loadingApartado={loadingApartado}
+        errorMsg={errorMsg}
+        isPending={isPending}
+        nombreAlumno={nombreAlumno}
+        onNombreAlumnoChange={setNombreAlumno}
+        emailAlumno={emailAlumno}
+        onEmailAlumnoChange={setEmailAlumno}
+        metodoRegistro={metodoRegistro}
+        onMetodoRegistroChange={setMetodoRegistro}
+        montoApartado={montoApartado}
+        onMontoApartadoChange={setMontoApartado}
+        busqueda={busqueda}
+        onBusquedaChange={setBusqueda}
+        usuariosPendientes={usuariosPendientes}
+        usuarioSeleccionado={usuarioSeleccionado}
+        onSeleccionarUsuario={handleSeleccionarUsuario}
+        onDeseleccionarUsuario={handleDeseleccionarUsuario}
+        onBuscarPreRegistro={() => void handleBuscarPreRegistro()}
+        onConfirmarNuevoCobro={handleConfirmarNuevoCobro}
+        onCancelarNuevoCobro={cancelarNuevoCobro}
+        tipoPagoLiquidacion={tipoPagoLiquidacion}
+        onTipoPagoLiquidacionChange={setTipoPagoLiquidacion}
+        onConfirmarLiquidacion={handleConfirmarLiquidacion}
+        onRegresarLiquidacion={regresarLiquidacion}
+        onCerrarToken={cerrarVentanaToken}
+      />
       </div>
     </div>
   )
