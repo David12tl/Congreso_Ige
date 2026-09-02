@@ -3,6 +3,9 @@
 import React from 'react'
 import SeatMap from '@/components/asientos/zonaExternos'
 import Zona1 from '@/components/asientos/zona_1'
+import Zona2 from '@/components/asientos/zona_2'
+import Zona3 from '@/components/asientos/zona_3'
+import Zona4 from '@/components/asientos/zona_4'
 import ZonaGrid from '@/components/asientos/ZonaGrid'
 import { ApartadosPendientesPanel } from './ApartadosPendientesPanel'
 import { PanelCobroLateral } from './PanelCobroLateral'
@@ -140,6 +143,27 @@ export function TaquillaTokensView({
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
                 onSeleccionarAsientoCuadro('ZONA_1', zonaActivaRow?.id ?? '', seatId, info)
+              }
+            />
+          ) : zonaActiva === 'ZONA_2' ? (
+            <Zona2
+              occupiedSeats={zonaActivaOcupados}
+              onSeatSelect={(seatId, info) =>
+                onSeleccionarAsientoCuadro('ZONA_2', zonaActivaRow?.id ?? '', seatId, info)
+              }
+            />
+          ) : zonaActiva === 'ZONA_3' ? (
+            <Zona3
+              occupiedSeats={zonaActivaOcupados}
+              onSeatSelect={(seatId, info) =>
+                onSeleccionarAsientoCuadro('ZONA_3', zonaActivaRow?.id ?? '', seatId, info)
+              }
+            />
+          ) : zonaActiva === 'ZONA_4' ? (
+            <Zona4
+              occupiedSeats={zonaActivaOcupados}
+              onSeatSelect={(seatId, info) =>
+                onSeleccionarAsientoCuadro('ZONA_4', zonaActivaRow?.id ?? '', seatId, info)
               }
             />
           ) : zonaActivaRow ? (

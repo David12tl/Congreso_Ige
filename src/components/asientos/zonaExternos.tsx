@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 // Geometría del Bloque Superior: 17 filas (de 3 a 8 asientos) = 93 asientos
-const BLOCK_TOP_ROWS = [3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8];
+const BLOCK_TOP_ROWS = [3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8];
 
 // Geometría del Bloque Inferior: 13 filas de 8 + 1 fila de 4 (AE) = 108 asientos
 const BLOCK_BOTTOM_ROWS = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4]; 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 // Geometría del Bloque Superior: 17 filas que van progresivamente de 9 a 13 asientos
 // Suma total: 9 + 9 + 9 + 10 + 10 + 10 + 11 + 11 + 11 + 11 + 12 + 12 + 12 + 12 + 13 + 13 + 13 = 180 asientos
-const BLOCK_TOP_ROWS = [9, 9, 9, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 13];
+const BLOCK_TOP_ROWS = [9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 13];
 
 // Geometría del Bloque Inferior: 15 filas (de 14 asientos mayormente) para dar 208 asientos exactos
 // Suma total: (13 filas × 14) + (2 filas × 13) = 182 + 26 = 208 asientos
