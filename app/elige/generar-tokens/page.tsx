@@ -33,7 +33,7 @@ export default async function GenerarTokensPage() {
     if (ticket.asiento_zona && ticket.asiento_bloque && ticket.asiento_fila && ticket.asiento_numero) {
       // Reconstruir la clave unica del asiento usando getSeatKey (formato: "ZONA|BLOQUE|FILA|NUMERO")
       const key = getSeatKey({
-        zoneCode: ticket.asiento_zona as 'PREFERENTE' | 'LUNETA' | 'PALCOS' | 'GENERAL PLANTA BAJA' | 'GENERAL PLANTA ALTA',
+        zoneCode: ticket.asiento_zona as 'EXTERNOS' | 'ZONA_1' | 'ZONA_2' | 'ZONA_3' | 'ZONA_4',
         zoneId: '',
         bloque: ticket.asiento_bloque,
         fila: ticket.asiento_fila,

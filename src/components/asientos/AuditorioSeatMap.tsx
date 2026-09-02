@@ -20,15 +20,6 @@ interface AuditorioSeatMapProps {
   seatStatusMap?: Record<string, SeatStatus>
 }
 
-/**
- * Mapea el estatus de pago a su color representativo en el mapa.
- *  - libre          : no se usa (se renderiza con el color de la zona)
- *  - pre-registro   : NARANJA
- *  - pendiente      : ÁMBAR (legacy = apartado)
- *  - apartado       : AMARILLO/ÁMBAR
- *  - pagado         : VERDE CORPORATIVO
- *  - completo       : ROJO (liquidado)
- */
 function getStatusColor(
   status: SeatStatus | undefined,
   zoneColor: string,
@@ -44,13 +35,13 @@ function getStatusColor(
       return { backgroundColor: '#EA580C' } // Naranja
     case 'pendiente':
     case 'apartado':
-      return { backgroundColor: '#f59e0b' } // Ámbar / Amarillo corporativo limpio
+      return { backgroundColor: '#f59e0b' } // Ámbar
     case 'pagado':
       return { backgroundColor: '#00a354' } // Verde corporativo
     case 'completo':
       return { backgroundColor: '#DC2626' } // Rojo
     default:
-      return { backgroundColor: '#a3a3a3' } // Gris neutro medio para ocupado genérico
+      return { backgroundColor: '#a3a3a3' } // Gris neutro
   }
 }
 
@@ -81,7 +72,7 @@ export function AuditorioSeatMap({
   return (
     <section className="w-full overflow-x-auto rounded-2xl border border-[#e5e5e5] bg-white p-5 shadow-sm">
       <div className="min-w-[1120px] space-y-6">
-        {/* Escenario con estética corporativa limpia */}
+        {/* Escenario */}
         <div className="mx-auto flex h-14 w-[560px] items-center justify-center rounded-b-3xl border-x border-b border-[#00a354]/20 bg-gradient-to-b from-[#00a354]/5 to-[#00a354]/10 text-xs font-black uppercase tracking-[0.35em] text-[#00a354] shadow-sm">
           Escenario
         </div>
@@ -100,100 +91,137 @@ export function AuditorioSeatMap({
                 </h2>
               </div>
 
-              {/* Contenedor de Bloques */}
+              {/* Contenedor de Bloques ajustado a layout de 1 o 2 columnas si es zona externos */}
               <div
-                className={`grid gap-4 ${
-                  zone.bloques.length === 1 ? 'grid-cols-1' : 'grid-cols-5'
+                className={`grid gap-6 ${
+                  zone.bloques.length === 1
+                    ? 'grid-cols-1'
+                    : zone.bloques.length === 2
+                      ? 'grid-cols-1 lg:grid-cols-2'
+                      : 'grid-cols-1 md:grid-cols-3 lg:grid-cols-5'
                 }`}
               >
-                {zone.bloques.map((bloque) => (
-                  <div
-                    key={bloque.id}
-                    className="rounded-xl border border-[#e5e5e5] bg-[#f5f5f5]/40 p-3.5"
-                  >
-                    <div className="mb-3 truncate text-center text-[10px] font-black uppercase tracking-widest text-[#4a4a4a] border-b border-[#e5e5e5] pb-1.5">
-                      {bloque.nombre}
-                    </div>
+                {zone.bloques.map((bloque) => {
+                  const totalAsientosBloque = bloque.filas.reduce(
+                    (acc, fila) => acc + fila.asientos,
+                    0,
+                  )
 
-                    <div className="space-y-1.5">
-                      {bloque.filas.map((fila) => (
-                        <div key={fila.fila} className="flex items-center justify-center gap-1">
-                          {/* Identificador de fila */}
-                          <span className="mr-1.5 w-6 text-right text-[10px] font-black text-[#4a4a4a]/70">
-                            {fila.fila}
-                          </span>
-                          
-                          {Array.from({ length: fila.asientos }, (_, index) => {
-                            const numero = index + 1
-                            const seat: SeatIdentity = {
-                              zoneCode: zone.code,
-                              zoneId: zone.zoneId,
-                              bloque: bloque.id,
-                              fila: fila.fila,
-                              numero,
-                            }
-                            const key = getSeatKey(seat)
-                            const occupied = occupiedSeatKeys.has(key)
-                            const selected = selectedSeatKey === key
-                            const status = seatStatusMap?.[key]
-                            const isApartado = status === 'apartado' || status === 'pendiente'
-                            const isPagado = status === 'pagado' || status === 'completo'
-                            const isPreRegistro = status === 'pre-registro'
-                            const isInteractive = mode === 'assign' && !occupied
+                  return (
+                    <div
+                      key={bloque.id}
+                      className="rounded-xl border border-[#e5e5e5] bg-[#f5f5f5]/40 p-4"
+                    >
+                      {/* Título del Bloque con conteo exacto */}
+                      <div className="mb-4 flex items-center justify-center border-b border-[#e5e5e5] pb-2">
+                        <span className="rounded-full bg-[#1E2A39] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+                          {bloque.nombre} ({totalAsientosBloque})
+                        </span>
+                      </div>
 
-                            return (
-                              <div
-                                key={key}
-                                className={
-                                  fila.pasillosDespuesDe?.includes(numero - 1)
-                                    ? 'ml-4 flex'
-                                    : 'flex'
-                                }
-                              >
-                                <button
-                                  type="button"
-                                  disabled={!isInteractive && !(mode === 'assign' && occupied)}
-                                  onClick={() => onSeatClick?.(seat)}
-                                  title={getStatusTitle(status, `${zone.nombre} ${bloque.nombre} fila ${fila.fila}, asiento ${numero}`)}
-                                  aria-label={`${occupied ? 'Ocupado' : 'Disponible'}: ${zone.nombre}, ${bloque.nombre}, fila ${fila.fila}, asiento ${numero}`}
-                                  className={`h-5 w-5 rounded-t-[4px] border text-[8px] font-black leading-none transition-all duration-200 ${
-                                    occupied && !status
-                                      ? 'cursor-not-allowed border-[#e5e5e5] bg-[#e5e5e5] text-[#4a4a4a] opacity-65'
-                                      : isPreRegistro
-                                        ? 'cursor-pointer border-orange-500 bg-orange-600 text-white hover:scale-110 hover:brightness-105'
-                                        : isApartado
-                                          ? 'cursor-pointer border-amber-400 bg-amber-500 text-white hover:scale-110 hover:brightness-105'
-                                          : isPagado
-                                            ? 'cursor-not-allowed border-[#00a354]/30 bg-[#00a354] text-white opacity-85'
-                                            : selected
-                                              ? 'scale-110 border-[#1a1a1a] bg-[#1a1a1a] text-white shadow-[0_0_0_2px_rgba(26,26,26,0.15)]'
-                                              : isInteractive
-                                                ? 'border-[#e5e5e5] bg-white text-[#4a4a4a] hover:scale-110 hover:border-[#00a354] hover:bg-[#00a354]/10 hover:text-[#00a354]'
-                                                : 'border-[#e5e5e5] bg-white text-[#4a4a4a]'
-                                  }`}
-                                  style={
-                                    selected || (occupied && !status)
-                                      ? undefined
-                                      : getStatusColor(status, zone.color, occupied, selected)
+                      <div className="space-y-2">
+                        {bloque.filas.map((fila) => (
+                          <div
+                            key={fila.fila}
+                            className="flex items-center justify-center gap-1"
+                          >
+                            {/* Identificador de fila Izquierdo */}
+                            <span className="mr-2 w-6 text-right text-[10px] font-black text-[#4a4a4a]/70">
+                              {fila.fila}
+                            </span>
+
+                            {Array.from({ length: fila.asientos }, (_, index) => {
+                              const numero = index + 1
+                              const seat: SeatIdentity = {
+                                zoneCode: zone.code,
+                                zoneId: zone.zoneId,
+                                bloque: bloque.id,
+                                fila: fila.fila,
+                                numero,
+                              }
+                              const key = getSeatKey(seat)
+                              const occupied = occupiedSeatKeys.has(key)
+                              const selected = selectedSeatKey === key
+                              const status = seatStatusMap?.[key]
+                              const isApartado =
+                                status === 'apartado' || status === 'pendiente'
+                              const isPagado =
+                                status === 'pagado' || status === 'completo'
+                              const isPreRegistro = status === 'pre-registro'
+                              const isInteractive = mode === 'assign' && !occupied
+
+                              return (
+                                <div
+                                  key={key}
+                                  className={
+                                    fila.pasillosDespuesDe?.includes(numero - 1)
+                                      ? 'ml-4 flex'
+                                      : 'flex'
                                   }
                                 >
-                                  {numero}
-                                </button>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ))}
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      !isInteractive &&
+                                      !(mode === 'assign' && occupied)
+                                    }
+                                    onClick={() => onSeatClick?.(seat)}
+                                    title={getStatusTitle(
+                                      status,
+                                      `${zone.nombre} ${bloque.nombre} fila ${fila.fila}, asiento ${numero}`,
+                                    )}
+                                    aria-label={`${
+                                      occupied ? 'Ocupado' : 'Disponible'
+                                    }: ${zone.nombre}, ${bloque.nombre}, fila ${fila.fila}, asiento ${numero}`}
+                                    className={`h-6 w-6 rounded-t-[5px] border text-[9px] font-black leading-none transition-all duration-150 ${
+                                      occupied && !status
+                                        ? 'cursor-not-allowed border-[#e5e5e5] bg-[#e5e5e5] text-[#4a4a4a] opacity-65'
+                                        : isPreRegistro
+                                          ? 'cursor-pointer border-orange-500 bg-orange-600 text-white hover:scale-110 hover:brightness-105'
+                                          : isApartado
+                                            ? 'cursor-pointer border-amber-400 bg-amber-500 text-white hover:scale-110 hover:brightness-105'
+                                            : isPagado
+                                              ? 'cursor-not-allowed border-[#00a354]/30 bg-[#00a354] text-white opacity-85'
+                                              : selected
+                                                ? 'scale-110 border-[#1a1a1a] bg-[#1a1a1a] text-white shadow-[0_0_0_2px_rgba(26,26,26,0.15)]'
+                                                : isInteractive
+                                                  ? 'border-[#e5e5e5] bg-white text-[#4a4a4a] hover:scale-110 hover:border-[#00a354] hover:bg-[#00a354]/10 hover:text-[#00a354]'
+                                                  : 'border-[#e5e5e5] bg-white text-[#4a4a4a]'
+                                    }`}
+                                    style={
+                                      selected || (occupied && !status)
+                                        ? undefined
+                                        : getStatusColor(
+                                            status,
+                                            zone.color,
+                                            occupied,
+                                            selected,
+                                          )
+                                    }
+                                  >
+                                    {numero}
+                                  </button>
+                                </div>
+                              )
+                            })}
+
+                            {/* Identificador de fila Derecho */}
+                            <span className="ml-2 w-6 text-left text-[10px] font-black text-[#4a4a4a]/70">
+                              {fila.fila}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Leyenda extendida adaptada a fondo claro */}
+      {/* Leyenda extendida */}
       <div className="mt-6 flex flex-wrap items-center gap-5 border-t border-[#e5e5e5] pt-4 text-[9px] font-black uppercase tracking-widest text-[#4a4a4a]">
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3.5 w-3.5 rounded-sm bg-[#a3a3a3] border border-black/5" />
