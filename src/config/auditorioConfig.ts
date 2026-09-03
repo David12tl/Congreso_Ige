@@ -1,5 +1,22 @@
 export const CONGRESO_IGE_EVENT_ID = '6b077c0c-ca75-483c-87d4-1211118936d2'
 
+export const ZONE_UUIDS: Record<string, string> = {
+  externos: '126bd2ac-9c73-4224-9bac-bcb517699be8',
+  zona1: '219c93e2-0eb9-4b10-9954-9245c8c9fc46',
+  zona2: '42ac3d31-39ad-45ba-bdbe-f7455d460cd7',
+  zona3: '363c612c-7bf9-4118-8510-4ff90099c4f6',
+  zona4: 'eaee25be-0ff5-4091-aa82-8dd028586c17',
+}
+
+export function getZoneUuid(keyOrId?: string | null): string | null {
+  if (!keyOrId) return null
+  if (ZONE_UUIDS[keyOrId]) return ZONE_UUIDS[keyOrId]
+  const normalized = keyOrId.toLowerCase().replace(/[\s_-]/g, '')
+  if (ZONE_UUIDS[normalized]) return ZONE_UUIDS[normalized]
+  if (Object.values(ZONE_UUIDS).includes(keyOrId)) return keyOrId
+  return keyOrId
+}
+
 export type ZoneCode =
   | 'EXTERNOS'
   | 'ZONA_1'
@@ -39,7 +56,7 @@ const rows = (labels: string[], asientos: number): SeatRowConfig[] =>
 export const auditorioConfig: AuditorioZoneConfig[] = [
   {
     code: 'EXTERNOS',
-    zoneId: '5f92a10b-8d76-48bc-b2e1-93109282f5d2',
+    zoneId: ZONE_UUIDS.externos,
     nombre: 'Zona Externos',
     color: '#1E2A39',
     bloques: [

@@ -10,6 +10,7 @@ import ZonaGrid from '@/components/asientos/ZonaGrid'
 import { ApartadosPendientesPanel } from './ApartadosPendientesPanel'
 import { PanelCobroLateral } from './PanelCobroLateral'
 import { useTaquillaStore, ZONA_TABS } from './hooks/useTaquillaStore'
+import { ZONE_UUIDS } from '@/config/auditorioConfig'
 import type { TaquillaTokensViewProps } from './types'
 
 // Re-exportar tipos para compatibilidad con componentes hijos
@@ -142,28 +143,28 @@ export function TaquillaTokensView({
             <Zona1
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
-                onSeleccionarAsientoCuadro('ZONA_1', zonaActivaRow?.id ?? '', seatId, info)
+                onSeleccionarAsientoCuadro('ZONA_1', zonaActivaRow?.id ?? ZONE_UUIDS.zona1, seatId, info)
               }
             />
           ) : zonaActiva === 'ZONA_2' ? (
             <Zona2
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
-                onSeleccionarAsientoCuadro('ZONA_2', zonaActivaRow?.id ?? '', seatId, info)
+                onSeleccionarAsientoCuadro('ZONA_2', zonaActivaRow?.id ?? ZONE_UUIDS.zona2, seatId, info)
               }
             />
           ) : zonaActiva === 'ZONA_3' ? (
             <Zona3
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
-                onSeleccionarAsientoCuadro('ZONA_3', zonaActivaRow?.id ?? '', seatId, info)
+                onSeleccionarAsientoCuadro('ZONA_3', zonaActivaRow?.id ?? ZONE_UUIDS.zona3, seatId, info)
               }
             />
           ) : zonaActiva === 'ZONA_4' ? (
             <Zona4
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
-                onSeleccionarAsientoCuadro('ZONA_4', zonaActivaRow?.id ?? '', seatId, info)
+                onSeleccionarAsientoCuadro('ZONA_4', zonaActivaRow?.id ?? ZONE_UUIDS.zona4, seatId, info)
               }
             />
           ) : zonaActivaRow ? (

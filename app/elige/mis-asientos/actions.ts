@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { PerfilUsuarioCompleto } from '@/components/asientos/types'
 
 export interface AsientoInfo {
@@ -191,6 +192,12 @@ export async function crearPreRegistro(input: PreRegistroInput) {
       return { success: false, message: 'Tu cuenta no tiene un correo electrónico válido.' }
     }
 
+    const resolvedZoneId =
+      getZoneUuid(input.zoneId) ||
+      getZoneUuid(input.asientoZona) ||
+      ZONE_UUIDS[input.asientoZona?.toLowerCase().replace(/[\s_-]/g, '')] ||
+      input.zoneId
+
     // Insertar el registro mapeando los parámetros dinámicos del 'input'
     // Se añade el campo 'type' (exigido por tu base de datos) y 'zone_id' si tu tabla los requiere.
     const { error } = await supabase
@@ -202,7 +209,7 @@ export async function crearPreRegistro(input: PreRegistroInput) {
         asiento_bloque: input.asientoBloque,
         asiento_fila: input.asientoFila,
         asiento_numero: input.asientoNumero,
-        zone_id: input.zoneId,
+        zone_id: resolvedZoneId,
         type: input.matricula ? 'alumno' : 'externo' // Cumple con el NOT NULL obligatorio 'type'
       })
 

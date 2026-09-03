@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { getZoneUuid } from '@/config/auditorioConfig';
 import { generateCredentialPDF, CredentialData } from '@/lib/credentials/pdf-generator';
 import { assignSeatToUser } from '@/lib/credentials/seat-assignment';
 import { uploadCredentialPDF } from '@/lib/credentials/storage';

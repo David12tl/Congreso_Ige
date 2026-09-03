@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { auditorioConfig } from "@/config/auditorioConfig";
+import { auditorioConfig, getZoneUuid } from "@/config/auditorioConfig";
 
 export interface AssignedSeat {
   asiento_zona: string;
@@ -91,7 +91,7 @@ export async function assignSpecificSeat(
       asiento_fila: seatData.asiento_fila,
       asiento_numero: seatData.asiento_numero,
       asiento_bloque: seatData.asiento_bloque,
-      zone_id: seatData.zone_id,
+      zone_id: getZoneUuid(seatData.zone_id) || getZoneUuid(seatData.asiento_zona) || seatData.zone_id,
     })
     .eq("buyer_id", _userId)
     .is("asiento_numero", null);

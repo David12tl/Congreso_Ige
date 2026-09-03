@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
+import { CONGRESO_IGE_EVENT_ID, ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import type {
@@ -353,11 +353,13 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
     return { success: false, message: 'Completa los datos obligatorios del alumno y asiento.' }
   }
 
+  const resolvedZoneId = getZoneUuid(input.zoneId) || getZoneUuid(input.zoneCode) || ZONE_UUIDS[input.zoneCode?.toLowerCase().replace(/[\s_-]/g, '')] || input.zoneId
+
   const ticketData = {
     buyer_id: user.id,
     purchase_id: null,
     event_id: CONGRESO_IGE_EVENT_ID,
-    zone_id: input.zoneId,
+    zone_id: resolvedZoneId,
     type: input.estatusPago === 'pagado' ? (input.matricula ? 'alumno' : 'empresa') : 'alumno',
     nombre,
     email,
@@ -509,11 +511,12 @@ export async function generarTokensMultiples(
       const tokenCode = String(tokenData)
       const abonoIndividual = PRECIO_POR_BOLETO
       const estadoPago: TokenCanjeInsert['estado_pago'] = 'completado'
+      const resolvedZoneId = getZoneUuid(asiento.zoneId) || getZoneUuid(asiento.zoneCode) || asiento.zoneId
 
       const tokenRow: TokenCanjeInsert = {
         token_code: tokenCode,
         event_id: CONGRESO_IGE_EVENT_ID,
-        zone_id: asiento.zoneId,
+        zone_id: resolvedZoneId,
         creado_por: user.id,
         status: 'disponible',
         total_abonado: abonoIndividual,
@@ -598,12 +601,14 @@ export async function cobrarAsientoYGenerarToken(
       throw purchaseError
     }
 
+    const resolvedZoneId = getZoneUuid(seat.zoneId) || getZoneUuid(seat.zoneCode) || seat.zoneId
+
     // Si se recibió un ticketId, significa que viene de un pre-registro.
     // ACTUALIZAMOS el ticket existente para preservar sus datos originales (matrícula, carrera, semestre, etc.)
     // y solo agregamos la información del asiento y de la compra.
     if (ticketId) {
       const ticketUpdatePayload = {
-        zone_id: seat.zoneId,
+        zone_id: resolvedZoneId,
         asiento_zona: seat.zoneCode,
         asiento_bloque: seat.bloque,
         asiento_fila: seat.fila,
@@ -629,7 +634,7 @@ export async function cobrarAsientoYGenerarToken(
       const ticketPayload = {
         id: uuidv4(),
         event_id: CONGRESO_IGE_EVENT_ID,
-        zone_id: seat.zoneId,
+        zone_id: resolvedZoneId,
         asiento_zona: seat.zoneCode,
         asiento_bloque: seat.bloque,
         asiento_fila: seat.fila,
@@ -654,7 +659,7 @@ export async function cobrarAsientoYGenerarToken(
     const tokenPayload = {
       token_code: String(tokenCode),
       event_id: CONGRESO_IGE_EVENT_ID,
-      zone_id: seat.zoneId,
+      zone_id: resolvedZoneId,
       creado_por: user.id,
       status: 'disponible',
       total_abonado: montoRecibido,
@@ -704,7 +709,8 @@ export async function liquidarRestoAsiento(
 
     // Mapeamos a un Record seguro para que TypeScript no se queje por propiedades inexistentes
     const ticketData = ticketRaw as Record<string, unknown>;
-    const zoneId = ticketData.zone_id as string | null;
+    const rawZoneId = ticketData.zone_id as string | null;
+    const zoneId = getZoneUuid(rawZoneId) || rawZoneId;
     const purchaseId = ticketData.purchase_id as string | null;
 
     // Control preventivo crítico para el UUID de zone_id

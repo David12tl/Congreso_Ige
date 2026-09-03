@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getSeatKey } from '@/config/auditorioConfig'
+import { getSeatKey, ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { SeatIdentity, ZoneCode } from '@/config/auditorioConfig'
 import type { SeatEstatusPago as SeatStatus, AssignmentContext } from '@/components/asientos/types'
 import { type SeatSelectionInfo } from '@/components/asientos/zonaExternos'
@@ -363,7 +363,12 @@ export function useTaquillaStore({
       info: ZonaSeatSelectionInfo | SeatSelectionInfo,
     ) => {
       setAsientoSeleccionado(seatId)
-      const resolvedZoneId = zoneId || getZonaRow(zonaCode)?.id || ''
+      const resolvedZoneId =
+        getZoneUuid(zoneId) ||
+        getZoneUuid(zonaCode) ||
+        getZonaRow(zonaCode)?.id ||
+        ZONE_UUIDS[zonaCode.toLowerCase().replace(/[\s_-]/g, '')] ||
+        ''
       const bloque =
         'bloque' in info && info.bloque
           ? info.bloque === 'top'
