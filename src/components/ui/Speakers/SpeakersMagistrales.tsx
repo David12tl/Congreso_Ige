@@ -117,9 +117,19 @@ export default function SpeakersMagistrales() {
       nombre: "DRA. MARÍA GRACIELA HERNÁNDEZ Y ORDUÑA",
       puesto: "Directora General",
       compania: "COVEICYDET",
-      tipo: 'mesa_redonda',
+      conferencia: "Ciencia, Empresa, Sociedad y Campo: Las mujeres que transforman el ecosistema emprendedor.",
       subtipo: 'MODERADOR',
       avatarUrl: "/mesa_redonda_2.jpeg",
+      tipo: 'mesa_redonda',
+      fecha: "Día 18 de noviembre de 2026",
+      hora: "12:00 a 14:30 hrs",
+      lugar: "Auditorio Metropolitano",
+      organiza: "Academia en Gestión Empresarial",
+      bio: [
+        "Directora General de COVEICYDET / Miembro del SNII / Presidenta de la Red de Mujeres Científicas del Estado de Veracruz / Miembro del Comité de Ética en Investigación del Hospital Regional de Alta Especialidad de Veracruz.",
+        "Ha sido reconocida por su liderazgo y contribuciones al desarrollo científico y tecnológico en la región.",
+        "Su enfoque se centra en fomentar la participación de las mujeres en la ciencia y la innovación, promoviendo un ecosistema emprendedor inclusivo y sostenible."
+      ],
       theme: { container: '#FCE8E6', onContainer: '#C5221F', badgeBg: '#FAD2CF', badgeText: '#A50E0E' }
     },
     {
@@ -127,6 +137,7 @@ export default function SpeakersMagistrales() {
       nombre: "DRA. MONÍCA MARGOT RISUEÑOS SOLARTE",
       puesto: "Universidad del Cauca · Facultad de Ciencias Agrarias (Popayán, Colombia)",
       compania: "Emprendimientos Agrícolas",
+      conferencia: "Mesa Redonda: Emprendimiento, Innovación y Turismo para el Desarrollo de las Ciudades",
       tipo: 'mesa_redonda',
       subtipo: 'PANELISTA',
       avatarUrl: "/mesa_redonda_3.jpg",
@@ -137,6 +148,7 @@ export default function SpeakersMagistrales() {
       nombre: "Panelista 3",
       puesto: "Especialista Invitada",
       compania: "Ecosistema Emprendedor",
+      conferencia: "Mesa Redonda: Emprendimiento, Innovación y Turismo para el Desarrollo de las Ciudades",
       tipo: 'mesa_redonda',
       subtipo: 'PANELISTA',
       avatarUrl: "/mesa_redonda.png",

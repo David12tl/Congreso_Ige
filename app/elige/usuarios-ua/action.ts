@@ -15,115 +15,134 @@ export interface UsuarioUA {
   created_at: string
 }
 
-// Tipos de fila de las tablas consultadas (evitan el uso de `any`)
-interface ProfileFila {
-  id: string
-  email: string | null
-  id_rol: number
-  role_id?: number | null
-  unidad_academica_id?: number | null
-  created_at: string
-}
-
-interface RoleFila {
-  id_rol: number
-  nombre_rol: string
-}
-
-interface UnidadAcademicaFila {
-  id: number
-  nombre: string
-}
-
+// ── Tipos de fila de la consulta anidada sobre `tickets` ──────────────────
+// La tabla `tickets` es la FUENTE PRIMARIA de los datos mostrados:
+// nombre, matrícula, carrera, semestre y modalidad viven en cada fila del ticket.
 interface TicketFila {
   id: string
-  buyer_id: string
+  buyer_id: string | null
   nombre: string | null
-  email: string
+  email: string | null
+  matricula: string | null
   carrera: string | null
   semestre: string | null
-  matricula: string | null
   modalidad: 'escolarizado' | 'mixto' | null
   unidad_academica_id: number | null
 }
 
+interface ProfileFila {
+  id: string
+  email: string | null
+  id_rol: number
+  unidad_academica_id: number | null
+  // Relación por FK `profiles_id_rol_fkey`
+  roles?: { nombre_rol: string } | null
+  // Relación por FK `profiles_unidad_academica_id_fkey`
+  unidades_academicas?: { nombre: string } | null
+}
+
+// Normaliza un valor de texto de la BD: recorta espacios y trata una cadena vacía
+// o de solo espacios como "sin dato" (null).
+function valorUtilizable(value: unknown): string | null {
+  if (typeof value !== 'string') return (value as string | null) ?? null
+  const t = value.trim()
+  return t.length > 0 ? t : null
+}
+
+// Cliente "bypass" mínimo: el cliente tipado del proyecto está desactualizado y
+// rechaza columnas/relaciones reales (p. ej. el FK de `tickets` hacia
+// `unidades_academicas`). Este patrón ya se usa en app/elige/generar-qr/actions.ts.
+interface SupabaseBypass {
+  from: (table: string) => {
+    select: (columns?: string) => Promise<{
+      data: Record<string, unknown>[] | null
+      error: { message: string } | null
+    } | null>
+  }
+}
+
 export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
   const supabase = await createClient()
+  const cli = supabase as unknown as SupabaseBypass
 
-  // 1. Consultar en paralelo las tablas profiles, roles y unidades_academicas
-  const [profilesRes, rolesRes, uaRes] = await Promise.all([
-    supabase.from('profiles').select('*'),
-    supabase.from('roles').select('*'),
-    supabase.from('unidades_academicas').select('*'),
-  ])
-
-  if (profilesRes.error || !profilesRes.data) {
-    console.error('Error al obtener profiles:', profilesRes.error)
-    return []
-  }
-
-  const profilesData = profilesRes.data as ProfileFila[]
-  const rolesData = (rolesRes.data as RoleFila[]) || []
-  const uaData = (uaRes.data as UnidadAcademicaFila[]) || []
-
-  // 2. Filtrar estrictamente los usuarios con rol 3 (id_rol o role_id)
-  const perfilesUsuarios = profilesData.filter((p) => {
-    return Number(p.id_rol) === 3 || Number(p.role_id) === 3
-  })
-
-  if (perfilesUsuarios.length === 0) {
-    return []
-  }
-
-  // 3. Obtener los IDs de los usuarios para consultar sus tickets usando 'buyer_id'
-  const userIds = perfilesUsuarios.map((p) => p.id)
-
-  const { data: ticketsData, error: ticketsError } = await supabase
+  // ── 1. FUENTE PRIMARIA: `tickets` ──────────────────────────────────────────
+  // Los datos de la tabla (nombre, matrícula, carrera, semestre, modalidad) se
+  // leen directamente de cada fila de `tickets`. La Unidad Académica NO vive aquí:
+  // se resuelve desde `profiles` (paso 2).
+  const ticketsRes = await cli
     .from('tickets')
-    .select('*')
-    .in('buyer_id', userIds)
+    .select(`
+      id,
+      buyer_id,
+      nombre,
+      email,
+      matricula,
+      carrera,
+      semestre,
+      modalidad,
+      unidad_academica_id
+    `)
 
-  if (ticketsError) {
-    console.error('Error al obtener tickets:', ticketsError)
+  if (!ticketsRes || ticketsRes.error) {
+    console.error('[getUsuariosPorUA] Error leyendo tickets:', ticketsRes?.error?.message ?? 'sin respuesta')
+    return []
   }
 
-  const ticketsList = (ticketsData as TicketFila[]) || []
+  const ticketRows = (ticketsRes.data || []) as unknown as TicketFila[]
+  if (ticketRows.length === 0) return []
 
-  // 4. Crear mapas para traducir IDs numéricos a nombres legibles
-  const rolesMap = new Map<number, string>()
-  rolesData.forEach((r) => {
-    rolesMap.set(Number(r.id_rol), r.nombre_rol)
+  // ── 2. Perfiles (para resolver rol, email respaldo y UNIDAD ACADÉMICA) ────
+  // `tickets` no tiene FK declarada hacia `profiles`, así que se relaciona en
+  // memoria por `buyer_id` (patrón lógico usado en el proyecto). Aquí leemos el
+  // `unidad_academica_id` de `profiles` y, mediante su FK real, el NOMBRE de la
+  // unidad académica desde `unidades_academicas`.
+  const profilesRes = await cli
+    .from('profiles')
+    .select(`
+      id,
+      email,
+      id_rol,
+      unidad_academica_id,
+      roles!profiles_id_rol_fkey (
+        nombre_rol
+      ),
+      unidades_academicas!profiles_unidad_academica_id_fkey (
+        nombre
+      )
+    `)
+
+  const profileRows = (profilesRes?.data || []) as unknown as ProfileFila[]
+
+  const rolPorBuyer = new Map<string, string>()
+  const emailPorBuyer = new Map<string, string>()
+  const idRolPorBuyer = new Map<string, number>()
+  const uaPorBuyer = new Map<string, string>()
+  profileRows.forEach((p) => {
+    rolPorBuyer.set(p.id, p.roles?.nombre_rol || 'Usuario')
+    if (p.email) emailPorBuyer.set(p.id, p.email)
+    idRolPorBuyer.set(p.id, p.id_rol)
+    // Unidad Académica: se toma desde `profiles.unidades_academicas` (RELACIÓN REAL)
+    if (p.unidades_academicas?.nombre) uaPorBuyer.set(p.id, p.unidades_academicas.nombre)
   })
 
-  const uaMap = new Map<number, string>()
-  uaData.forEach((ua) => {
-    uaMap.set(Number(ua.id), ua.nombre)
-  })
-
-  // 5. Mapear y fusionar toda la información correctamente
-  return perfilesUsuarios.map((p): UsuarioUA => {
-    // Relacionar perfil con ticket mediante buyer_id
-    const ticket = ticketsList.find((t) => t.buyer_id === p.id)
-
-    // Obtener el nombre de la unidad académica (puede estar en el perfil o en el ticket)
-    const uaId = p.unidad_academica_id || ticket?.unidad_academica_id
-    const nombreUA = uaId ? uaMap.get(Number(uaId)) || null : null
-
-    // Obtener el nombre del rol desde la tabla roles
-    const rolId = Number(p.id_rol) || Number(p.role_id) || 3
-    const nombreRol = rolesMap.get(rolId) || `Rol ${rolId}`
-
-    return {
-      id: p.id,
-      nombre: ticket?.nombre || null,
-      email: p.email || '',
-      carrera: ticket?.carrera || null,
-      semestre: ticket?.semestre ? String(ticket.semestre) : null,
-      matricula: ticket?.matricula || null,
-      modalidad: ticket?.modalidad || null,
-      unidad_academica: nombreUA,
-      id_rol: nombreRol,
-      created_at: p.created_at,
-    }
-  })
+  // ── 3. Mapeo final: cada fila de `tickets` es un registro de la tabla ───────
+  // Mostramos los tickets cuyo comprador tiene id_rol === 3 (Usuario), que es lo
+  // que esta vista "Usuarios por UA" siempre ha representado.
+  return ticketRows
+    .filter((t) => t.buyer_id !== null && idRolPorBuyer.get(t.buyer_id as string) === 3)
+    .map((t): UsuarioUA => {
+      const buyerId = t.buyer_id ?? ''
+      return {
+        id: t.id,
+        nombre: valorUtilizable(t.nombre),
+        email: valorUtilizable(t.email) || emailPorBuyer.get(buyerId) || '',
+        matricula: valorUtilizable(t.matricula),
+        carrera: valorUtilizable(t.carrera),
+        semestre: valorUtilizable(t.semestre),
+        modalidad: t.modalidad ?? null,
+        unidad_academica: uaPorBuyer.get(buyerId) || null,
+        id_rol: rolPorBuyer.get(buyerId) || 'Usuario',
+        created_at: '',
+      }
+    })
 }
