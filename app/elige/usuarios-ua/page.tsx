@@ -15,6 +15,14 @@ function derivarModalidad(usuario: UsuarioUA): 'mixto' | 'escolarizado' {
   return 'escolarizado'
 }
 
+// Normaliza un valor de texto: recorta espacios y trata cadenas vacías o de solo
+// espacios como "sin dato" (null) para que la interfaz muestre el placeholder.
+function limpiarValor(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return value ?? null
+  const t = value.trim()
+  return t.length > 0 ? t : null
+}
+
 export default function UsuariosUAPage() {
   const [usuarios, setUsuarios] = useState<UsuarioUA[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +37,17 @@ export default function UsuariosUAPage() {
     async function loadData() {
       const data = await getUsuariosPorUA()
       if (isMounted) {
-        setUsuarios(data)
+        // Normalizamos cada registro en el frontend para que los valores null o con
+        // solo espacios no se muestren como datos reales.
+        setUsuarios(data.map((u) => ({
+          ...u,
+          nombre: limpiarValor(u.nombre),
+          email: limpiarValor(u.email) || '',
+          carrera: limpiarValor(u.carrera),
+          semestre: limpiarValor(u.semestre),
+          matricula: limpiarValor(u.matricula),
+          unidad_academica: limpiarValor(u.unidad_academica),
+        })))
         
         // Extraer nombres de unidades académicas únicas para el filtro
         const uasUnicas: string[] = Array.from(
@@ -54,11 +72,14 @@ export default function UsuariosUAPage() {
   }, [])
 
   // Filtrado por texto y por Unidad Académica (por nombre)
+  const termino = search.trim().toLowerCase()
   const usuariosFiltrados = usuarios.filter((usuario) => {
     const matchesSearch = 
-      (usuario.nombre?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (usuario.email?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (usuario.matricula?.toLowerCase() || '').includes(search.toLowerCase())
+      (usuario.nombre || '').toLowerCase().includes(termino) ||
+      (usuario.email || '').toLowerCase().includes(termino) ||
+      (usuario.matricula || '').toLowerCase().includes(termino) ||
+      (usuario.carrera || '').toLowerCase().includes(termino) ||
+      (usuario.unidad_academica || '').toLowerCase().includes(termino)
 
     const matchesUA = selectedUA === 'TODAS' || usuario.unidad_academica === selectedUA
 
@@ -153,15 +174,21 @@ export default function UsuariosUAPage() {
                   return (
                     <tr key={usuario.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-bold text-[#1E2A39] text-base leading-tight">{usuario.nombre || 'Sin Nombre Registrado'}</div>
+                        <div className={`font-bold text-base leading-tight ${usuario.nombre ? 'text-[#1E2A39]' : 'text-slate-400 italic'}`}>
+                          {usuario.nombre || 'Sin Nombre Registrado'}
+                        </div>
                         <div className="text-xs text-[#7D7D7D] font-medium mt-0.5">{usuario.email}</div>
                       </td>
                       <td className="px-6 py-4 font-mono font-semibold text-[#1E2A39]">
-                        {usuario.matricula || '——'}
+                        {usuario.matricula || <span className="italic text-slate-400 font-light">Pendiente</span>}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-bold text-[#1E2A39]">{usuario.carrera || 'No Especificada'}</div>
-                        <div className="text-xs text-[#7D7D7D] mt-0.5">{usuario.semestre ? `${usuario.semestre}° Semestre` : '——'}</div>
+                        <div className={`font-bold ${usuario.carrera ? 'text-[#1E2A39]' : 'text-slate-400 italic'}`}>
+                          {usuario.carrera || 'No Especificada'}
+                        </div>
+                        <div className="text-xs text-[#7D7D7D] mt-0.5">
+                          {usuario.semestre ? `${usuario.semestre}° Semestre` : <span className="italic text-slate-300">No registrado</span>}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-[#1E2A39]">
