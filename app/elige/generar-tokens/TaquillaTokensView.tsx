@@ -139,7 +139,7 @@ export function TaquillaTokensView({
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={onSeleccionarAsiento}
             />
-          ) : zonaActiva === 'TEQUI,CUI,TESO' ? (
+          ) : zonaActiva === 'TEH,TEQ,CUI' ? (
             <Zona1
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
