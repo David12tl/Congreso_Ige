@@ -120,6 +120,50 @@ export default function CongresoPage() {
         <p className="text-base md:text-lg text-[#7D7D7D] mb-10 max-w-xl leading-relaxed font-normal">
           Un espacio internacional de transferencia tecnológica e inspiración, conectando el ecosistema de la región centro de Veracruz con el mundo.
         </p>
+       <div className="flex flex-row flex-wrap items-center justify-center gap-4 sm:gap-6">
+  <Image
+    src="/idc-b.png"
+    alt="Ingenieria desarrollo comunitario"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+  <Image
+    src="/IC.png"
+    alt="Ingenieria Civil"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+  <Image
+    src="/IF.png"
+    alt="Ingenieria Forestal"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+  <Image
+    src="/ISC.png"
+    alt="Ingenieria sistemas computacionales"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+  <Image
+    src="/IGE.png"
+    alt="Ingenieria Gestion Empresarial"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+  <Image
+    src="/Logo_de_IIAS.png"
+    alt="Ingenieria Inovacion Agricola Sustentable"
+    width={60}
+    height={60}
+    className="object-contain"
+  />
+</div>
       </div>
       
       {/* Columna Imagen completa (Abarca el 100% del alto y ancho de su mitad) */}
