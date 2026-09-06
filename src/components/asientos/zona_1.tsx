@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 const TOP_ROWS = [27,27,28,30,30,31,32,33,33,34,36,37,37,38,40,40,40];
 const BOTTOM_ROWS = [43,43,43,43,43,43,43,43,43,43,43,42,42,42,42];
 
-const ACCENT = "#923cd8";
+const ACCENT = "#1d4ed8";
 
 function getRowLabel(i:number):string{return i<26?String.fromCharCode(65+i):"A"+String.fromCharCode(65+i-26)}
 
