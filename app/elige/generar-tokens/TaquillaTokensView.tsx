@@ -139,28 +139,28 @@ export function TaquillaTokensView({
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={onSeleccionarAsiento}
             />
-          ) : zonaActiva === 'TEH,TEQ,CUI' ? (
+          ) : zonaActiva === 'ZONA_1' ? (
             <Zona1
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
                 onSeleccionarAsientoCuadro('ZONA_1', zonaActivaRow?.id ?? ZONE_UUIDS.zona1, seatId, info)
               }
             />
-          ) : zonaActiva === 'ZONGOLICA' ? (
+          ) : zonaActiva === 'ZONA_2' ? (
             <Zona2
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
                 onSeleccionarAsientoCuadro('ZONA_2', zonaActivaRow?.id ?? ZONE_UUIDS.zona2, seatId, info)
               }
             />
-          ) : zonaActiva === 'NOGALES' ? (
+          ) : zonaActiva === 'ZONA_3' ? (
             <Zona3
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
                 onSeleccionarAsientoCuadro('ZONA_3', zonaActivaRow?.id ?? ZONE_UUIDS.zona3, seatId, info)
               }
             />
-          ) : zonaActiva === 'NOGALES' ? (
+          ) : zonaActiva === 'ZONA_4' ? (
             <Zona4
               occupiedSeats={zonaActivaOcupados}
               onSeatSelect={(seatId, info) =>
