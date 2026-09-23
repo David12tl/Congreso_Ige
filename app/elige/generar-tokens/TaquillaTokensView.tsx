@@ -81,10 +81,14 @@ export function TaquillaTokensView({
   } = useTaquillaStore({ assignmentContext, initialOccupiedSeatKeys, initialSeatStatusMap, initialStats })
 
   return (
-    <div className="grid grid-cols-1 gap-8 xl:grid-cols-3 min-h-screen bg-white dark:bg-[#2a2a2f] text-[#1a1a1a] p-4">
-      {/* Columna Izquierda: Mapa del Auditorio */}
-      <div className="rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-6 backdrop-blur-xl xl:col-span-2 shadow-sm">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    /* ✅ 1. w-full + grid-cols-12 para control fino del ancho horizontal */
+    <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-screen bg-white dark:bg-[#2a2a2f] text-[#1a1a1a] p-2 sm:p-4">
+      
+      {/* ─── Columna Izquierda: Mapa del Auditorio (Abarca 8 de 12 columnas en pantallas grandes) ─── */}
+      <div className="lg:col-span-8 xl:col-span-8 w-full rounded-3xl border border-[#e5e5e5] bg-[#f5f5f5]/60 p-4 sm:p-6 backdrop-blur-xl shadow-sm space-y-6">
+        
+        {/* Encabezado y Selector de Zonas */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-black uppercase tracking-wider text-[#00a354]">
               Taquilla Física y Control de Asientos
@@ -130,9 +134,10 @@ export function TaquillaTokensView({
           </div>
         </div>
 
+        {/* Mapa Interactivo */}
         <div
           id="taquilla-zona-interaccion"
-          className="rounded-2xl bg-white dark:bg-[#2a2a2f] p-4 border border-[#e5e5e5] shadow-inner"
+          className="w-full rounded-2xl bg-white dark:bg-[#2a2a2f] p-4 border border-[#e5e5e5] shadow-inner flex justify-center overflow-x-auto"
         >
           {zonaActiva === 'EXTERNOS' ? (
             <SeatMap
@@ -186,6 +191,7 @@ export function TaquillaTokensView({
           )}
         </div>
 
+        {/* Panel de Apartados Pendientes */}
         <ApartadosPendientesPanel
           apartadosFiltrados={apartadosFiltrados}
           totalPendientes={totalPendientes}
@@ -198,42 +204,45 @@ export function TaquillaTokensView({
           onRecargar={() => void onRecargarApartados()}
           onLiquidar={(row) => void onLiquidarDesdeTabla(row)}
         />
+      </div> {/* ✅ AQUÍ SE CIERRA LA COLUMNA IZQUIERDA */}
 
-      {/* Columna Derecha: Panel de Control Dinámico */}
-      <PanelCobroLateral
-        tokenGenerado={tokenGenerado}
-        modalMode={modalMode}
-        selectedSeat={selectedSeat}
-        selectedTicketId={selectedTicketId}
-        selectedZone={selectedZone}
-        infoApartado={infoApartado}
-        loadingApartado={loadingApartado}
-        errorMsg={errorMsg}
-        isPending={isPending}
-        nombreAlumno={nombreAlumno}
-        onNombreAlumnoChange={onNombreAlumnoChange}
-        emailAlumno={emailAlumno}
-        onEmailAlumnoChange={onEmailAlumnoChange}
-        metodoRegistro={metodoRegistro}
-        onMetodoRegistroChange={onMetodoRegistroChange}
-        montoApartado={montoApartado}
-        onMontoApartadoChange={onMontoApartadoChange}
-        busqueda={busqueda}
-        onBusquedaChange={onBusquedaChange}
-        usuariosPendientes={usuariosPendientes}
-        usuarioSeleccionado={usuarioSeleccionado}
-        onSeleccionarUsuario={onSeleccionarUsuario}
-        onDeseleccionarUsuario={onDeseleccionarUsuario}
-        onBuscarPreRegistro={() => void onBuscarPreRegistro()}
-        onConfirmarNuevoCobro={onConfirmarNuevoCobro}
-        onCancelarNuevoCobro={onCancelarNuevoCobro}
-        tipoPagoLiquidacion={tipoPagoLiquidacion}
-        onTipoPagoLiquidacionChange={onTipoPagoLiquidacionChange}
-        onConfirmarLiquidacion={onConfirmarLiquidacion}
-        onRegresarLiquidacion={onRegresarLiquidacion}
-        onCerrarToken={onCerrarToken}
-      />
+      {/* ─── Columna Derecha: Panel de Cobro y Acciones (Abarca 4 de 12 columnas) ─── */}
+      <div className="lg:col-span-4 xl:col-span-4 w-full">
+        <PanelCobroLateral
+          tokenGenerado={tokenGenerado}
+          modalMode={modalMode}
+          selectedSeat={selectedSeat}
+          selectedTicketId={selectedTicketId}
+          selectedZone={selectedZone}
+          infoApartado={infoApartado}
+          loadingApartado={loadingApartado}
+          errorMsg={errorMsg}
+          isPending={isPending}
+          nombreAlumno={nombreAlumno}
+          onNombreAlumnoChange={onNombreAlumnoChange}
+          emailAlumno={emailAlumno}
+          onEmailAlumnoChange={onEmailAlumnoChange}
+          metodoRegistro={metodoRegistro}
+          onMetodoRegistroChange={onMetodoRegistroChange}
+          montoApartado={montoApartado}
+          onMontoApartadoChange={onMontoApartadoChange}
+          busqueda={busqueda}
+          onBusquedaChange={onBusquedaChange}
+          usuariosPendientes={usuariosPendientes}
+          usuarioSeleccionado={usuarioSeleccionado}
+          onSeleccionarUsuario={onSeleccionarUsuario}
+          onDeseleccionarUsuario={onDeseleccionarUsuario}
+          onBuscarPreRegistro={() => void onBuscarPreRegistro()}
+          onConfirmarNuevoCobro={onConfirmarNuevoCobro}
+          onCancelarNuevoCobro={onCancelarNuevoCobro}
+          tipoPagoLiquidacion={tipoPagoLiquidacion}
+          onTipoPagoLiquidacionChange={onTipoPagoLiquidacionChange}
+          onConfirmarLiquidacion={onConfirmarLiquidacion}
+          onRegresarLiquidacion={onRegresarLiquidacion}
+          onCerrarToken={onCerrarToken}
+        />
       </div>
+
     </div>
   )
 }

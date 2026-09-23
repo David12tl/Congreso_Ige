@@ -11,12 +11,32 @@ import {
   HiOutlineClock,
   HiOutlineCheck,
   HiOutlineAcademicCap,
-  HiOutlineOfficeBuilding
+  HiOutlineOfficeBuilding,
+  HiChevronLeft,
+  HiChevronRight
 } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getTickets, Ticket } from './action'
 
 const TOTAL_AFORO = 1200 // Capacidad máxima del recinto/evento
+const ITEMS_PER_PAGE = 10 // Fijado a 10 registros por página
+
+// Íconos SVG auxiliares para "Ir al Inicio" (|<) y "Ir al Final" (>|)
+function FirstPageIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+    </svg>
+  )
+}
+
+function LastPageIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+    </svg>
+  )
+}
 
 export default function TicketsVendidosPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -25,8 +45,9 @@ export default function TicketsVendidosPage() {
   const [statusFilter, setStatusFilter] = useState<string>('todos')
   const [typeFilter, setTypeFilter] = useState<string>('todos')
   const [zoneFilter, setZoneFilter] = useState<string>('todas')
+  const [currentPage, setCurrentPage] = useState<number>(1)
 
-  // Cargar registros llamando a la Server Action (memorizado con useCallback)
+  // Cargar registros llamando a la Server Action
   const fetchTicketsData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setLoading(true)
@@ -61,7 +82,7 @@ export default function TicketsVendidosPage() {
     return ((totalPagados / TOTAL_AFORO) * 100).toFixed(1)
   }, [totalPagados])
 
-  // 3. Zona Más Vendida (reestructurado con Map para evitar detect-object-injection)
+  // 3. Zona Más Vendida
   const zonaMasVendida = useMemo(() => {
     const pagados = tickets.filter(t => t.estatus_pago === 'pagado' && t.asiento_zona)
     if (pagados.length === 0) return 'N/A'
@@ -107,6 +128,36 @@ export default function TicketsVendidosPage() {
       return matchSearch && matchStatus && matchType && matchZone
     })
   }, [tickets, searchTerm, statusFilter, typeFilter, zoneFilter])
+
+  // Restablecer a la página 1 cuando se cambie cualquier filtro
+  const [prevSearch, setPrevSearch] = useState(searchTerm)
+  const [prevStatus, setPrevStatus] = useState(statusFilter)
+  const [prevType, setPrevType] = useState(typeFilter)
+  const [prevZone, setPrevZone] = useState(zoneFilter)
+
+  if (
+    prevSearch !== searchTerm ||
+    prevStatus !== statusFilter ||
+    prevType !== typeFilter ||
+    prevZone !== zoneFilter
+  ) {
+    setPrevSearch(searchTerm)
+    setPrevStatus(statusFilter)
+    setPrevType(typeFilter)
+    setPrevZone(zoneFilter)
+    setCurrentPage(1)
+  }
+
+  // Cálculos de Paginación
+  const totalPages = Math.ceil(filteredTickets.length / ITEMS_PER_PAGE) || 1
+
+  const currentItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredTickets.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredTickets, currentPage])
+
+  const startRange = filteredTickets.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+  const endRange = Math.min(currentPage * ITEMS_PER_PAGE, filteredTickets.length)
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
@@ -264,39 +315,39 @@ export default function TicketsVendidosPage() {
                     Cargando tickets desde la base de datos...
                   </td>
                 </tr>
-              ) : filteredTickets.length === 0 ? (
+              ) : currentItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400 font-light">
                     No se encontraron tickets con los criterios seleccionados.
                   </td>
                 </tr>
               ) : (
-                filteredTickets.map((ticket) => (
+                currentItems.map((ticket) => (
                   <tr key={ticket.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-4 space-y-1.5">
                       <div>
-                        <h4 className="font-bold text-[#1E2A39] text-base leading-tight">{ticket.nombre || 'Sin nombre'}</h4>
-                        <p className="text-xs text-[#7D7D7D] font-medium">{ticket.email}</p>
+                        <h4 className="font-bold text-[#1E2A39] dark:text-slate-100 text-base leading-tight">{ticket.nombre || 'Sin nombre'}</h4>
+                        <p className="text-xs text-[#7D7D7D] dark:text-slate-400 font-medium">{ticket.email}</p>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Badge Tipo Base */}
                         {ticket.type === 'alumno' ? (
-                          <span className="px-2.5 py-0.5 bg-[#1E2A39]/10 text-[#1E2A39] text-[11px] font-extrabold uppercase rounded-md tracking-wider">
-                            <HiOutlineAcademicCap className="w-3 h-3 inline-block" /> Alumno
+                          <span className="px-2.5 py-0.5 bg-[#1E2A39]/10 dark:bg-slate-700/60 text-[#1E2A39] dark:text-slate-200 text-[11px] font-extrabold uppercase rounded-md tracking-wider">
+                            <HiOutlineAcademicCap className="w-3 h-3 inline-block mr-1" /> Alumno
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 bg-[#8B1E23]/10 text-[#8B1E23] text-[11px] font-extrabold uppercase rounded-md tracking-wider">
-                            <HiOutlineOfficeBuilding className="w-3 h-3 inline-block" /> Empresa
+                          <span className="px-2.5 py-0.5 bg-[#8B1E23]/10 dark:bg-rose-950/40 text-[#8B1E23] dark:text-rose-400 text-[11px] font-extrabold uppercase rounded-md tracking-wider">
+                            <HiOutlineOfficeBuilding className="w-3 h-3 inline-block mr-1" /> Empresa
                           </span>
                         )}
 
-                        {/* BADGE DE MODALIDAD DINÁMICO REQUERIDO */}
+                        {/* BADGE DE MODALIDAD DINÁMICO */}
                         {ticket.type === 'alumno' && (
                           <span className={`px-2.5 py-0.5 text-[11px] font-extrabold uppercase rounded-md tracking-wider ${
                             ticket.modalidad === 'mixto'
-                              ? 'bg-[#8B1E23]/10 text-[#8B1E23]'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-600/10'
+                              ? 'bg-[#8B1E23]/10 dark:bg-rose-950/40 text-[#8B1E23] dark:text-rose-400'
+                              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-600/10'
                           }`}>
                             {ticket.modalidad === 'mixto' ? 'Mixto' : 'Escolarizado'}
                           </span>
@@ -368,6 +419,61 @@ export default function TicketsVendidosPage() {
             </tbody>
           </table>
         </div>
+
+        {/* ─── Navegación Estilo DataGrid (10 por página) ─── */}
+        {filteredTickets.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-5 text-xs text-slate-600 dark:text-slate-400">
+            <div className="font-medium">
+              {startRange}-{endRange} de {filteredTickets.length}
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* Primera Página |< */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
+                title="Primera página"
+              >
+                <FirstPageIcon className="w-4 h-4" />
+              </button>
+
+              {/* Página Anterior < */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
+                title="Página anterior"
+              >
+                <HiChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Página Siguiente > */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
+                title="Página siguiente"
+              >
+                <HiChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Última Página >| */}
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer disabled:cursor-not-allowed"
+                title="Última página"
+              >
+                <LastPageIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </GlassCard>
     </div>
   )

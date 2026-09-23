@@ -1,11 +1,11 @@
 import { TaquillaTokensView } from './TaquillaTokensView'
-import { TokensTable } from './TokensTable' // Ajusta la ruta relativa si moviste el componente
+import { TokensTable } from './TokensTable'
 import { createClient } from '@/lib/supabase/server'
 import { getSeatKey } from '@/config/auditorioConfig'
 import { getAssignmentContext } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
 import type { SeatEstatusPago as SeatStatus } from '@/components/asientos/types'
-import type { TokenCanje } from './TokensTable' // Apuntamos al tipo correcto exportado por la tabla
+import type { TokenCanje } from './TokensTable'
 
 export default async function GenerarTokensPage() {
   const supabase = await createClient()
@@ -31,7 +31,6 @@ export default async function GenerarTokensPage() {
 
   tickets?.forEach((ticket) => {
     if (ticket.asiento_zona && ticket.asiento_bloque && ticket.asiento_fila && ticket.asiento_numero) {
-      // Reconstruir la clave unica del asiento usando getSeatKey (formato: "ZONA|BLOQUE|FILA|NUMERO")
       const key = getSeatKey({
         zoneCode: ticket.asiento_zona as 'EXTERNOS' | 'ZONA_1' | 'ZONA_2' | 'ZONA_3' | 'ZONA_4',
         zoneId: '',
@@ -45,7 +44,7 @@ export default async function GenerarTokensPage() {
     }
   })
 
-  // 3. Obtenemos los datos COMPLETOS de la vista detallada de SQL pasándola por unknown para evitar bloqueos estrictos de TS/ESLint
+  // 3. Obtenemos los datos COMPLETOS de la vista detallada de SQL
   const nombreVista = 'vista_tokens_detalles' as unknown as 'tokens_canje'
 
   const { data: dbTokens } = await (supabase
@@ -55,7 +54,6 @@ export default async function GenerarTokensPage() {
 
   const tokensList = dbTokens ?? []
 
-  // Calculamos las estadísticas usando el array completo para ahorrar una petición extra a la base de datos
   const initialStats = {
     total: tokensList.length,
     disponibles: tokensList.filter((t) => t.status === 'disponible').length,
@@ -63,7 +61,8 @@ export default async function GenerarTokensPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-10">
+    /* Reemplazado 'container' por 'w-full max-w-[1800px]' para abarcar el espacio de pantalla horizontal */
+    <div className="w-full max-w-[1800px] mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-10">
       {/* Vista principal con el mapa interactivo de asientos */}
       <TaquillaTokensView 
         assignmentContext={assignmentContext ?? {
@@ -79,10 +78,12 @@ export default async function GenerarTokensPage() {
       />
 
       {/* Separador visual limpio */}
-      <hr className="border-gray-200" />
+      <hr className="border-slate-200" />
 
-      {/* Renderizado de la tabla de control pasándole la data obtenida por SSR */}
-      <TokensTable tokens={tokensList} />
+      {/* Renderizado de la tabla de control */}
+      <div className="w-full overflow-x-auto">
+        <TokensTable tokens={tokensList} />
+      </div>
     </div>
   )
-}  
+}
