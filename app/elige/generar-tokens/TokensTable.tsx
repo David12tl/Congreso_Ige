@@ -62,20 +62,25 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Normalización y filtrado de datos
+  // Normalización y filtrado de datos (Resistente a acentos, mayúsculas y variantes de BD)
   const filteredTokens = useMemo(() => {
+    const normalizeStr = (str: string = '') =>
+      str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
     return (tokens as TokenConVariantes[]).map((t: TokenConVariantes): TokenCanje => {
-      // Detección flexible de los nombres de columnas de la BD / vista
       const nombre = t.nombre || t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || t.Nombre || '';
       const correo = t.email || t.cliente_correo || t.Cliente_Correo || t.CLIENTE_CORREO || t.Email || '';
       const matricula = t.matricula || t.Matricula || '';
 
       return {
         id: t.id,
-        token_code: t.token_code,
-        status: t.status,
-        estado_pago: t.estado_pago,
-        total_abonado: t.total_abonado,
+        token_code: t.token_code || '',
+        status: t.status || '',
+        estado_pago: t.estado_pago || '',
+        total_abonado: t.total_abonado || 0,
         created_at: t.created_at,
         utilizado_el: t.utilizado_el,
         cliente_nombre: nombre,
@@ -83,15 +88,25 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         matricula: matricula
       };
     }).filter((token: TokenCanje) => {
-      const searchLower = searchTerm.toLowerCase();
+      const searchLower = normalizeStr(searchTerm.trim());
 
-      const matchesCode = token.token_code?.toLowerCase().includes(searchLower) || false;
-      const matchesNombre = token.cliente_nombre?.toLowerCase().includes(searchLower) || false;
-      const matchesCorreo = token.cliente_correo?.toLowerCase().includes(searchLower) || false;
-      const matchesMatricula = token.matricula?.toLowerCase().includes(searchLower) || false;
+      const codeStr = normalizeStr(token.token_code);
+      const nombreStr = normalizeStr(token.cliente_nombre || '');
+      const correoStr = normalizeStr(token.cliente_correo || '');
+      const matriculaStr = normalizeStr(token.matricula || '');
+
+      const matchesCode = codeStr.includes(searchLower);
+      const matchesNombre = nombreStr.includes(searchLower);
+      const matchesCorreo = correoStr.includes(searchLower);
+      const matchesMatricula = matriculaStr.includes(searchLower);
 
       const matchesSearch = matchesCode || matchesNombre || matchesCorreo || matchesMatricula;
-      const matchesStatus = statusFilter === 'todos' || token.status === statusFilter;
+
+      const tokenStatusLower = normalizeStr(token.status);
+      const filterStatusLower = normalizeStr(statusFilter);
+
+      const matchesStatus =
+        statusFilter === 'todos' || tokenStatusLower === filterStatusLower;
 
       return matchesSearch && matchesStatus;
     });
@@ -188,16 +203,22 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                   </td>
 
                   <td className="px-6 py-4 text-[#7D7D7D]">
-                    {token.cliente_nombre && token.cliente_nombre.trim() !== '' ? (
+                    {(token.cliente_nombre && token.cliente_nombre.trim() !== '') || (token.cliente_correo && token.cliente_correo.trim() !== '') || (token.matricula && token.matricula.trim() !== '') ? (
                       <div>
-                        <div className="font-semibold text-slate-900 uppercase text-xs tracking-wider">
-                          {token.cliente_nombre}
-                        </div>
+                        {token.cliente_nombre && token.cliente_nombre.trim() !== '' ? (
+                          <div className="font-semibold text-slate-900 uppercase text-xs tracking-wider">
+                            {token.cliente_nombre}
+                          </div>
+                        ) : (
+                          <div className="font-semibold text-slate-500 uppercase text-xs tracking-wider italic">
+                            Sin nombre registrado
+                          </div>
+                        )}
                         <div className="flex flex-col sm:flex-row sm:gap-2 text-xs text-slate-500 font-mono mt-0.5">
-                          {token.matricula && (
+                          {token.matricula && token.matricula.trim() !== '' && (
                             <span className="font-bold text-indigo-600">[{token.matricula}]</span>
                           )}
-                          {token.cliente_correo && (
+                          {token.cliente_correo && token.cliente_correo.trim() !== '' && (
                             <span>{token.cliente_correo}</span>
                           )}
                         </div>
