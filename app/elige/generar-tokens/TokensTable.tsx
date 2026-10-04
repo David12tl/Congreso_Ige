@@ -20,20 +20,23 @@ function LastPageIcon({ className }: { className?: string }) {
   );
 }
 
-// Tipos adaptados al 100% a tus datos reales de la BD
-export type TokenStatus = 'disponible' | 'usado' | 'expirado';
+// Tipos adaptados a tus datos de la BD (incluyendo nombre, email y matrícula)
+export type TokenStatus = 'disponible' | 'usado' | 'expirado' | string;
 export type EstadoPago = 'faltante' | 'completado' | string;
 
 export interface TokenCanje {
   id: string;
   token_code: string;
-  status: TokenStatus | string;
+  status: TokenStatus;
   estado_pago: EstadoPago;
   total_abonado: number | string;
   created_at: string;
   utilizado_el?: string | null;
   cliente_nombre?: string;
   cliente_correo?: string;
+  nombre?: string;
+  email?: string;
+  matricula?: string;
 }
 
 // Interfaz interna para mapear variantes de mayúsculas/minúsculas de SQL
@@ -42,6 +45,9 @@ interface TokenConVariantes extends TokenCanje {
   CLIENTE_NOMBRE?: string;
   Cliente_Correo?: string;
   CLIENTE_CORREO?: string;
+  Nombre?: string;
+  Email?: string;
+  Matricula?: string;
 }
 
 interface TokensTableProps {
@@ -49,7 +55,7 @@ interface TokensTableProps {
   isLoading?: boolean;
 }
 
-const ITEMS_PER_PAGE = 5; // Fijado estrictamente a 5 registros por vista
+const ITEMS_PER_PAGE = 5; // Fijado a 5 registros por vista
 
 export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,8 +65,10 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
   // Normalización y filtrado de datos
   const filteredTokens = useMemo(() => {
     return (tokens as TokenConVariantes[]).map((t: TokenConVariantes): TokenCanje => {
-      const nombre = t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || '';
-      const correo = t.cliente_correo || t.Cliente_Correo || t.CLIENTE_CORREO || '';
+      // Detección flexible de los nombres de columnas de la BD / vista
+      const nombre = t.nombre || t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || t.Nombre || '';
+      const correo = t.email || t.cliente_correo || t.Cliente_Correo || t.CLIENTE_CORREO || t.Email || '';
+      const matricula = t.matricula || t.Matricula || '';
 
       return {
         id: t.id,
@@ -71,16 +79,18 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         created_at: t.created_at,
         utilizado_el: t.utilizado_el,
         cliente_nombre: nombre,
-        cliente_correo: correo
+        cliente_correo: correo,
+        matricula: matricula
       };
     }).filter((token: TokenCanje) => {
       const searchLower = searchTerm.toLowerCase();
 
-      const matchesCode = token.token_code.toLowerCase().includes(searchLower);
+      const matchesCode = token.token_code?.toLowerCase().includes(searchLower) || false;
       const matchesNombre = token.cliente_nombre?.toLowerCase().includes(searchLower) || false;
       const matchesCorreo = token.cliente_correo?.toLowerCase().includes(searchLower) || false;
+      const matchesMatricula = token.matricula?.toLowerCase().includes(searchLower) || false;
 
-      const matchesSearch = matchesCode || matchesNombre || matchesCorreo;
+      const matchesSearch = matchesCode || matchesNombre || matchesCorreo || matchesMatricula;
       const matchesStatus = statusFilter === 'todos' || token.status === statusFilter;
 
       return matchesSearch && matchesStatus;
@@ -129,8 +139,8 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Buscar por código, nombre o correo..."
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64 text-gray-800"
+            placeholder="Buscar por código, nombre, correo o matrícula..."
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-72 text-gray-800"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -154,7 +164,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
           <thead className="bg-[#1E2A39]/5 text-[11px] font-black uppercase tracking-widest text-[#1E2A39]">
             <tr>
               <th scope="col" className="px-6 py-4">Código Token</th>
-              <th scope="col" className="px-6 py-4">Cliente Asignado</th>
+              <th scope="col" className="px-6 py-4">Cliente / Alumno Asignado</th>
               <th scope="col" className="px-6 py-4">Estado Canje</th>
               <th scope="col" className="px-6 py-4">Estado Pago</th>
               <th scope="col" className="px-6 py-4">Monto Abonado</th>
@@ -180,17 +190,20 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                   <td className="px-6 py-4 text-[#7D7D7D]">
                     {token.cliente_nombre && token.cliente_nombre.trim() !== '' ? (
                       <div>
-                        <div className="font-medium text-slate-900 uppercase text-xs tracking-wider">
+                        <div className="font-semibold text-slate-900 uppercase text-xs tracking-wider">
                           {token.cliente_nombre}
                         </div>
-                        {token.cliente_correo && (
-                          <div className="text-xs text-slate-400 font-mono mt-0.5">
-                            {token.cliente_correo}
-                          </div>
-                        )}
+                        <div className="flex flex-col sm:flex-row sm:gap-2 text-xs text-slate-500 font-mono mt-0.5">
+                          {token.matricula && (
+                            <span className="font-bold text-indigo-600">[{token.matricula}]</span>
+                          )}
+                          {token.cliente_correo && (
+                            <span>{token.cliente_correo}</span>
+                          )}
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-slate-400 italic text-xs">Usuario Registrado</span>
+                      <span className="text-slate-400 italic text-xs">Sin asignar / Usuario Registrado</span>
                     )}
                   </td>
 
@@ -213,13 +226,13 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                   </td>
 
                   <td className="px-6 py-4 font-semibold text-[#1E2A39]">
-                    ${Number(token.total_abonado).toFixed(2)}
+                    ${Number(token.total_abonado || 0).toFixed(2)}
                   </td>
 
                   <td className="px-6 py-4 text-xs text-[#7D7D7D] whitespace-nowrap">
-                    {new Date(token.created_at).toLocaleDateString('es-MX', {
+                    {token.created_at ? new Date(token.created_at).toLocaleDateString('es-MX', {
                       day: '2-digit', month: 'short', year: 'numeric'
-                    })}
+                    }) : '—'}
                   </td>
 
                   <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -240,7 +253,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         </table>
       </div>
 
-      {/* ─── Navegación Estilo Material UI / DataGrid (5 por página) ─── */}
+      {/* Navegación y Paginación */}
       {filteredTokens.length > 0 && (
         <div className="pt-4 flex items-center justify-end gap-5 text-xs text-slate-700">
           <div className="font-medium text-slate-600">
