@@ -6,6 +6,12 @@ import { getAssignmentContext } from './actions'
 import type { AssignmentContext } from '@/components/asientos/types'
 import type { SeatEstatusPago as SeatStatus } from '@/components/asientos/types'
 import type { TokenCanje } from './TokensTable'
+import {
+  enriquecerTokensConDetalles,
+  RawTokenRow,
+  TicketLookupRow,
+  PurchaseLookupRow,
+} from './tokenResolver'
 
 export default async function GenerarTokensPage() {
   const supabase = await createClient()
@@ -44,15 +50,27 @@ export default async function GenerarTokensPage() {
     }
   })
 
-  // 3. Obtenemos los datos COMPLETOS de la vista detallada de SQL
+  // 3. Obtenemos los datos COMPLETOS de los tokens enriquecidos con la identidad del alumno asignado/comprador
   const nombreVista = 'vista_tokens_detalles' as unknown as 'tokens_canje'
 
-  const { data: dbTokens } = await (supabase
-    .from(nombreVista)
-    .select('*')
-    .order('created_at', { ascending: false }) as unknown as Promise<{ data: TokenCanje[] | null }>)
+  const [tokensRes, ticketsLookupRes, purchasesLookupRes] = await Promise.all([
+    supabase
+      .from(nombreVista)
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tickets')
+      .select('id, nombre, email, matricula, purchase_id, buyer_id'),
+    supabase
+      .from('purchases')
+      .select('id, amount_paid, created_at'),
+  ])
 
-  const tokensList = dbTokens ?? []
+  const rawTokens = (tokensRes.data as unknown as RawTokenRow[]) || []
+  const ticketsLookup = (ticketsLookupRes.data as unknown as TicketLookupRow[]) || []
+  const purchasesLookup = (purchasesLookupRes.data as unknown as PurchaseLookupRow[]) || []
+
+  const tokensList: TokenCanje[] = enriquecerTokensConDetalles(rawTokens, ticketsLookup, purchasesLookup)
 
   const initialStats = {
     total: tokensList.length,

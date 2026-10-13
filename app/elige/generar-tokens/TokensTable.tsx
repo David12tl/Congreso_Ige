@@ -71,9 +71,14 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
         .toLowerCase();
 
     return (tokens as TokenConVariantes[]).map((t: TokenConVariantes): TokenCanje => {
-      const nombre = t.nombre || t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || t.Nombre || '';
+      let nombre = t.nombre || t.cliente_nombre || t.Cliente_Nombre || t.CLIENTE_NOMBRE || t.Nombre || '';
       const correo = t.email || t.cliente_correo || t.Cliente_Correo || t.CLIENTE_CORREO || t.Email || '';
       const matricula = t.matricula || t.Matricula || '';
+
+      // Si el nombre proviene como 'Usuario Registrado' o 'Sin asignar' y no hay correo registrado, se normaliza
+      if ((nombre.trim().toLowerCase() === 'usuario registrado' || nombre.trim().toLowerCase() === 'sin asignar') && !correo.trim()) {
+        nombre = '';
+      }
 
       return {
         id: t.id,
@@ -203,9 +208,9 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                   </td>
 
                   <td className="px-6 py-4 text-[#7D7D7D]">
-                    {(token.cliente_nombre && token.cliente_nombre.trim() !== '') || (token.cliente_correo && token.cliente_correo.trim() !== '') || (token.matricula && token.matricula.trim() !== '') ? (
+                    {(token.cliente_nombre && token.cliente_nombre.trim() !== '' && token.cliente_nombre.trim().toLowerCase() !== 'sin asignar') || (token.cliente_correo && token.cliente_correo.trim() !== '') || (token.matricula && token.matricula.trim() !== '') ? (
                       <div>
-                        {token.cliente_nombre && token.cliente_nombre.trim() !== '' ? (
+                        {token.cliente_nombre && token.cliente_nombre.trim() !== '' && token.cliente_nombre.trim().toLowerCase() !== 'sin asignar' ? (
                           <div className="font-semibold text-slate-900 uppercase text-xs tracking-wider">
                             {token.cliente_nombre}
                           </div>
@@ -224,7 +229,7 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
                         </div>
                       </div>
                     ) : (
-                      <span className="text-slate-400 italic text-xs">Sin asignar / Usuario Registrado</span>
+                      <span className="text-slate-400 italic text-xs">Sin asignar</span>
                     )}
                   </td>
 
