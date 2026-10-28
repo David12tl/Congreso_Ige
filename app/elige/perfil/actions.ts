@@ -19,19 +19,6 @@ export interface PerfilUsuario {
   unidadAcademicaNombre: string | null
 }
 
-interface SupabaseProfileJoin {
-  email: string | null
-  created_at: string | null
-  unidad_academica_id: number | null
-  roles: {
-    nombre_rol: string
-    nivel_acceso: number | null
-  } | null
-  unidades_academicas: {
-    nombre: string
-  } | null
-}
-
 export interface UnidadAcademica {
   id: number
   nombre: string
@@ -43,24 +30,31 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (authError) {
-      console.error('[getMiPerfil] Error de autenticación Supabase:', authError.message)
+    if (authError || !user) {
+      console.warn('[getMiPerfil] No hay usuario autenticado en Supabase.')
       return null
     }
 
-    if (!user) {
-      console.warn('[getMiPerfil] No hay usuario autenticado en la sesión de Supabase.')
-      return null
-    }
-
+    // Consulta simplificada para evitar fallos si la relación nombrada de FK varía
     const { data, error } = await supabase
       .from('profiles')
-      .select('email, created_at, unidad_academica_id, roles!profiles_id_rol_fkey(nombre_rol, nivel_acceso), unidades_academicas!profiles_unidad_academica_id_fkey(nombre)')
+      .select(`
+        email,
+        created_at,
+        unidad_academica_id,
+        roles (
+          nombre_rol,
+          nivel_acceso
+        ),
+        unidades_academicas (
+          nombre
+        )
+      `)
       .eq('id', user.id)
       .maybeSingle()
 
     if (error) {
-      console.error(`[getMiPerfil] Error SQL consultando perfil para user ${user.id}:`, error.message)
+      console.error(`[getMiPerfil] Error SQL en profiles para user ${user.id}:`, error.message)
       return null
     }
 
@@ -69,16 +63,18 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
       return null
     }
 
-    const p = data as unknown as SupabaseProfileJoin
+    // Extraemos tipos con seguridad
+    const roleData = Array.isArray(data.roles) ? data.roles[0] : data.roles
+    const uaData = Array.isArray(data.unidades_academicas) ? data.unidades_academicas[0] : data.unidades_academicas
 
     return {
       id: user.id,
-      email: p.email,
-      createdAt: p.created_at ? new Date(p.created_at).toLocaleDateString() : '—',
-      rolNombre: p.roles?.nombre_rol || 'Usuario',
-      nivelAcceso: p.roles?.nivel_acceso ?? 1,
-      unidadAcademicaId: p.unidad_academica_id ?? null,
-      unidadAcademicaNombre: p.unidades_academicas?.nombre ?? null,
+      email: data.email ?? user.email ?? null,
+      createdAt: data.created_at ? new Date(data.created_at).toLocaleDateString() : '—',
+      rolNombre: roleData?.nombre_rol || 'Usuario',
+      nivelAcceso: roleData?.nivel_acceso ?? 1,
+      unidadAcademicaId: data.unidad_academica_id ? Number(data.unidad_academica_id) : null,
+      unidadAcademicaNombre: uaData?.nombre ?? null,
     }
   } catch (err) {
     console.error('[getMiPerfil] Excepción no controlada:', err instanceof Error ? err.message : String(err))
@@ -100,7 +96,14 @@ export async function getUnidadesAcademicas(): Promise<UnidadAcademica[]> {
       return []
     }
 
-    return (data || []) as UnidadAcademica[]
+    if (!data) return []
+
+    // 💡 SOLUCIÓN CLAVE: Convertir explícitamente el BigInt `id` a Number
+    return data.map((ua) => ({
+      id: Number(ua.id),
+      nombre: String(ua.nombre),
+      tipo: (ua.tipo as 'interno' | 'externo') || 'interno',
+    }))
   } catch (err) {
     console.error('[getUnidadesAcademicas] Excepción no controlada:', err instanceof Error ? err.message : String(err))
     return []
@@ -109,7 +112,6 @@ export async function getUnidadesAcademicas(): Promise<UnidadAcademica[]> {
 
 export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Promise<{ success: boolean; message: string }> {
   try {
-    // ── Validación de entrada con Zod ────────────────────────────────────────
     const parsed = UnidadAcademicaIdSchema.safeParse(unidadAcademicaId)
     if (!parsed.success) {
       return { success: false, message: parsed.error.issues[0]?.message ?? 'ID inválido.' }
@@ -119,33 +121,26 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (authError) {
-      console.error('[actualizarMiUnidadAcademica] Error de autenticación:', authError.message)
+    if (authError || !user) {
       return { success: false, message: 'Sesión expirada o no válida.' }
     }
 
-    if (!user) {
-      console.warn('[actualizarMiUnidadAcademica] No hay usuario autenticado.')
-      return { success: false, message: 'Sesión expirada o no válida.' }
-    }
-
+    // Usamos UPDATE directo en lugar de UPSERT para no perder otros valores como `id_rol`
     const { error } = await supabase
       .from('profiles')
-      .upsert({
-        id: user.id,
-        email: user.email ?? null,
+      .update({
         unidad_academica_id: safeId,
-      }, { onConflict: 'id' })
+      })
+      .eq('id', user.id)
 
     if (error) {
-      console.error(`[actualizarMiUnidadAcademica] Error SQL actualizando UA para user ${user.id}:`, error.message)
+      console.error(`[actualizarMiUnidadAcademica] Error SQL actualizando UA:`, error.message)
       return { success: false, message: 'No se pudo guardar la Unidad Académica.' }
     }
 
     return { success: true, message: 'Unidad Académica actualizada.' }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('[actualizarMiUnidadAcademica] Excepción no controlada:', msg)
+    console.error('[actualizarMiUnidadAcademica] Excepción no controlada:', err instanceof Error ? err.message : String(err))
     return { success: false, message: 'Error crítico al guardar la Unidad Académica.' }
   }
 }
