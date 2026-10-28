@@ -44,10 +44,10 @@ export function UsuariosUATable({ usuarios }: UsuariosUATableProps) {
               const modalidad = derivarModalidad(usuario)
               return (
                 <tr key={usuario.id} className="hover:bg-slate-50/50 transition-colors">
-                  {/* Botón de Carpeta Abierta para el ID */}
+                  {/* Botón de Carpeta Abierta con la ruta corregida */}
                   <td className="px-6 py-4">
                     <Link
-                      href={`/app/elige/usuarios-ua/${usuario.id}`}
+                      href={`/elige/usuarios-ua/${usuario.id}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-bold uppercase transition-all shadow-sm"
                       title="Ver vouchers del expediente"
                     >
