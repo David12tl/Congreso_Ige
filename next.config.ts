@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['sharp'],
   // Habilitar optimización de imágenes (WebP/AVIF) para imágenes locales y externas
   images: {
     formats: ['image/avif', 'image/webp'],
