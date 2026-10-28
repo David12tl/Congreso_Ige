@@ -76,7 +76,7 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
       {/* Regresar a la lista */}
       <div className="flex items-center justify-between">
         <Link 
-          href="/admin/usuarios_ua"
+          href="/elige/usuarios-ua"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold uppercase tracking-wider transition-all"
         >
           <HiOutlineArrowLeft className="w-4 h-4" />
