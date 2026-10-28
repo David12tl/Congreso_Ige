@@ -31,22 +31,22 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      console.warn('[getMiPerfil] No hay usuario autenticado en Supabase.')
+      console.warn('[getMiPerfil] No hay usuario autenticado en Supabase Auth.')
       return null
     }
 
-    // Consulta simplificada para evitar fallos si la relación nombrada de FK varía
+    // Consulta alineada con las FK exactas: profiles_id_rol_fkey y profiles_unidad_academica_id_fkey
     const { data, error } = await supabase
       .from('profiles')
       .select(`
         email,
         created_at,
         unidad_academica_id,
-        roles (
+        roles:profiles_id_rol_fkey (
           nombre_rol,
           nivel_acceso
         ),
-        unidades_academicas (
+        unidades_academicas:profiles_unidad_academica_id_fkey (
           nombre
         )
       `)
@@ -54,7 +54,7 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
       .maybeSingle()
 
     if (error) {
-      console.error(`[getMiPerfil] Error SQL en profiles para user ${user.id}:`, error.message)
+      console.error(`[getMiPerfil] Error SQL consultando perfil para user ${user.id}:`, error.message)
       return null
     }
 
@@ -63,7 +63,7 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
       return null
     }
 
-    // Extraemos tipos con seguridad
+    // Extracción segura de tipos
     const roleData = Array.isArray(data.roles) ? data.roles[0] : data.roles
     const uaData = Array.isArray(data.unidades_academicas) ? data.unidades_academicas[0] : data.unidades_academicas
 
@@ -98,7 +98,7 @@ export async function getUnidadesAcademicas(): Promise<UnidadAcademica[]> {
 
     if (!data) return []
 
-    // 💡 SOLUCIÓN CLAVE: Convertir explícitamente el BigInt `id` a Number
+    // Convertir explícitamente el BigInt id a Number para evitar problemas de serialización JSON en Next.js
     return data.map((ua) => ({
       id: Number(ua.id),
       nombre: String(ua.nombre),
@@ -125,7 +125,6 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
       return { success: false, message: 'Sesión expirada o no válida.' }
     }
 
-    // Usamos UPDATE directo en lugar de UPSERT para no perder otros valores como `id_rol`
     const { error } = await supabase
       .from('profiles')
       .update({
@@ -134,7 +133,7 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
       .eq('id', user.id)
 
     if (error) {
-      console.error(`[actualizarMiUnidadAcademica] Error SQL actualizando UA:`, error.message)
+      console.error(`[actualizarMiUnidadAcademica] Error SQL actualizando UA para user ${user.id}:`, error.message)
       return { success: false, message: 'No se pudo guardar la Unidad Académica.' }
     }
 
