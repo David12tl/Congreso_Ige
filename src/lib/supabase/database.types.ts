@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      comprobantes_pago: {
+        Row: {
+          id: string
+          created_at: string | null
+          profile_id: string
+          matricula: string
+          file_path: string
+          file_url: string
+          estado: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string | null
+          profile_id: string
+          matricula: string
+          file_path: string
+          file_url: string
+          estado: string
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          profile_id?: string
+          matricula?: string
+          file_path?: string
+          file_url?: string
+          estado?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprobantes_pago_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
