@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { optimizarAWebp } from '@/lib/optimizeImage'
 
 export async function subirVoucherAccion(formData: FormData) {
   const file = formData.get('file') as File
@@ -18,18 +17,10 @@ export async function subirVoucherAccion(formData: FormData) {
     const arrayBuffer = await file.arrayBuffer()
     const bufferOriginal = Buffer.from(arrayBuffer)
 
-    let bufferFinal: Buffer = bufferOriginal
-    let fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    let contentType = file.type
-
-    // Si es una imagen (JPG/PNG/WEBP), la optimizamos a WebP
-    if (contentType.startsWith('image/')) {
-      bufferFinal = await optimizarAWebp(bufferOriginal)
-      fileExt = 'webp'
-      contentType = 'image/webp'
-    }
-
-    const fileName = `${Date.now()}.${fileExt}`
+    const bufferFinal: Buffer = bufferOriginal
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const contentType = file.type || `image/${fileExt}`
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
     const filePath = `${matricula}/${fileName}`
 
     // Subir a Supabase Storage
@@ -62,7 +53,7 @@ export async function subirVoucherAccion(formData: FormData) {
 
     if (dbError) throw dbError
 
-    return { success: true, message: 'Voucher optimizado a WebP y subido correctamente.' }
+    return { success: true, message: 'Voucher subido correctamente.' }
   } catch (error: unknown) {
     console.error('[subirVoucherAccion] Error procesando voucher:', error instanceof Error ? error.message : String(error))
     const errorMsg = error instanceof Error ? error.message : 'Error al procesar el voucher.'

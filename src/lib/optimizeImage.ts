@@ -1,11 +1,11 @@
-import sharp from 'sharp'
-
 /**
- * Recibe un Buffer de imagen y devuelve un Buffer en formato WebP comprimido.
+ * Recibe un Buffer de imagen y lo devuelve tal cual (passthrough), sin
+ * compresión ni conversión a WebP. Las imágenes de comprobante/voucher se
+ * aceptan en su formato original.
+ *
+ * Se mantiene la firma `Promise<Buffer>` para que `VoucherUploader.tsx` y
+ * otras acciones sigan funcionando sin modificar sus llamadas.
  */
 export async function optimizarAWebp(imageBuffer: Buffer): Promise<Buffer> {
-  return await sharp(imageBuffer)
-    .resize({ width: 1200, withoutEnlargement: true }) // Redimensiona max a 1200px de ancho si es muy grande
-    .webp({ quality: 80 })                             // Comprime a WebP con calidad 80%
-    .toBuffer()
+  return imageBuffer
 }
