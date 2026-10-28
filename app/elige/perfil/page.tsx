@@ -97,7 +97,7 @@ export default function PerfilPage() {
       }
 
       setResumen(dataResumen)
-      setUnidadesAcademicas(dataUAs)
+      setUnidadesAcademicas(dataUAs || [])
 
       const photoUrl = extraerAvatarDeUsuario(clientSession?.user)
       setAvatarUrl(photoUrl)
@@ -212,13 +212,6 @@ export default function PerfilPage() {
         />
       </div>
 
-      {isAuthenticated && perfilId && (
-        <VoucherUploader
-          userId={perfilId}
-          matricula={matriculaUsuario}
-        />
-      )}
-
       <div className="mt-8 border-t border-[#cbd5e1] dark:border-slate-700 pt-8">
         {requiereCompletarUA ? (
           <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-[#2a2a2f] rounded-[24px] border border-dashed border-[#cbd5e1] dark:border-slate-700 opacity-75">
@@ -239,6 +232,14 @@ export default function PerfilPage() {
           )
         )}
       </div>
+
+      {/* 3. Carga y comprobantes de pago (al final de la página) */}
+      {isAuthenticated && perfilId && (
+        <VoucherUploader
+          userId={perfilId}
+          matricula={matriculaUsuario}
+        />
+      )}
     </div>
   )
 }
