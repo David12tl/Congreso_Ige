@@ -67,13 +67,16 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
     const roleData = Array.isArray(data.roles) ? data.roles[0] : data.roles
     const uaData = Array.isArray(data.unidades_academicas) ? data.unidades_academicas[0] : data.unidades_academicas
 
+    const dateObj = data.created_at ? new Date(data.created_at) : null
+    const createdAtFormatted = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString() : '—'
+
     return {
       id: user.id,
       email: data.email ?? user.email ?? null,
-      createdAt: data.created_at ? new Date(data.created_at).toLocaleDateString() : '—',
+      createdAt: createdAtFormatted,
       rolNombre: roleData?.nombre_rol || 'Usuario',
-      nivelAcceso: roleData?.nivel_acceso ?? 1,
-      unidadAcademicaId: data.unidad_academica_id ? Number(data.unidad_academica_id) : null,
+      nivelAcceso: roleData?.nivel_acceso != null ? Number(roleData.nivel_acceso) : 1,
+      unidadAcademicaId: data.unidad_academica_id != null ? Number(data.unidad_academica_id) : null,
       unidadAcademicaNombre: uaData?.nombre ?? null,
     }
   } catch (err) {
@@ -101,7 +104,7 @@ export async function getUnidadesAcademicas(): Promise<UnidadAcademica[]> {
     // Convertir explícitamente el BigInt id a Number para evitar problemas de serialización JSON en Next.js
     return data.map((ua) => ({
       id: Number(ua.id),
-      nombre: String(ua.nombre),
+      nombre: String(ua.nombre ?? ''),
       tipo: (ua.tipo as 'interno' | 'externo') || 'interno',
     }))
   } catch (err) {
@@ -143,3 +146,4 @@ export async function actualizarMiUnidadAcademica(unidadAcademicaId: number): Pr
     return { success: false, message: 'Error crítico al guardar la Unidad Académica.' }
   }
 }
+

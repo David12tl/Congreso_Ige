@@ -1,11 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 import { optimizarAWebp } from '@/lib/optimizeImage'
 
 export async function subirVoucherAccion(formData: FormData) {
-  const supabase = await createClient()
-
   const file = formData.get('file') as File
   const matricula = formData.get('matricula') as string
   const userId = formData.get('userId') as string
@@ -15,6 +13,8 @@ export async function subirVoucherAccion(formData: FormData) {
   }
 
   try {
+    const supabase = await createClient()
+
     const arrayBuffer = await file.arrayBuffer()
     const bufferOriginal = Buffer.from(arrayBuffer)
 
@@ -64,6 +64,7 @@ export async function subirVoucherAccion(formData: FormData) {
 
     return { success: true, message: 'Voucher optimizado a WebP y subido correctamente.' }
   } catch (error: unknown) {
+    console.error('[subirVoucherAccion] Error procesando voucher:', error instanceof Error ? error.message : String(error))
     const errorMsg = error instanceof Error ? error.message : 'Error al procesar el voucher.'
     return { success: false, message: errorMsg }
   }

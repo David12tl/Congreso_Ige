@@ -5,9 +5,18 @@ import type { Database } from "@/types/database.types";
 export async function createClient() {
   const cookieStore = await cookies();
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "[Supabase SSR] Variables de entorno faltantes: NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
+  }
+
   return createServerClient<{ public: Database["public"] }, "public">(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -19,8 +28,8 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Las cookies solo pueden escribirse desde Server Components durante una solicitud activa.
-            // Este catch silencia el error esperado cuando se llama desde un Route Handler o middleware.
+            // Las cookies solo pueden escribirse desde Server Components durante una solicitud activa o Server Actions.
+            // Este catch silencia el error esperado cuando se llama desde un contexto de solo lectura.
           }
         },
       },

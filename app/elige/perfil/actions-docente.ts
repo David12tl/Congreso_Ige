@@ -33,39 +33,44 @@ interface ActionResult {
 export async function crearRegistroDocente(
   formData: DocenteFormData,
 ): Promise<ActionResult> {
-  // 1. Validar los datos de entrada con Zod.
-  const validation = DocenteFormSchema.safeParse(formData)
-  if (!validation.success) {
-    return { success: false, message: validation.error.issues[0].message }
-  }
-  const safeData = validation.data
-
-  const supabase = await createClient() as SupabaseClient
-
-  // Usamos una función RPC para envolver la lógica en una transacción de base de datos.
-  // Esto asegura que si algo falla, se revierten todos los cambios.
-  const { data, error } = await supabase.rpc('registrar_docente_y_generar_token', {
-    p_user_id: safeData.userId,
-    p_email: safeData.userEmail,
-    p_nombre: safeData.nombre,
-    p_telefono: safeData.telefono,
-    p_departamento: safeData.departamento,
-    p_event_id: CONGRESO_IGE_EVENT_ID,
-  })
-
-  if (error) {
-    console.error('[Docente Register] Error en RPC:', error.message)
-    // Si el error es por una clave única duplicada (el usuario ya existe), damos un mensaje claro.
-    if (error.code === '23505') {
-      return { success: false, message: 'Este usuario ya se encuentra registrado en el sistema.' }
+  try {
+    // 1. Validar los datos de entrada con Zod.
+    const validation = DocenteFormSchema.safeParse(formData)
+    if (!validation.success) {
+      return { success: false, message: validation.error.issues[0].message }
     }
-    return { success: false, message: 'No se pudo completar el registro. Intenta de nuevo.' }
-  }
+    const safeData = validation.data
 
-  // La función RPC devuelve el token generado.
-  return {
-    success: true,
-    message: '¡Registro de docente completado! Se ha generado tu token de acceso.',
-    token: data,
+    const supabase = await createClient() as SupabaseClient
+
+    // Usamos una función RPC para envolver la lógica en una transacción de base de datos.
+    // Esto asegura que si algo falla, se revierten todos los cambios.
+    const { data, error } = await supabase.rpc('registrar_docente_y_generar_token', {
+      p_user_id: safeData.userId,
+      p_email: safeData.userEmail,
+      p_nombre: safeData.nombre,
+      p_telefono: safeData.telefono,
+      p_departamento: safeData.departamento,
+      p_event_id: CONGRESO_IGE_EVENT_ID,
+    })
+
+    if (error) {
+      console.error('[Docente Register] Error en RPC:', error.message)
+      // Si el error es por una clave única duplicada (el usuario ya existe), damos un mensaje claro.
+      if (error.code === '23505') {
+        return { success: false, message: 'Este usuario ya se encuentra registrado en el sistema.' }
+      }
+      return { success: false, message: 'No se pudo completar el registro. Intenta de nuevo.' }
+    }
+
+    // La función RPC devuelve el token generado.
+    return {
+      success: true,
+      message: '¡Registro de docente completado! Se ha generado tu token de acceso.',
+      token: data,
+    }
+  } catch (err) {
+    console.error('[crearRegistroDocente] Excepción no controlada:', err instanceof Error ? err.message : String(err))
+    return { success: false, message: 'Error crítico en el servidor al registrar al docente.' }
   }
 }

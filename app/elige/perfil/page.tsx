@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { HiOutlineExclamationCircle, HiOutlineClipboardList } from 'react-icons/hi'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
 import { getMiPerfil, getUnidadesAcademicas, actualizarMiUnidadAcademica } from './actions'
@@ -14,11 +14,6 @@ import { ProfileHeader } from './ProfileHeader'
 import { ProfileAvatarCard } from './ProfileAvatarCard'
 import { ProfileDetailsCard } from './ProfileDetailsCard'
 import { VoucherUploader } from './VoucherUploaderClient'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
 
 interface PerfilUsuarioConId {
   id: string
@@ -60,6 +55,7 @@ function extraerAvatarDeUsuario(user: User | null | undefined): string | null {
 }
 
 export default function PerfilPage() {
+  const supabase = useMemo(() => createClient(), [])
   const [perfil, setPerfil] = useState<PerfilUsuarioConId | null>(null)
   const [resumen, setResumen] = useState<ResumenDashboard | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -72,10 +68,15 @@ export default function PerfilPage() {
   const [uaSaved, setUaSaved] = useState(false)
   const [uaError, setUaError] = useState<string | null>(null)
 
+  const isFetchingRef = useRef(false)
+
   const isAuthenticated = !!session
   const requiereCompletarUA = isAuthenticated && (!perfil || perfil.unidadAcademicaId === null)
 
   const cargarDatos = useCallback(async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+
     try {
       const [dataPerfil, dataResumen, dataUAs, sessionResult] = await Promise.all([
         getMiPerfil(),
@@ -89,7 +90,7 @@ export default function PerfilPage() {
 
       if (dataPerfil) {
         setPerfil(dataPerfil)
-        if (dataPerfil.unidadAcademicaId) {
+        if (dataPerfil.unidadAcademicaId != null) {
           setSelectedUA(dataPerfil.unidadAcademicaId)
         }
       } else {
@@ -103,8 +104,10 @@ export default function PerfilPage() {
       setAvatarUrl(photoUrl)
     } catch (err) {
       console.error('Error al sincronizar datos del perfil:', err)
+    } finally {
+      isFetchingRef.current = false
     }
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     let activo = true
@@ -116,13 +119,27 @@ export default function PerfilPage() {
 
     inicializar()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
-      if (activo) {
-        setSession(sess ?? null)
-        if (sess?.user) {
-          setAvatarUrl(extraerAvatarDeUsuario(sess.user))
-          cargarDatos()
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (!activo) return
+
+      // Mantener sincronizado el estado local de sesión y avatar
+      setSession(sess ?? null)
+      if (sess?.user) {
+        setAvatarUrl(extraerAvatarDeUsuario(sess.user))
+      } else {
+        setAvatarUrl(null)
+        setPerfil(null)
+        setResumen(null)
+      }
+
+      // PREVENCIÓN DE BUCLE INFINITO EN VERCEL (HTTP 500):
+      // - 'INITIAL_SESSION': ya fue invocado por inicializar() arriba; no duplicar.
+      // - 'TOKEN_REFRESHED': Supabase refresca tokens periódicamente o en getSession;
+      //   los datos de perfil no cambian en un simple refresco de token. Disparar
+      //   Server Actions aquí creaba un bucle continuo saturando las Serverless Functions.
+      // Solo sincronizamos Server Actions ante un inicio de sesión explícito ('SIGNED_IN'):
+      if (event === 'SIGNED_IN') {
+        cargarDatos()
       }
     })
 
@@ -130,7 +147,7 @@ export default function PerfilPage() {
       activo = false
       subscription.unsubscribe()
     }
-  }, [cargarDatos])
+  }, [cargarDatos, supabase])
 
   const handleSaveUA = async () => {
     if (selectedUA === '') return
@@ -243,3 +260,4 @@ export default function PerfilPage() {
     </div>
   )
 }
+
