@@ -20,6 +20,7 @@ import {
   HiOutlineQrcode,
   HiOutlineCash,
   HiOutlineCamera,
+   HiOutlinePlay
 } from 'react-icons/hi'
 
 type UserRole = 'admin' | 'encargado' | 'user'
@@ -130,9 +131,9 @@ const navItems: NavItem[] = [
     roles: ['user'],
   },
   {
-    label: 'Mapa del Evento',
-    href: '/elige/mapa',
-    icon: <HiOutlineMap className="w-5 h-5" />,
+    label: 'En Vivo',
+    href: '/elige/en-vivo',
+    icon: <HiOutlinePlay className="w-5 h-5" />,
     roles: ['admin', 'encargado', 'user'],
   },
   {

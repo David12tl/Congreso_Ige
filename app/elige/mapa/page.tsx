@@ -1,8 +1,11 @@
 'use client'
 
 import React from 'react'
-import { HiOutlineMap, HiOutlineLocationMarker } from 'react-icons/hi'
+import { HiOutlinePlay } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
+
+// Configurable YouTube live stream ID
+const YOUTUBE_LIVE_ID = 'TU_VIDEO_ID'
 
 export default function MapaPage() {
   return (
@@ -11,60 +14,40 @@ export default function MapaPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-black tracking-tight text-[#0f172a] dark:text-white text-2xl md:text-3xl">
-            <HiOutlineMap className="inline-block w-8 h-8 mr-3 text-emerald-700" />
-            Mapa del{' '}
+            <HiOutlinePlay className="inline-block w-8 h-8 mr-3 text-emerald-700" /> Congreso En Vivo
             <span className="text-emerald-700">
               Evento
             </span>
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-light mt-1">GLOBAL // PLANO_INTERACTIVO_DEL_CONGRESO</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-light mt-1">GLOBAL // STREAMING_OFICIAL_DEL_CONGRESO</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">Mapa disponible</span>
+          <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">● EN VIVO</span>
         </div>
       </header>
 
       {/* Map placeholder */}
       <GlassCard className="p-8 min-h-[500px] flex flex-col items-center justify-center" glowColor="emerald">
         <div className="relative mb-6">
-          {/* Pulse ring */}
-          <div className="absolute -inset-6 bg-emerald-100 rounded-full blur-2xl animate-pulse" />
-          <div className="relative w-24 h-24 rounded-[24px] bg-emerald-50 border border-emerald-200 flex items-center justify-center">
-            <HiOutlineMap className="w-12 h-12 text-emerald-700" />
-          </div>
+          <iframe
+            width="560"
+            height="315"
+            src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_LIVE_ID}?autoplay=1&mute=1`}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl"
+          />
         </div>
 
-        <h2 className="text-2xl font-bold text-[#0f172a] dark:text-white mb-2">Plano del Congreso IGE 2026</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-lg text-center mb-8 font-light">
-          Visualiza la distribución de stands, salas de conferencias, zonas de
-          networking y áreas de servicio dentro del evento.
+        <h2 className="text-2xl font-bold text-[#0f172a] dark:text-white mb-2">Transmisión en Vivo</h2>
+        <p className="text-slate-500 dark:text-slate-400 data-sm text-center mb-8 font-light">
+          Sigue en directo todas las conferencias y ponencias del Congreso IGE 2026
         </p>
 
-        {/* Legend preview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-2xl">
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <HiOutlineLocationMarker className="w-4 h-4 text-cyan-700" />
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-light">Developer Land</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <HiOutlineLocationMarker className="w-4 h-4 text-purple-700" />
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-light">Data Land</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <HiOutlineLocationMarker className="w-4 h-4 text-amber-700" />
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-light">Cloud Land</span>
-          </div>
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <HiOutlineLocationMarker className="w-4 h-4 text-emerald-700" />
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-light">IA Land</span>
-          </div>
-        </div>
-
-        <div className="mt-8 flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg">
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          <span className="text-amber-700 text-xs font-light">Próximamente — Mapa interactivo con Leaflet / Mapbox</span>
-        </div>
+        
       </GlassCard>
     </div>
   )

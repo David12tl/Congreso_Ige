@@ -139,7 +139,7 @@ export default async function DashboardPage() {
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Acceso Rápido</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
-            href="/elige/mapa"
+            href="/elige/en-vivo"
             className="group bg-white dark:bg-[#2a2a2f] rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-lg hover:border-[#1e3a8a]/30 transition-all"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a] mb-4 group-hover:scale-110 transition-transform">
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
-            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] transition-colors">Mapa del Evento</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#1e3a8a] transition-colors">En Vivo</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Explora stands, salas de conferencias y zonas del congreso</p>
           </Link>
 
