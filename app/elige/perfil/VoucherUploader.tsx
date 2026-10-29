@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 
 export interface SubirVoucherResult {
   success: boolean
@@ -58,7 +59,9 @@ export async function subirVoucherAccion(formData: FormData): Promise<SubirVouch
     // 3. Preparación y llamada a Supabase Storage
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const contentType = file.type || `image/${fileExt}`
-    const filePath = `${matricula}/${userId}-${Date.now()}.${fileExt}`
+    const cleanMatricula = matricula.trim()
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
+    const filePath = `${cleanMatricula}/${fileName}`
 
     console.log(`[subirVoucherAccion] Subiendo a Supabase Storage: path="${filePath}", contentType="${contentType}"`)
 
@@ -78,18 +81,20 @@ export async function subirVoucherAccion(formData: FormData): Promise<SubirVouch
       }
     }
 
-    // 4. Obtención de URL pública
+    // 4. Obtención de URL pública de respaldo
     const { data: publicUrlData } = supabase.storage
       .from('vouchers')
       .getPublicUrl(filePath)
 
     // 5. Guardar registro en la base de datos (comprobantes_pago)
+    // El valor exacto de Storage ('filePath') se inserta en file_path
+    console.log(`[subirVoucherAccion] Guardando en comprobantes_pago: ruta_archivo/file_path="${filePath}"`)
     const { error: dbError } = await supabase
       .from('comprobantes_pago')
       .insert([
         {
           profile_id: userId,
-          matricula: matricula,
+          matricula: cleanMatricula,
           file_path: filePath,
           file_url: publicUrlData.publicUrl,
           estado: 'pendiente'
@@ -104,6 +109,9 @@ export async function subirVoucherAccion(formData: FormData): Promise<SubirVouch
         error: dbError.message
       }
     }
+
+    // 6. Invalidar caché para refrescar componentes del servidor
+    revalidatePath('/elige/perfil')
 
     console.log('[subirVoucherAccion] Comprobante subido y registrado exitosamente:', filePath)
     return {
