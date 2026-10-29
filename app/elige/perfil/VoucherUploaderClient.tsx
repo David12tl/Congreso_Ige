@@ -15,24 +15,52 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState<string>('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setStatus('idle')
     setMessage('')
 
-    const formData = new FormData(e.currentTarget as HTMLFormElement)
-    formData.append('userId', userId)
-    formData.append('matricula', matricula)
+    if (!userId || userId.trim() === '') {
+      setStatus('error')
+      setMessage('Error: No se encontró el identificador del usuario (userId).')
+      return
+    }
+
+    if (!matricula || matricula.trim() === '') {
+      setStatus('error')
+      setMessage('Error: No se encontró la matrícula del usuario.')
+      return
+    }
+
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    // Garantizar que userId y matricula siempre viajen en el FormData
+    formData.set('userId', userId)
+    formData.set('matricula', matricula)
+
+    const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null
+    const selectedFile = fileInput?.files?.[0]
+
+    if (!selectedFile || selectedFile.size === 0) {
+      setStatus('error')
+      setMessage('Por favor, selecciona un archivo válido antes de enviar.')
+      return
+    }
+
+    // Agregar explícitamente el archivo bajo 'archivo' y 'file' para máxima compatibilidad
+    formData.set('archivo', selectedFile)
+    formData.set('file', selectedFile)
 
     startTransition(async () => {
       const result = await subirVoucherAccion(formData)
       if (result.success) {
         setStatus('success')
-        setMessage(result.message)
-        ;(e.currentTarget as HTMLFormElement).reset()
+        setMessage(result.message || 'Comprobante de pago subido correctamente.')
+        form.reset()
       } else {
         setStatus('error')
-        setMessage(result.message)
+        setMessage(result.error || result.message || 'Error al procesar el comprobante.')
       }
     })
   }
@@ -48,10 +76,12 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <label className="text-xs font-semibold text-[#475569] dark:text-slate-400 uppercase tracking-widest">
+          <label htmlFor="archivo" className="text-xs font-semibold text-[#475569] dark:text-slate-400 uppercase tracking-widest">
             Seleccionar archivo (JPG, PNG, PDF)
           </label>
           <input
+            id="archivo"
+            name="archivo"
             type="file"
             accept="image/*,application/pdf"
             required
