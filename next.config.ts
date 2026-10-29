@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   // Habilitar optimización de imágenes (WebP/AVIF) para imágenes locales y externas
   images: {
     formats: ['image/avif', 'image/webp'],

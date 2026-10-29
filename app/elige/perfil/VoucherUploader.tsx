@@ -45,6 +45,13 @@ export async function subirVoucherAccion(formData: FormData): Promise<SubirVouch
     return { success: false, message: errorMsg, error: errorMsg }
   }
 
+  // Validación de seguridad en servidor para límite de tamaño (10 MB)
+  if (file.size > 10 * 1024 * 1024) {
+    const errorMsg = 'El archivo excede el tamaño máximo permitido de 10 MB.'
+    console.error(`[subirVoucherAccion] Error: ${errorMsg}`)
+    return { success: false, message: errorMsg, error: errorMsg }
+  }
+
   try {
     const supabase = await createClient()
 

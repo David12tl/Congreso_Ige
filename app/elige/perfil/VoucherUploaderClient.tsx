@@ -5,6 +5,8 @@ import { HiOutlineCloudUpload, HiCheckCircle, HiExclamationCircle } from 'react-
 import { subirVoucherAccion } from './VoucherUploader'
 import { GlassCard } from '@/components/ui/GlassCard'
 
+const MAX_FILE_SIZE_BYTES = 4_718_592 // 4.5 MB
+
 interface VoucherUploaderProps {
   userId: string
   matricula: string
@@ -14,6 +16,25 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
   const [isPending, startTransition] = useTransition()
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState<string>('')
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+      setStatus('error')
+      setMessage(`El archivo seleccionado es muy pesado (${fileSizeMB} MB). El tamaño máximo permitido es de 4.5 MB.`)
+      e.target.value = '' // Cancelar y limpiar selección
+      return
+    }
+
+    // Limpiar alertas de error previas si el archivo ahora es válido
+    if (status === 'error') {
+      setStatus('idle')
+      setMessage('')
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -48,6 +69,14 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
       return
     }
 
+    // Validación de tamaño máximo (4.5 MB) previo al envío
+    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (selectedFile.size / (1024 * 1024)).toFixed(2)
+      setStatus('error')
+      setMessage(`El archivo seleccionado es muy pesado (${fileSizeMB} MB). El tamaño máximo permitido es de 4.5 MB.`)
+      return
+    }
+
     // Agregar explícitamente el archivo bajo 'archivo' y 'file' para máxima compatibilidad
     formData.set('archivo', selectedFile)
     formData.set('file', selectedFile)
@@ -77,7 +106,7 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <label htmlFor="archivo" className="text-xs font-semibold text-[#475569] dark:text-slate-400 uppercase tracking-widest">
-            Seleccionar archivo (JPG, PNG, PDF)
+            Seleccionar archivo (JPG, PNG, PDF - Máx. 4.5 MB)
           </label>
           <input
             id="archivo"
@@ -85,6 +114,7 @@ export function VoucherUploader({ userId, matricula }: VoucherUploaderProps) {
             type="file"
             accept="image/*,application/pdf"
             required
+            onChange={handleFileChange}
             className="w-full bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm"
           />
           <button
