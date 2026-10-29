@@ -16,9 +16,10 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { 
   obtenerComprobantesPorUsuario, 
   cambiarEstadoComprobante,
-  normalizarRutaStorage,
   ComprobanteItem 
 } from '../../../../src/hooks/adminVoucherActions'
+
+import { normalizarRutaStorage } from '@/lib/storageUtils'
 import { createClient } from '@/lib/supabase/client'
 
 interface Comprobante {
@@ -47,8 +48,13 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
     return Promise.all(
       items.map(async (comp) => {
         // Limpieza y normalización de la ruta almacenada
-        const rawPath = comp.ruta_archivo || comp.file_path || comp.file_url || ''
-        const rutaLimpia = normalizarRutaStorage(rawPath)
+        const rutaOriginal = typeof comp.ruta_archivo === 'string' ? comp.ruta_archivo : String(comp.ruta_archivo || '')
+        const rutaLimpia = normalizarRutaStorage(rutaOriginal)
+
+        if (!rutaLimpia) {
+          console.warn('[Admin Voucher] Ruta inválida o vacía para el comprobante:', comp)
+          return { ...comp, signedUrl: null }
+        }
 
         let signedUrl: string | null = comp.signedUrl ?? null
 

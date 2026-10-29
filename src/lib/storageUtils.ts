@@ -1,40 +1,51 @@
 /**
- * Normaliza y limpia una ruta de archivo dentro del bucket privado 'vouchers'.
- * Remueve prefijos de bucket ('vouchers/'), slashes iniciales, URLs completas de Supabase y query tokens.
+ * Normaliza y limpia la ruta de un archivo para su uso con Supabase Storage.
+ * Elimina prefijos innecesarios, asegura el formato correcto y maneja
+ * tanto rutas relativas como URLs completas.
+ *
+ * @param rawPath - La ruta original del archivo (puede ser file_path, ruta_archivo, file_url o cadena vacía)
+ * @returns La ruta normalizada lista para usar con Supabase Storage, o cadena vacía si no es válida
  */
-export function normalizarRutaStorage(raw: string | null | undefined): string {
-  if (!raw || typeof raw !== 'string') return ''
-  let ruta = raw.trim()
-
-  // Remover query params si los tiene (?token=...)
-  ruta = ruta.split('?')[0]
-
-  // Extraer la ruta relativa si viene como URL completa de Supabase Storage
-  if (ruta.includes('/storage/v1/object/public/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/public/vouchers/').pop() || ruta
-  } else if (ruta.includes('/storage/v1/object/sign/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/sign/vouchers/').pop() || ruta
-  } else if (ruta.includes('/storage/v1/object/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/vouchers/').pop() || ruta
-  } else if (ruta.includes('/vouchers/')) {
-    ruta = ruta.split('/vouchers/').pop() || ruta
+export function normalizarRutaStorage(rawPath: string): string {
+  if (!rawPath) {
+    return ''
   }
 
-  // Quitar prefijo 'vouchers/' si estuviera presente
-  if (ruta.startsWith('vouchers/')) {
-    ruta = ruta.slice('vouchers/'.length)
+  // Convertir a string y limpiar
+  let path = String(rawPath).trim()
+
+  // Remover prefijos de URL completas si están presentes
+  // Patrones comunes: https://..., http://..., supabase storage URLs
+  const urlPrefixes = [
+    'https://',
+    'http://',
+  ]
+
+  for (const prefix of urlPrefixes) {
+    if (path.startsWith(prefix)) {
+      // Intentar extraer el camino después del bucket name
+      // Formato típico de Supabase: https://ref.supabase.co/storage/v1/bucket/path/to/file
+      const storageMatch = path.match(/\/storage\/v1\/[^/]+\/(.+)$/)
+      if (storageMatch) {
+        path = storageMatch[1]
+        break
+      }
+      // Si no es un patrón de Supabase conocido, quitar el prefijo
+      path = path.replace(prefix, '')
+      break
+    }
   }
 
-  // Quitar slashes al inicio
-  ruta = ruta.replace(/^\/+/, '')
+  // Eliminar barras diagonales al principio y al final
+  path = path.replace(/^\/+|\/+$/g, '')
 
-  // Decodificar posibles caracteres codificados (%20, etc.)
-  try {
-    ruta = decodeURIComponent(ruta)
-  } catch {
-    // Si falla, usar tal como está
+  // Reemplazar múltiples barras diagonales consecutivas por una sola
+  path = path.replace(/\/+/g, '/')
+
+  // Si la ruta está vacía después de la limpieza, retornar vacía
+  if (!path) {
+    return ''
   }
 
-  return ruta
+  return path
 }
-

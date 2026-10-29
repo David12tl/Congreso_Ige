@@ -3,7 +3,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { normalizarRutaStorage } from '@/lib/storageUtils'
-export { normalizarRutaStorage }
 
 export interface ComprobanteItem {
   id: string
