@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { normalizarRutaStorage } from '@/lib/storageUtils'
+export { normalizarRutaStorage }
 
 export interface ComprobanteItem {
   id: string
@@ -13,46 +15,6 @@ export interface ComprobanteItem {
   estado: string
   created_at: string | null
   profile_id: string
-}
-
-/**
- * Normaliza y limpia una ruta de archivo dentro del bucket privado 'vouchers'.
- * Remueve prefijos de bucket ('vouchers/'), slashes iniciales, URLs completas de Supabase y query tokens.
- */
-export function normalizarRutaStorage(raw: string | null | undefined): string {
-  if (!raw || typeof raw !== 'string') return ''
-  let ruta = raw.trim()
-
-  // Remover query params si los tiene (?token=...)
-  ruta = ruta.split('?')[0]
-
-  // Extraer la ruta relativa si viene como URL completa de Supabase Storage
-  if (ruta.includes('/storage/v1/object/public/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/public/vouchers/').pop() || ruta
-  } else if (ruta.includes('/storage/v1/object/sign/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/sign/vouchers/').pop() || ruta
-  } else if (ruta.includes('/storage/v1/object/vouchers/')) {
-    ruta = ruta.split('/storage/v1/object/vouchers/').pop() || ruta
-  } else if (ruta.includes('/vouchers/')) {
-    ruta = ruta.split('/vouchers/').pop() || ruta
-  }
-
-  // Quitar prefijo 'vouchers/' si estuviera presente
-  if (ruta.startsWith('vouchers/')) {
-    ruta = ruta.slice('vouchers/'.length)
-  }
-
-  // Quitar slashes al inicio
-  ruta = ruta.replace(/^\/+/, '')
-
-  // Decodificar posibles caracteres codificados (%20, etc.)
-  try {
-    ruta = decodeURIComponent(ruta)
-  } catch {
-    // Si falla, usar tal como está
-  }
-
-  return ruta
 }
 
 export async function obtenerComprobantesPorUsuario(userId: string): Promise<ComprobanteItem[]> {
@@ -77,7 +39,7 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
 
   // 2. Si no encontró resultados, buscar por matricula
   if (!data || data.length === 0) {
-    const { data: dataPorMatricula } = await supabase
+    const { data: dataPorMatricula, error: errorPorMatricula } = await supabase
       .from('comprobantes_pago')
       .select(`
         id,
@@ -93,12 +55,13 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
 
     if (dataPorMatricula && dataPorMatricula.length > 0) {
       data = dataPorMatricula
+      error = errorPorMatricula
     }
   }
 
   // 3. Si aún no encontró resultados, verificar si 'userId' corresponde a un id de ticket
   if (!data || data.length === 0) {
-    const { data: ticket } = await supabase
+    const { data: ticket, error: errorTicket } = await supabase
       .from('tickets')
       .select('buyer_id, matricula')
       .eq('id', userId)
@@ -106,7 +69,7 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
 
     if (ticket) {
       if (ticket.buyer_id) {
-        const { data: dataBuyer } = await supabase
+        const { data: dataBuyer, error: errorBuyer } = await supabase
           .from('comprobantes_pago')
           .select(`
             id,
@@ -122,11 +85,12 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
 
         if (dataBuyer && dataBuyer.length > 0) {
           data = dataBuyer
+          error = errorBuyer
         }
       }
 
       if ((!data || data.length === 0) && ticket.matricula) {
-        const { data: dataTicketMatricula } = await supabase
+        const { data: dataTicketMatricula, error: errorTicketMatricula } = await supabase
           .from('comprobantes_pago')
           .select(`
             id,
@@ -142,6 +106,7 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
 
         if (dataTicketMatricula && dataTicketMatricula.length > 0) {
           data = dataTicketMatricula
+          error = errorTicketMatricula
         }
       }
     }
@@ -209,10 +174,14 @@ export async function cambiarEstadoComprobante(
 
   // 2. Si es aprobado, marcar su token_canje como completado
   if (nuevoEstado === 'aprobado') {
-    await supabase
+    const { error: updateError } = await supabase
       .from('tokens_canje')
       .update({ estado_pago: 'completado' })
       .eq('utilizado_por', userId)
+
+    if (updateError) {
+      console.error('[cambiarEstadoComprobante] Error actualizando token_canje:', updateError.message)
+    }
   }
 
   revalidatePath(`/elige/usuarios-ua/${userId}`)
