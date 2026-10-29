@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useState, useMemo, use } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { 
   HiOutlineFolderOpen, 
@@ -10,12 +9,14 @@ import {
   HiOutlineX, 
   HiOutlineDocumentText,
   HiOutlineEye,
-  HiOutlineClock
+  HiOutlineClock,
+  HiOutlinePhotograph
 } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { 
   obtenerComprobantesPorUsuario, 
   cambiarEstadoComprobante,
+  normalizarRutaStorage,
   ComprobanteItem 
 } from '../../../../src/hooks/adminVoucherActions'
 import { createClient } from '@/lib/supabase/client'
@@ -39,44 +40,42 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
-  // Resuelve las URLs firmadas utilizando el cliente Supabase para cada comprobante
+  // Genera URLs firmadas para cada fila utilizando el cliente de Supabase
   const resolverComprobantesConSignedUrls = async (items: ComprobanteItem[]): Promise<Comprobante[]> => {
     return Promise.all(
       items.map(async (comp) => {
+        // Limpieza y normalización de la ruta almacenada
         const rawPath = comp.ruta_archivo || comp.file_path || comp.file_url || ''
-        let cleanPath = rawPath.trim()
-        if (cleanPath.includes('/vouchers/')) {
-          cleanPath = cleanPath.split('/vouchers/').pop() || cleanPath
-        } else if (cleanPath.startsWith('vouchers/')) {
-          cleanPath = cleanPath.replace(/^vouchers\//, '')
-        }
-        cleanPath = cleanPath.split('?')[0]
+        const rutaLimpia = normalizarRutaStorage(rawPath)
 
-        let signedUrl = comp.signedUrl
+        let signedUrl: string | null = comp.signedUrl ?? null
 
-        try {
-          if (cleanPath) {
+        // Invocación a Supabase Storage para obtener una URL temporal autorizada (3600s = 1 hora)
+        if (rutaLimpia) {
+          try {
             const { data: signData, error: signError } = await supabase.storage
               .from('vouchers')
-              .createSignedUrl(cleanPath, 3600)
+              .createSignedUrl(rutaLimpia, 3600)
 
             if (signError) {
-              console.error(`[Cliente Admin] Error en createSignedUrl para ruta_archivo "${cleanPath}":`, signError.message)
+              console.error(`[Admin Voucher] Error en createSignedUrl para ruta_archivo "${rutaLimpia}":`, signError.message)
             } else if (signData?.signedUrl) {
               signedUrl = signData.signedUrl
             }
+          } catch (err) {
+            console.error(`[Admin Voucher] Excepción al obtener signedUrl para "${rutaLimpia}":`, err)
           }
-        } catch (err) {
-          console.error(`[Cliente Admin] Excepción obteniendo signedUrl para "${cleanPath}":`, err)
         }
 
-        console.log(`[Cliente Admin Voucher] ruta_archivo: "${cleanPath}", signedUrl: "${signedUrl ?? 'NO_URL'}"`)
+        // Log explícito para depuración
+        console.log(`[Admin Voucher] ruta_archivo almacenada: "${rutaLimpia}", signedUrl obtenida: "${signedUrl ?? 'NO_URL'}"`)
 
         return {
           ...comp,
-          ruta_archivo: cleanPath,
-          signedUrl: signedUrl || comp.file_url
+          ruta_archivo: rutaLimpia,
+          signedUrl: signedUrl
         }
       })
     )
@@ -154,7 +153,7 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
         </div>
       </GlassCard>
 
-      {/* Galería de tarjetas */}
+      {/* Galería de tarjetas de comprobantes */}
       {comprobantes.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-[#2a2a2f] rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
           <p className="text-sm text-slate-400 italic">Esta carpeta no contiene comprobantes subidos aún.</p>
@@ -162,8 +161,9 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {comprobantes.map((comp) => {
-            const isPdf = comp.ruta_archivo.toLowerCase().endsWith('.pdf') || comp.file_url.toLowerCase().includes('.pdf')
-            const srcUrl = comp.signedUrl || comp.file_url
+            const isPdf = comp.ruta_archivo.toLowerCase().endsWith('.pdf') || (comp.file_url && comp.file_url.toLowerCase().includes('.pdf'))
+            const hasSignedUrl = !!comp.signedUrl
+            const hasImageError = !!imageErrors[comp.id]
 
             return (
               <GlassCard 
@@ -172,32 +172,47 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
                 glowColor={comp.estado === 'aprobado' ? 'emerald' : comp.estado === 'rechazado' ? 'amber' : 'purple'}
               >
                 <div>
-                  {/* Previsualización */}
+                  {/* Previsualización del Comprobante */}
                   {isPdf ? (
                     <div className="w-full h-44 bg-red-50 dark:bg-red-950/30 rounded-xl flex flex-col items-center justify-center text-red-600 border border-red-200 dark:border-red-900/50 p-4 text-center">
                       <HiOutlineDocumentText className="w-12 h-12 mb-2" />
                       <span className="text-xs font-bold">Documento PDF</span>
-                      <a
-                        href={srcUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
-                      >
-                        <HiOutlineEye className="w-4 h-4" /> Abrir PDF
-                      </a>
+                      {hasSignedUrl ? (
+                        <a
+                          href={comp.signedUrl!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                        >
+                          <HiOutlineEye className="w-4 h-4" /> Abrir PDF
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-red-400 mt-2 font-medium">Archivo no encontrado o expirado</span>
+                      )}
+                    </div>
+                  ) : (!hasSignedUrl || hasImageError) ? (
+                    <div className="w-full h-44 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex flex-col items-center justify-center text-slate-400 p-4 text-center border border-dashed border-slate-300 dark:border-slate-700">
+                      <HiOutlinePhotograph className="w-10 h-10 mb-2 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Archivo no encontrado o expirado</span>
+                      <span className="text-[10px] text-slate-400 mt-1 font-mono break-all line-clamp-1">
+                        {comp.ruta_archivo || 'Sin ruta'}
+                      </span>
                     </div>
                   ) : (
                     <div className="w-full h-44 relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group bg-slate-100 dark:bg-slate-800">
-                      <Image 
-                        src={srcUrl} 
+                      {/* Renderizado de Signed URL usando <img> para carga directa sin restricciones de dominio */}
+                      <img 
+                        src={comp.signedUrl!} 
                         alt="Voucher de pago" 
-                        fill 
-                        unoptimized
-                        className="object-cover transition-transform duration-300 group-hover:scale-105" 
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                        onError={() => {
+                          console.warn(`[Admin Voucher] Error al cargar imagen en pantalla para comprobante ${comp.id}. URL expirada o inválida.`)
+                          setImageErrors((prev) => ({ ...prev, [comp.id]: true }))
+                        }}
                       />
                       <button 
                         type="button"
-                        onClick={() => setPreviewUrl(srcUrl)}
+                        onClick={() => setPreviewUrl(comp.signedUrl!)}
                         className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity font-bold text-xs gap-1 cursor-pointer"
                       >
                         <HiOutlineEye className="w-5 h-5" /> Ampliar
@@ -223,7 +238,7 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
                   </div>
                 </div>
 
-                {/* Acciones */}
+                {/* Acciones de Aprobación */}
                 <div className="mt-6 pt-3 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleEstado(comp.id, 'aprobado')}
@@ -256,12 +271,10 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
           onClick={() => setPreviewUrl(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] w-full h-full rounded-2xl overflow-hidden flex items-center justify-center">
-            <Image 
+            <img 
               src={previewUrl} 
               alt="Vista ampliada" 
-              fill 
-              unoptimized
-              className="object-contain" 
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" 
             />
           </div>
         </div>

@@ -133,7 +133,7 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
     .map((t): UsuarioUA => {
       const buyerId = t.buyer_id ?? ''
       return {
-        id: t.id,
+        id: buyerId || t.id,
         nombre: valorUtilizable(t.nombre),
         email: valorUtilizable(t.email) || emailPorBuyer.get(buyerId) || '',
         matricula: valorUtilizable(t.matricula),

@@ -15,10 +15,53 @@ export interface ComprobanteItem {
   profile_id: string
 }
 
+/**
+ * Normaliza y limpia una ruta de archivo dentro del bucket privado 'vouchers'.
+ * Remueve prefijos de bucket ('vouchers/'), slashes iniciales, URLs completas de Supabase y query tokens.
+ */
+export function normalizarRutaStorage(raw: string | null | undefined): string {
+  if (!raw || typeof raw !== 'string') return ''
+  let ruta = raw.trim()
+
+  // Remover query params si los tiene (?token=...)
+  ruta = ruta.split('?')[0]
+
+  // Extraer la ruta relativa si viene como URL completa de Supabase Storage
+  if (ruta.includes('/storage/v1/object/public/vouchers/')) {
+    ruta = ruta.split('/storage/v1/object/public/vouchers/').pop() || ruta
+  } else if (ruta.includes('/storage/v1/object/sign/vouchers/')) {
+    ruta = ruta.split('/storage/v1/object/sign/vouchers/').pop() || ruta
+  } else if (ruta.includes('/storage/v1/object/vouchers/')) {
+    ruta = ruta.split('/storage/v1/object/vouchers/').pop() || ruta
+  } else if (ruta.includes('/vouchers/')) {
+    ruta = ruta.split('/vouchers/').pop() || ruta
+  }
+
+  // Quitar prefijo 'vouchers/' si estuviera presente
+  if (ruta.startsWith('vouchers/')) {
+    ruta = ruta.slice('vouchers/'.length)
+  }
+
+  // Quitar slashes al inicio
+  ruta = ruta.replace(/^\/+/, '')
+
+  // Decodificar posibles caracteres codificados (%20, etc.)
+  try {
+    ruta = decodeURIComponent(ruta)
+  } catch {
+    // Si falla, usar tal como está
+  }
+
+  return ruta
+}
+
 export async function obtenerComprobantesPorUsuario(userId: string): Promise<ComprobanteItem[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  console.log('[obtenerComprobantesPorUsuario] Buscando comprobantes para identificador:', userId)
+
+  // 1. Búsqueda principal por profile_id
+  let { data, error } = await supabase
     .from('comprobantes_pago')
     .select(`
       id,
@@ -32,22 +75,88 @@ export async function obtenerComprobantesPorUsuario(userId: string): Promise<Com
     .eq('profile_id', userId)
     .order('created_at', { ascending: false })
 
-  if (error) {
+  // 2. Si no encontró resultados, buscar por matricula
+  if (!data || data.length === 0) {
+    const { data: dataPorMatricula } = await supabase
+      .from('comprobantes_pago')
+      .select(`
+        id,
+        matricula,
+        file_url,
+        file_path,
+        estado,
+        created_at,
+        profile_id
+      `)
+      .eq('matricula', userId)
+      .order('created_at', { ascending: false })
+
+    if (dataPorMatricula && dataPorMatricula.length > 0) {
+      data = dataPorMatricula
+    }
+  }
+
+  // 3. Si aún no encontró resultados, verificar si 'userId' corresponde a un id de ticket
+  if (!data || data.length === 0) {
+    const { data: ticket } = await supabase
+      .from('tickets')
+      .select('buyer_id, matricula')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (ticket) {
+      if (ticket.buyer_id) {
+        const { data: dataBuyer } = await supabase
+          .from('comprobantes_pago')
+          .select(`
+            id,
+            matricula,
+            file_url,
+            file_path,
+            estado,
+            created_at,
+            profile_id
+          `)
+          .eq('profile_id', ticket.buyer_id)
+          .order('created_at', { ascending: false })
+
+        if (dataBuyer && dataBuyer.length > 0) {
+          data = dataBuyer
+        }
+      }
+
+      if ((!data || data.length === 0) && ticket.matricula) {
+        const { data: dataTicketMatricula } = await supabase
+          .from('comprobantes_pago')
+          .select(`
+            id,
+            matricula,
+            file_url,
+            file_path,
+            estado,
+            created_at,
+            profile_id
+          `)
+          .eq('matricula', ticket.matricula)
+          .order('created_at', { ascending: false })
+
+        if (dataTicketMatricula && dataTicketMatricula.length > 0) {
+          data = dataTicketMatricula
+        }
+      }
+    }
+  }
+
+  if (error && (!data || data.length === 0)) {
     console.error('[obtenerComprobantesPorUsuario] Error al obtener comprobantes:', error)
     return []
   }
 
   const items: ComprobanteItem[] = await Promise.all(
     (data || []).map(async (row) => {
-      // Normalizar la ruta dentro del bucket 'vouchers'
+      // Normalizar la ruta del archivo dentro del bucket privado 'vouchers'
       const rawPath = row.file_path || (row as unknown as Record<string, unknown>).ruta_archivo as string || row.file_url || ''
-      let cleanPath = rawPath.trim()
-      if (cleanPath.includes('/vouchers/')) {
-        cleanPath = cleanPath.split('/vouchers/').pop() || cleanPath
-      } else if (cleanPath.startsWith('vouchers/')) {
-        cleanPath = cleanPath.replace(/^vouchers\//, '')
-      }
-      cleanPath = cleanPath.split('?')[0]
+      const cleanPath = normalizarRutaStorage(rawPath)
 
       let signedUrl: string | null = null
       if (cleanPath) {
