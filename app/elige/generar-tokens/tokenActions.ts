@@ -14,6 +14,7 @@ import type {
 } from '@/components/asientos/types'
 import { getSeatKey } from '@/config/auditorioConfig'
 import { v4 as uuidv4 } from 'uuid'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 
 const PRECIO_POR_BOLETO = 650
 
@@ -364,13 +365,15 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
   }
 
   const resolvedZoneId = getZoneUuid(input.zoneId) || getZoneUuid(input.zoneCode) || ZONE_UUIDS[input.zoneCode?.toLowerCase().replace(/[\s_-]/g, '')] || input.zoneId
+  const ticketType = input.estatusPago === 'pagado' ? (input.matricula ? 'alumno' : 'empresa') : 'alumno'
 
   const ticketData = {
     buyer_id: user.id,
     purchase_id: null,
     event_id: CONGRESO_IGE_EVENT_ID,
     zone_id: resolvedZoneId,
-    type: input.estatusPago === 'pagado' ? (input.matricula ? 'alumno' : 'empresa') : 'alumno',
+    type: ticketType,
+    modalidad: ticketType === 'alumno' ? normalizeStudentModality(input.modalidad) : null,
     nombre,
     email,
     matricula: cleanText(input.matricula, 80) || null,
@@ -581,11 +584,12 @@ export async function cobrarAsientoYGenerarToken(
   try {
     let alumnoId: string | null = null
     let alumnoEmail = email?.trim() || null
+    let modalidad = normalizeStudentModality(null)
 
     if (ticketId) {
       const { data: ticket, error: ticketLookupError } = await supabase
         .from('tickets')
-        .select('buyer_id, email')
+        .select('buyer_id, email, modalidad')
         .eq('id', ticketId)
         .maybeSingle()
 
@@ -595,14 +599,15 @@ export async function cobrarAsientoYGenerarToken(
       }
 
       if (ticket) {
-        const student = ticket as { buyer_id: string | null; email: string | null }
+        const student = ticket as { buyer_id: string | null; email: string | null; modalidad: string | null }
         alumnoId = student.buyer_id
         alumnoEmail = student.email?.trim() || alumnoEmail
+        modalidad = normalizeStudentModality(student.modalidad)
       }
     } else if (alumnoEmail) {
       const { data: ticket, error: ticketLookupError } = await supabase
         .from('tickets')
-        .select('buyer_id, email')
+        .select('buyer_id, email, modalidad')
         .ilike('email', alumnoEmail)
         .limit(1)
         .maybeSingle()
@@ -613,9 +618,10 @@ export async function cobrarAsientoYGenerarToken(
       }
 
       if (ticket) {
-        const student = ticket as { buyer_id: string | null; email: string | null }
+        const student = ticket as { buyer_id: string | null; email: string | null; modalidad: string | null }
         alumnoId = student.buyer_id
         alumnoEmail = student.email?.trim() || alumnoEmail
+        modalidad = normalizeStudentModality(student.modalidad)
       }
     }
 
@@ -693,6 +699,7 @@ export async function cobrarAsientoYGenerarToken(
         asiento_numero: seat.numero,
         purchase_id: purchaseId,
         type: 'alumno',
+        modalidad,
         // NOTA: Si este update falla en runtime, revisa si el campo en DB se llama 'status' en lugar de 'estatus_pago'
         estatus_pago: esPagoCompleto ? 'pagado' : 'apartado',
         purchased_at: esPagoCompleto ? new Date().toISOString() : null,
@@ -719,6 +726,7 @@ export async function cobrarAsientoYGenerarToken(
         asiento_numero: seat.numero,
         purchase_id: purchaseId,
         type: 'alumno', // Ajustado con el valor permitido por el CHECK constraint de la tabla 'tickets'
+        modalidad,
         nombre: nombre?.trim() || null,
         email: email?.trim() || null,
         // NOTA: Si este insert falla en runtime, revisa si el campo en DB se llama 'status' en lugar de 'estatus_pago'

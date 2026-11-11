@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database.types'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 
 type TicketInsert = Database['public']['Tables']['tickets']['Insert']
 
@@ -131,11 +132,8 @@ export async function actualizarInformacionPerfil(formData: UpdateAsistenteData)
       semestre: isAlumno ? (formData.semestre ?? null) : null,
       carrera: isAlumno ? (formData.carrera ?? null) : null,
       telefono: !isAlumno ? (formData.telefono ?? null) : null,
-      // La columna modalidad solo acepta 'escolarizado' | 'mixto' | null en la base de datos
       modalidad: isAlumno
-        ? (formData.modalidad === 'escolarizado' || formData.modalidad === 'mixto'
-            ? formData.modalidad
-            : 'escolarizado')
+        ? normalizeStudentModality(formData.modalidad)
         : null,
     }
 

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
 import type { ActionResult } from '@/components/asientos/types'
 import { generateCredentialPDF } from '@/lib/credentials/pdf-generator'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 
 // ─── INTERFACES DE DATOS ESTRICTAS ───────────────────────────────────
 
@@ -75,7 +76,7 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
   const [profileRes, tokenRes, ticketRes] = await Promise.all([
     client.from('profiles').select('nombre, email, matricula, carrera, semestre, telefono, unidad_academica_id').eq('id', user.id).maybeSingle(),
     client.from('tokens_canje').select('id, seat_id, type').eq('utilizado_por', user.id).maybeSingle(),
-    client.from('tickets').select('id, qr_data, nombre, email, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, matricula, carrera, semestre, telefono, unidad_academica_id').or(`id.eq.${user.id},buyer_id.eq.${user.id}`).maybeSingle()
+    client.from('tickets').select('id, qr_data, nombre, email, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, matricula, modalidad, carrera, semestre, telefono, unidad_academica_id').or(`id.eq.${user.id},buyer_id.eq.${user.id}`).maybeSingle()
   ])
 
   const profileData = profileRes?.data as Record<string, unknown> | null
@@ -124,6 +125,9 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
       nombre: nombreFinal,
       email: emailFinal,
       type: tipoFinal,
+      modalidad: tipoFinal === 'alumno'
+        ? normalizeStudentModality(ticketDb?.modalidad)
+        : null,
       matricula: matriculaFinal,
       carrera: profileData?.carrera || null,
       semestre: profileData?.semestre || null,
@@ -139,7 +143,10 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
           asiento_bloque: asientoBloque,
           asiento_fila: asientoFila,
           asiento_numero: asientoNumero,
-          qr_data: qrDataFinal
+          qr_data: qrDataFinal,
+          modalidad: tipoFinal === 'alumno'
+            ? normalizeStudentModality(ticketDb.modalidad)
+            : null,
         }).eq('id', ticketDb.id)
       }
     } else {

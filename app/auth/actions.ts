@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
@@ -133,6 +134,7 @@ export async function signUp(data: {
       email: data.email,
       nombre: data.fullName,
       type: 'student', // Tipo por defecto
+      modalidad: normalizeStudentModality(null),
       qr_data: qrData,
       purchased_at: new Date().toISOString(),
     })

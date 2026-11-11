@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { PerfilUsuarioCompleto } from '@/components/asientos/types'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 
 export interface AsientoInfo {
   id: string
@@ -22,6 +23,7 @@ interface PreRegistroInput {
   asientoNumero: number
   nombre: string
   matricula: string | null
+  modalidad?: string | null
   carrera: string | null
   empresa: string | null
   puesto: string | null
@@ -200,6 +202,7 @@ export async function crearPreRegistro(input: PreRegistroInput) {
 
     // Insertar el registro mapeando los parámetros dinámicos del 'input'
     // Se añade el campo 'type' (exigido por tu base de datos) y 'zone_id' si tu tabla los requiere.
+    const esAlumno = Boolean(input.matricula)
     const { error } = await supabase
       .from('tickets')
       .insert({
@@ -210,7 +213,8 @@ export async function crearPreRegistro(input: PreRegistroInput) {
         asiento_fila: input.asientoFila,
         asiento_numero: input.asientoNumero,
         zone_id: resolvedZoneId,
-        type: input.matricula ? 'alumno' : 'externo' // Cumple con el NOT NULL obligatorio 'type'
+        type: esAlumno ? 'alumno' : 'externo',
+        modalidad: esAlumno ? normalizeStudentModality(input.modalidad) : null,
       })
 
     if (error) {

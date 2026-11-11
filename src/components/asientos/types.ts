@@ -48,6 +48,7 @@ export interface ManualTicketInput extends SeatIdentity {
   carrera: string
   semestre: string
   telefono: string
+  modalidad?: string | null
   unidadAcademicaId?: number | null
   estatusPago?: 'pre-registro' | 'pagado' | 'pendiente'
 }

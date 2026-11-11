@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 
 interface TicketSelect {
   qr_data: string | null
@@ -43,6 +44,7 @@ export async function apartarAsientosEnBD(asientosIds: string[], eventId: string
     qr_data: id,
     event_id: eventId,
     type: 'student',
+    modalidad: normalizeStudentModality(null),
   }))
 
   const { error } = await supabase.from('tickets').insert(filasAInsertar)

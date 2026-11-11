@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { crearRegistroDocente } from './actions-docente'
+import { normalizeStudentModality } from '@/lib/tickets/modality'
 import { HiUser, HiOfficeBuilding, HiCheckCircle, HiExclamationCircle, HiLockClosed, HiClock } from 'react-icons/hi'
 
 // Estructura de datos para el formulario local
@@ -114,7 +115,7 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           matricula: type === 'alumno' ? matricula.trim() : null,
           carrera: type === 'alumno' ? carrera.trim() : null,
           semestre: type === 'alumno' ? semestre.trim() : null,
-          modalidad: type === 'alumno' ? modalidad : null,
+          modalidad: type === 'alumno' ? normalizeStudentModality(modalidad) : null,
           empresa: type === 'empresa' ? empresa.trim() : null,
         }
 
