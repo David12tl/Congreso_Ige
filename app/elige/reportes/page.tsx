@@ -123,7 +123,7 @@ function csvCell(value: string | number | null): string {
 }
 
 function exportarCSV(tickets: TicketDetalle[]): void {
-  const headers: (keyof TicketDetalle)[] = [
+  const headers = [
     'id',
     'identificador',
     'cliente',
@@ -137,7 +137,22 @@ function exportarCSV(tickets: TicketDetalle[]): void {
   ]
   const rows = [
     headers.map(csvCell).join(','),
-    ...tickets.map((ticket) => headers.map((header) => csvCell(ticket[header])).join(',')),
+    ...tickets.map((ticket) =>
+      [
+        ticket.id,
+        ticket.identificador,
+        ticket.cliente,
+        ticket.correo,
+        ticket.unidad_academica,
+        ticket.zona,
+        ticket.docente,
+        ticket.estado_pago,
+        ticket.total_abono,
+        ticket.fecha_venta,
+      ]
+        .map(csvCell)
+        .join(','),
+    ),
   ]
   const csv = `\uFEFF${rows.join('\r\n')}`
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
