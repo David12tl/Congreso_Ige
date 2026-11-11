@@ -13,6 +13,19 @@ interface DocenteSearchResult {
   tokens_canje: { token_code: string }[]
 }
 
+interface DocenteTokenDetailLookupClient {
+  from: (table: 'vista_tokens_detalles') => {
+    select: (columns: 'id') => {
+      ilike: (column: 'cliente_correo', value: string) => {
+        limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: PostgrestError | null }>
+      }
+      eq: (column: 'matricula', value: string) => {
+        limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: PostgrestError | null }>
+      }
+    }
+  }
+}
+
 /**
  * Busca docentes registrados en el evento que aún no tienen un token de gafete.
  * Filtra por nombre o email y excluye a quienes ya tienen un token.
@@ -68,19 +81,52 @@ export async function generarTokenParaDocente(docenteUserId: string) {
   const supabase = await createClient()
 
   try {
-    // 1. (MEJORA) Verificar si ya existe un token para este docente para evitar duplicados.
-    const { data: existingToken, error: checkError } = await supabase
-      .from('tokens_canje')
-      .select('token_code')
-      .eq('creado_por', docenteUserId)
+    // 1. Verificar tokens generados o ya utilizados por este docente.
+    const [existingToken, usedToken] = await Promise.all([
+      supabase
+        .from('tokens_canje')
+        .select('token_code')
+        .eq('creado_por', docenteUserId)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('tokens_canje')
+        .select('token_code')
+        .eq('utilizado_por', docenteUserId)
+        .limit(1)
+        .maybeSingle(),
+    ])
+
+    if (existingToken.error) throw existingToken.error
+    if (usedToken.error) throw usedToken.error
+
+    const { data: ticket, error: ticketError } = await supabase
+      .from('tickets')
+      .select('email, matricula')
+      .eq('buyer_id', docenteUserId)
+      .limit(1)
       .maybeSingle()
 
-    if (checkError) throw checkError
-    if (existingToken) {
+    if (ticketError) throw ticketError
+
+    const detailLookup = supabase as unknown as DocenteTokenDetailLookupClient
+    const [emailToken, matriculaToken] = await Promise.all([
+      ticket?.email
+        ? detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', ticket.email).limit(1)
+        : Promise.resolve({ data: null, error: null }),
+      ticket?.matricula
+        ? detailLookup.from('vista_tokens_detalles').select('id').eq('matricula', ticket.matricula).limit(1)
+        : Promise.resolve({ data: null, error: null }),
+    ])
+
+    if (emailToken.error) throw emailToken.error
+    if (matriculaToken.error) throw matriculaToken.error
+
+    if (existingToken.data || usedToken.data || emailToken.data?.length || matriculaToken.data?.length) {
       return {
         success: false,
-        message: 'Este docente ya tiene un token generado.',
-        token: existingToken.token_code,
+        message: 'Este docente ya tiene un token asignado.',
+        token: existingToken.data?.token_code ?? usedToken.data?.token_code,
       }
     }
 

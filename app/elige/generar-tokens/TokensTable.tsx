@@ -34,6 +34,7 @@ export interface TokenCanje {
   utilizado_el?: string | null;
   cliente_nombre?: string;
   cliente_correo?: string;
+  alumno_id?: string;
   nombre?: string;
   email?: string;
   matricula?: string;

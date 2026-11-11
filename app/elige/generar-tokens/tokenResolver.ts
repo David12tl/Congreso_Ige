@@ -10,12 +10,18 @@ export interface RawTokenRow {
   utilizado_el?: string | null
   utilizado_por?: string | null
   creado_por?: string | null
-  zone_id?: string | null
   ticket_id?: string | null
+  zone_id?: string | null
   cliente_nombre?: string | null
   cliente_correo?: string | null
   matricula?: string | null
   [key: string]: unknown
+}
+
+export interface TokenIdentityRow {
+  id: string
+  utilizado_por: string | null
+  creado_por: string | null
 }
 
 export interface TicketLookupRow {
@@ -25,12 +31,25 @@ export interface TicketLookupRow {
   matricula: string | null
   purchase_id?: string | null
   buyer_id?: string | null
+  ticket_id?: string | null
 }
 
 export interface PurchaseLookupRow {
   id: string
   created_at?: string | null
   amount_paid?: number | string | null
+}
+
+export function attachTokenIdentities(
+  tokens: RawTokenRow[],
+  identities: TokenIdentityRow[],
+): RawTokenRow[] {
+  const identitiesByTokenId = new Map(identities.map((identity) => [identity.id, identity]))
+
+  return tokens.map((token) => {
+    const identity = identitiesByTokenId.get(token.id)
+    return identity ? { ...token, ...identity } : token
+  })
 }
 
 /**
@@ -51,18 +70,38 @@ export function enriquecerTokensConDetalles(
   const ticketsByBuyer = new Map<string, TicketLookupRow>()
   const ticketsByPurchase = new Map<string, TicketLookupRow>()
   const ticketsById = new Map<string, TicketLookupRow>()
+  const ticketsByEmail = new Map<string, TicketLookupRow | null>()
+  const ticketsByMatricula = new Map<string, TicketLookupRow | null>()
+
+  const indexUniqueIdentity = (
+    index: Map<string, TicketLookupRow | null>,
+    key: string | null,
+    ticket: TicketLookupRow,
+  ) => {
+    const normalizedKey = key?.trim().toLowerCase()
+    if (!normalizedKey) return
+
+    const existing = index.get(normalizedKey)
+    if (existing === undefined) {
+      index.set(normalizedKey, ticket)
+    } else if (existing?.buyer_id !== ticket.buyer_id) {
+      index.set(normalizedKey, null)
+    }
+  }
 
   for (const tk of tickets) {
     if (tk.id) ticketsById.set(tk.id, tk)
     if (tk.buyer_id) ticketsByBuyer.set(tk.buyer_id, tk)
     if (tk.purchase_id) ticketsByPurchase.set(tk.purchase_id, tk)
+    indexUniqueIdentity(ticketsByEmail, tk.email, tk)
+    indexUniqueIdentity(ticketsByMatricula, tk.matricula, tk)
   }
 
   const purchasesSorted = [...purchases]
     .filter((p) => Boolean(p.created_at))
     .sort((a, b) => new Date(a.created_at!).getTime() - new Date(b.created_at!).getTime())
 
-  return tokens.map((t): TokenCanje => {
+  const enriched = tokens.map((t): TokenCanje => {
     let resolvedNombre =
       t.cliente_nombre && t.cliente_nombre.trim().toLowerCase() !== 'usuario registrado'
         ? t.cliente_nombre.trim()
@@ -70,39 +109,34 @@ export function enriquecerTokensConDetalles(
     let resolvedCorreo = t.cliente_correo ? t.cliente_correo.trim() : ''
     let resolvedMatricula = t.matricula ? t.matricula.trim() : ''
 
-    // Si aún no tenemos los datos completos del alumno (ej. token en status disponible)
-    if (!resolvedNombre || !resolvedCorreo) {
-      let matchedTicket: TicketLookupRow | null = null
+    let matchedTicket: TicketLookupRow | null = null
 
-      // 1. Prioridad: usuario que ya canjeó el token
-      if (t.utilizado_por && ticketsByBuyer.has(t.utilizado_por)) {
-        matchedTicket = ticketsByBuyer.get(t.utilizado_por) || null
-      }
-      // 2. Prioridad: relación directa por ticket_id si estuviera presente
-      else if (t.ticket_id && ticketsById.has(t.ticket_id)) {
-        matchedTicket = ticketsById.get(t.ticket_id) || null
-      }
-      // 3. Prioridad: creado_por asociado al buyer_id (ej. tokens de docentes)
-      else if (t.creado_por && ticketsByBuyer.has(t.creado_por)) {
-        matchedTicket = ticketsByBuyer.get(t.creado_por) || null
-      }
-      // 4. Prioridad: correlación temporal con purchase_id del alumno comprador
-      else if (t.created_at) {
-        const tTime = new Date(t.created_at).getTime()
-        const pMatch = purchasesSorted.find(
-          (p) => Math.abs(new Date(p.created_at!).getTime() - tTime) < 5000
-        )
-        if (pMatch && ticketsByPurchase.has(pMatch.id)) {
-          matchedTicket = ticketsByPurchase.get(pMatch.id) || null
-        }
-      }
-
-      if (matchedTicket) {
-        resolvedNombre = resolvedNombre || matchedTicket.nombre?.trim() || ''
-        resolvedCorreo = resolvedCorreo || matchedTicket.email?.trim() || ''
-        resolvedMatricula = resolvedMatricula || matchedTicket.matricula?.trim() || ''
-      }
+    if (t.utilizado_por) {
+      matchedTicket = ticketsByBuyer.get(t.utilizado_por) ?? null
     }
+    if (!matchedTicket && t.ticket_id) {
+      matchedTicket = ticketsById.get(t.ticket_id) ?? null
+    }
+    if (!matchedTicket && t.creado_por) {
+      matchedTicket = ticketsByBuyer.get(t.creado_por) ?? null
+    }
+    if (!matchedTicket && t.created_at) {
+      const tTime = new Date(t.created_at).getTime()
+      const pMatch = purchasesSorted.find(
+        (p) => Math.abs(new Date(p.created_at!).getTime() - tTime) < 5000
+      )
+      if (pMatch) matchedTicket = ticketsByPurchase.get(pMatch.id) ?? null
+    }
+
+    if (matchedTicket) {
+      resolvedNombre = resolvedNombre || matchedTicket.nombre?.trim() || ''
+      resolvedCorreo = resolvedCorreo || matchedTicket.email?.trim() || ''
+      resolvedMatricula = resolvedMatricula || matchedTicket.matricula?.trim() || ''
+    }
+
+    const identityTicket =
+      (resolvedCorreo ? ticketsByEmail.get(resolvedCorreo.toLowerCase()) : undefined) ??
+      (resolvedMatricula ? ticketsByMatricula.get(resolvedMatricula.toLowerCase()) : undefined)
 
     return {
       id: t.id,
@@ -115,7 +149,62 @@ export function enriquecerTokensConDetalles(
       cliente_nombre: resolvedNombre || 'Sin asignar',
       cliente_correo: resolvedCorreo || '',
       matricula: resolvedMatricula || '',
+      alumno_id: t.utilizado_por || matchedTicket?.buyer_id || identityTicket?.buyer_id || undefined,
     }
   })
-}
 
+  const preferredToken = (candidate: TokenCanje, current: TokenCanje) => {
+    const candidateUsed = candidate.status.trim().toUpperCase() === 'USADO'
+    const currentUsed = current.status.trim().toUpperCase() === 'USADO'
+    if (candidateUsed !== currentUsed) return candidateUsed
+    return new Date(candidate.created_at).getTime() > new Date(current.created_at).getTime()
+  }
+  const identityIdsByAlias = new Map<string, string | null>()
+
+  for (const token of enriched) {
+    if (!token.alumno_id) continue
+
+    const aliases = [
+      token.matricula?.trim() ? `matricula:${token.matricula.trim().toLowerCase()}` : null,
+      token.cliente_correo?.trim() ? `email:${token.cliente_correo.trim().toLowerCase()}` : null,
+    ].filter((alias): alias is string => Boolean(alias))
+
+    for (const alias of aliases) {
+      const currentId = identityIdsByAlias.get(alias)
+      if (currentId === undefined) identityIdsByAlias.set(alias, token.alumno_id)
+      else if (currentId !== token.alumno_id) identityIdsByAlias.set(alias, null)
+    }
+  }
+
+  const uniqueTokens = new Map<string, TokenCanje>()
+
+  for (const token of enriched) {
+    const matriculaAlias = token.matricula?.trim()
+      ? `matricula:${token.matricula.trim().toLowerCase()}`
+      : null
+    const emailAlias = token.cliente_correo?.trim()
+      ? `email:${token.cliente_correo.trim().toLowerCase()}`
+      : null
+    const aliases = [matriculaAlias, emailAlias].filter((alias): alias is string => Boolean(alias))
+    const aliasedIds = new Set(aliases
+      .map((alias) => identityIdsByAlias.get(alias))
+      .filter((id): id is string => Boolean(id)))
+    const aliasedAlumnoId = aliasedIds.size === 1 ? [...aliasedIds][0] : undefined
+    const safeFallbackAlias = aliases.find((alias) => !identityIdsByAlias.has(alias))
+    const identity = token.alumno_id
+      ? `id:${token.alumno_id}`
+      : aliasedAlumnoId
+        ? `id:${aliasedAlumnoId}`
+        : safeFallbackAlias ?? null
+
+    if (!identity) {
+      uniqueTokens.set(`token:${token.id}`, token)
+      continue
+    }
+
+    const current = uniqueTokens.get(identity)
+    if (!current || preferredToken(token, current)) uniqueTokens.set(identity, token)
+  }
+
+  return [...uniqueTokens.values()]
+}

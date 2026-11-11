@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { TokenCanje } from './TokensTable'
 import {
   enriquecerTokensConDetalles,
+  attachTokenIdentities,
   RawTokenRow,
+  TokenIdentityRow,
   TicketLookupRow,
   PurchaseLookupRow,
 } from './tokenResolver'
@@ -18,11 +20,14 @@ export async function obtenerTokensConDetalles(): Promise<TokenCanje[]> {
   const supabase = createClient()
   const nombreVista = 'vista_tokens_detalles' as unknown as 'tokens_canje'
 
-  const [tokensRes, ticketsRes, purchasesRes] = await Promise.all([
+  const [tokensRes, tokenIdentitiesRes, ticketsRes, purchasesRes] = await Promise.all([
     supabase
       .from(nombreVista)
       .select('*')
       .order('created_at', { ascending: false }),
+    supabase
+      .from('tokens_canje')
+      .select('id, utilizado_por, creado_por'),
     supabase
       .from('tickets')
       .select('id, nombre, email, matricula, purchase_id, buyer_id'),
@@ -36,7 +41,15 @@ export async function obtenerTokensConDetalles(): Promise<TokenCanje[]> {
     return []
   }
 
-  const rawTokens = (tokensRes.data as unknown as RawTokenRow[]) || []
+  if (tokenIdentitiesRes.error) {
+    console.error('Error al obtener la identidad de los tokens:', tokenIdentitiesRes.error.message)
+    return []
+  }
+
+  const rawTokens = attachTokenIdentities(
+    (tokensRes.data as unknown as RawTokenRow[]) || [],
+    (tokenIdentitiesRes.data as unknown as TokenIdentityRow[]) || [],
+  )
   const tickets = (ticketsRes.data as unknown as TicketLookupRow[]) || []
   const purchases = (purchasesRes.data as unknown as PurchaseLookupRow[]) || []
 
