@@ -85,14 +85,15 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
   const zonaCounts: Record<string, { name: string; count: number }> = {}
 
   // Contadores por UA
-  const uaCounts: Record<string, {
+  // Contadores por UA
+  const uaCounts = new Map<string, {
     nombre: string
     totalTickets: number
     totalAlumnos: number
     totalEmpresas: number
     totalDocentes: number
     ingresos: number
-  }> = {}
+  }>()
 
   if (ticketsData) {
     ticketsData.forEach((ticket) => {
@@ -129,22 +130,23 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
 
       // Contar por unidad academica
       const uaNombre = uaInfo?.nombre || 'No Especificada'
-      if (!uaCounts[uaNombre]) {
-        uaCounts[uaNombre] = {
+      if (!uaCounts.has(uaNombre)) {
+        uaCounts.set(uaNombre, {
           nombre: uaNombre,
           totalTickets: 0,
           totalAlumnos: 0,
           totalEmpresas: 0,
           totalDocentes: 0,
           ingresos: 0,
-        }
+        })
       }
-      uaCounts[uaNombre].totalTickets++
-      uaCounts[uaNombre].ingresos += zonePrice
+      const ua = uaCounts.get(uaNombre)!
+      ua.totalTickets++
+      ua.ingresos += zonePrice
 
-      if (type === 'alumno') uaCounts[uaNombre].totalAlumnos++
-      if (type === 'empresa') uaCounts[uaNombre].totalEmpresas++
-      if (type === 'docente') uaCounts[uaNombre].totalDocentes++
+      if (type === 'alumno') ua.totalAlumnos++
+      if (type === 'empresa') ua.totalEmpresas++
+      if (type === 'docente') ua.totalDocentes++
 
       // Simular asistencia por dia
       if (Math.random() > 0.3) asistenciasDia1++
@@ -185,7 +187,7 @@ export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: Res
   const porcentajeDocentes = totalTickets > 0 ? Math.round((totalDocentes / totalTickets) * 100) : 0
 
   // Formatear UAs
-  const uasFormateadas: UAMetrica[] = Object.values(uaCounts)
+  const uasFormateadas: UAMetrica[] = Array.from(uaCounts.values())
     .map((ua) => ({
       nombre: ua.nombre,
       totalTickets: ua.totalTickets,
