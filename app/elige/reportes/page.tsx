@@ -25,6 +25,7 @@ import {
   Ticket,
   Users,
 } from 'lucide-react'
+import { exportarReporteExcel } from '@/lib/exportUtils'
 import { getReportesData, type TicketDetalle } from './actions'
 
 interface ZonaMetrica {
@@ -116,56 +117,6 @@ function fixUtf8Encoding(value: string | null): string {
   )
 }
 
-function csvCell(value: string | number | null): string {
-  let content = fixUtf8Encoding(value == null ? '' : String(value))
-  if (/^[=+\-@\t\r]/.test(content)) content = `'${content}`
-  return `"${content.replaceAll('"', '""')}"`
-}
-
-function exportarCSV(tickets: TicketDetalle[]): void {
-  const headers = [
-    'id',
-    'identificador',
-    'cliente',
-    'correo',
-    'unidad_academica',
-    'zona',
-    'docente',
-    'estado_pago',
-    'total_abono',
-    'fecha_venta',
-  ]
-  const rows = [
-    headers.map(csvCell).join(','),
-    ...tickets.map((ticket) =>
-      [
-        ticket.id,
-        ticket.identificador,
-        ticket.cliente,
-        ticket.correo,
-        ticket.unidad_academica,
-        ticket.zona,
-        ticket.docente,
-        ticket.estado_pago,
-        ticket.total_abono,
-        ticket.fecha_venta,
-      ]
-        .map(csvCell)
-        .join(','),
-    ),
-  ]
-  const csv = `\uFEFF${rows.join('\r\n')}`
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `Reporte_Tickets_IGE_2026_${Date.now()}.csv`
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
-}
-
 function formatCurrency(value: number): string {
   return value.toLocaleString('es-MX', {
     style: 'currency',
@@ -227,8 +178,8 @@ export default function ReportesPage() {
     }
   }, [])
 
-  const handleDescargarCSV = () => {
-    if (data) exportarCSV(data.tickets)
+  const handleDescargarExcel = () => {
+    if (data) exportarReporteExcel(data.tickets)
   }
 
   const zonasData = data?.zonas ?? []
@@ -298,12 +249,12 @@ export default function ReportesPage() {
             </div>
             <button
               type="button"
-              onClick={handleDescargarCSV}
+              onClick={handleDescargarExcel}
               disabled={loading || !data}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              Descargar CSV
+              Descargar Excel
               {data && <span className="font-medium">({data.tickets.length})</span>}
             </button>
           </div>

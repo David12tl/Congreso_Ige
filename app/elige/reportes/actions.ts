@@ -26,6 +26,7 @@ export interface TicketDetalle {
   cliente: string
   correo: string
   unidad_academica: string
+  escolaridad: string
   zona: string
   docente: string
   estado_pago: string
@@ -157,13 +158,14 @@ export async function getReportesData(): Promise<{
     }
 
     const rawTickets = (ticketsResult.data ?? []).filter(isRecord)
-    const ticketMetrics: TicketMetricas[] = rawTickets.map((t) => ({
+    const ticketsLista: TicketMetricas[] = rawTickets.map((t) => ({
       detalle: {
         id: stringValue(t.id),
         identificador: stringValue(t.identificador),
         cliente: stringValue(t.cliente),
         correo: stringValue(t.correo),
         unidad_academica: stringValue(t.unidad_academica),
+        escolaridad: String(t.escolaridad || 'N/A'),
         zona: stringValue(t.zona),
         docente: stringValue(t.docente),
         estado_pago: stringValue(t.estado_pago || t.estatus_pago),
@@ -172,7 +174,7 @@ export async function getReportesData(): Promise<{
       },
       tipo: stringValue(t.tipo_ticket || t.type || 'alumno'),
     }))
-    const tickets = ticketMetrics.map(({ detalle }) => detalle)
+    const tickets = ticketsLista.map(({ detalle }) => detalle)
 
     let articulos: ArticuloInvestigacion[] = []
     try {
@@ -215,7 +217,7 @@ export async function getReportesData(): Promise<{
     let totalDocentes = 0
     let ingresosTickets = 0
 
-    for (const { detalle: ticket, tipo } of ticketMetrics) {
+    for (const { detalle: ticket, tipo } of ticketsLista) {
       const estado = ticket.estado_pago.trim().toLowerCase()
       const esPagado = estado === 'pagado' || estado === 'completed'
       const esApartado = estado === 'apartado'
