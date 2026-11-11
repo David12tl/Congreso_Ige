@@ -63,9 +63,6 @@ interface TokenDetailLookupClient {
       ilike: (column: 'cliente_correo', value: string) => {
         limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: DbError | null }>
       }
-      eq: (column: 'matricula', value: string) => {
-        limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: DbError | null }>
-      }
     }
   }
 }
@@ -584,12 +581,11 @@ export async function cobrarAsientoYGenerarToken(
   try {
     let alumnoId: string | null = null
     let alumnoEmail = email?.trim() || null
-    let matricula: string | null = null
 
     if (ticketId) {
       const { data: ticket, error: ticketLookupError } = await supabase
         .from('tickets')
-        .select('buyer_id, email, matricula')
+        .select('buyer_id, email')
         .eq('id', ticketId)
         .maybeSingle()
 
@@ -599,15 +595,14 @@ export async function cobrarAsientoYGenerarToken(
       }
 
       if (ticket) {
-        const student = ticket as { buyer_id: string | null; email: string | null; matricula: string | null }
+        const student = ticket as { buyer_id: string | null; email: string | null }
         alumnoId = student.buyer_id
         alumnoEmail = student.email?.trim() || alumnoEmail
-        matricula = student.matricula?.trim() || null
       }
     } else if (alumnoEmail) {
       const { data: ticket, error: ticketLookupError } = await supabase
         .from('tickets')
-        .select('buyer_id, email, matricula')
+        .select('buyer_id, email')
         .ilike('email', alumnoEmail)
         .limit(1)
         .maybeSingle()
@@ -618,37 +613,37 @@ export async function cobrarAsientoYGenerarToken(
       }
 
       if (ticket) {
-        const student = ticket as { buyer_id: string | null; email: string | null; matricula: string | null }
+        const student = ticket as { buyer_id: string | null; email: string | null }
         alumnoId = student.buyer_id
         alumnoEmail = student.email?.trim() || alumnoEmail
-        matricula = student.matricula?.trim() || null
       }
     }
 
-    const detailLookup = supabase as unknown as TokenDetailLookupClient
-    const [usedTokenLookup, emailTokenLookup, matriculaTokenLookup] = await Promise.all([
-      alumnoId
-        ? supabase.from('tokens_canje').select('id').eq('utilizado_por', alumnoId).limit(1)
-        : Promise.resolve({ data: null, error: null }),
-      alumnoEmail
-        ? detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', alumnoEmail).limit(1)
-        : Promise.resolve({ data: null, error: null }),
-      matricula
-        ? detailLookup.from('vista_tokens_detalles').select('id').eq('matricula', matricula).limit(1)
-        : Promise.resolve({ data: null, error: null }),
-    ])
+    try {
+      const detailLookup = supabase as unknown as TokenDetailLookupClient
+      const [usedTokenLookup, emailTokenLookup] = await Promise.all([
+        alumnoId
+          ? supabase.from('tokens_canje').select('id').eq('utilizado_por', alumnoId).limit(1)
+          : Promise.resolve({ data: null, error: null }),
+        alumnoEmail
+          ? detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', alumnoEmail).limit(1)
+          : Promise.resolve({ data: null, error: null }),
+      ])
 
-    const identityLookupError =
-      usedTokenLookup.error || emailTokenLookup.error || matriculaTokenLookup.error
-    if (identityLookupError) {
-      console.error('[cobrarAsientoYGenerarToken] Error al validar token existente:', identityLookupError.message)
-      return { success: false, message: `No se pudo validar si el alumno ya tiene token: ${identityLookupError.message}` }
-    }
+      const identityLookupError = usedTokenLookup.error || emailTokenLookup.error
+      if (identityLookupError) throw identityLookupError
 
-    if (usedTokenLookup.data?.length || emailTokenLookup.data?.length || matriculaTokenLookup.data?.length) {
+      if (usedTokenLookup.data?.length || emailTokenLookup.data?.length) {
+        return {
+          success: false,
+          message: 'Este alumno ya tiene un token asignado. No se generó otro.',
+        }
+      }
+    } catch (validationError: unknown) {
+      console.warn('[cobrarAsientoYGenerarToken] Error al validar token existente:', validationError)
       return {
         success: false,
-        message: 'Este alumno ya tiene un token asignado. No se generó otro.',
+        message: 'No se pudo validar si el alumno ya tiene token. Intenta de nuevo.',
       }
     }
 

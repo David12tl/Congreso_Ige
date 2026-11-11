@@ -19,9 +19,6 @@ interface DocenteTokenDetailLookupClient {
       ilike: (column: 'cliente_correo', value: string) => {
         limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: PostgrestError | null }>
       }
-      eq: (column: 'matricula', value: string) => {
-        limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: PostgrestError | null }>
-      }
     }
   }
 }
@@ -81,52 +78,54 @@ export async function generarTokenParaDocente(docenteUserId: string) {
   const supabase = await createClient()
 
   try {
-    // 1. Verificar tokens generados o ya utilizados por este docente.
-    const [existingToken, usedToken] = await Promise.all([
-      supabase
-        .from('tokens_canje')
-        .select('token_code')
-        .eq('creado_por', docenteUserId)
+    try {
+      // 1. Verificar tokens generados o ya utilizados por este docente.
+      const [existingToken, usedToken] = await Promise.all([
+        supabase
+          .from('tokens_canje')
+          .select('token_code')
+          .eq('creado_por', docenteUserId)
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('tokens_canje')
+          .select('token_code')
+          .eq('utilizado_por', docenteUserId)
+          .limit(1)
+          .maybeSingle(),
+      ])
+
+      if (existingToken.error) throw existingToken.error
+      if (usedToken.error) throw usedToken.error
+
+      const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .select('email')
+        .eq('buyer_id', docenteUserId)
         .limit(1)
-        .maybeSingle(),
-      supabase
-        .from('tokens_canje')
-        .select('token_code')
-        .eq('utilizado_por', docenteUserId)
-        .limit(1)
-        .maybeSingle(),
-    ])
+        .maybeSingle()
 
-    if (existingToken.error) throw existingToken.error
-    if (usedToken.error) throw usedToken.error
+      if (ticketError) throw ticketError
 
-    const { data: ticket, error: ticketError } = await supabase
-      .from('tickets')
-      .select('email, matricula')
-      .eq('buyer_id', docenteUserId)
-      .limit(1)
-      .maybeSingle()
+      const detailLookup = supabase as unknown as DocenteTokenDetailLookupClient
+      const emailToken = ticket?.email
+        ? await detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', ticket.email).limit(1)
+        : { data: null, error: null }
 
-    if (ticketError) throw ticketError
+      if (emailToken.error) throw emailToken.error
 
-    const detailLookup = supabase as unknown as DocenteTokenDetailLookupClient
-    const [emailToken, matriculaToken] = await Promise.all([
-      ticket?.email
-        ? detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', ticket.email).limit(1)
-        : Promise.resolve({ data: null, error: null }),
-      ticket?.matricula
-        ? detailLookup.from('vista_tokens_detalles').select('id').eq('matricula', ticket.matricula).limit(1)
-        : Promise.resolve({ data: null, error: null }),
-    ])
-
-    if (emailToken.error) throw emailToken.error
-    if (matriculaToken.error) throw matriculaToken.error
-
-    if (existingToken.data || usedToken.data || emailToken.data?.length || matriculaToken.data?.length) {
+      if (existingToken.data || usedToken.data || emailToken.data?.length) {
+        return {
+          success: false,
+          message: 'Este docente ya tiene un token asignado.',
+          token: existingToken.data?.token_code ?? usedToken.data?.token_code,
+        }
+      }
+    } catch (validationError: unknown) {
+      console.warn('Error al validar token existente para docente:', validationError)
       return {
         success: false,
-        message: 'Este docente ya tiene un token asignado.',
-        token: existingToken.data?.token_code ?? usedToken.data?.token_code,
+        message: 'No se pudo validar si el docente ya tiene token. Intenta de nuevo.',
       }
     }
 
