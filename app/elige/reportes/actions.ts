@@ -5,11 +5,32 @@ import { createClient } from '@/lib/supabase/server'
 export interface UAMetrica {
   nombre: string
   totalTickets: number
+  totalPagados: number
+  totalApartados: number
   porcentaje: number
   totalAlumnos: number
   totalEmpresas: number
   totalDocentes: number
   ingresos: number
+}
+
+export interface ZonaMetrica {
+  nombre: string
+  boletos: number
+  ingresos: number
+}
+
+export interface TicketDetalle {
+  id: string | number
+  identificador: string | null
+  cliente: string | null
+  correo: string | null
+  unidad_academica: string | null
+  zona: string | null
+  docente: string | null
+  estado_pago: string | null
+  total_abono: number | string | null
+  fecha_venta: string | null
 }
 
 export interface ResumenGlobal {
@@ -30,195 +51,185 @@ export interface ResumenGlobal {
   totalArticulos: number
   zonaTop: string
   zonaTopTickets: number
+  totalPagados: number
+  totalApartados: number
+  totalPendientes: number
 }
 
-export async function getReportesData(): Promise<{ uas: UAMetrica[]; global: ResumenGlobal }> {
+interface ArticuloInvestigacion {
+  id: string | number
+  estatus_pago: string | null
+}
+
+function toAmount(value: number | string | null): number {
+  const amount = Number(value ?? 0)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+export async function getReportesData(): Promise<{
+  uas: UAMetrica[]
+  zonas: ZonaMetrica[]
+  global: ResumenGlobal
+  tickets: TicketDetalle[]
+}> {
   const supabase = await createClient()
 
-  // Ejecutar todas las consultas en paralelo
-  const [
-    ticketsResult,
-    zonasResult,
-    articulosResult,
-  ] = await Promise.all([
-    // Consultar tickets con joins a zonas y unidades académicas
-    supabase
-      .from('tickets')
-      .select(`
-        id,
-        type,
-        estatus_pago,
-        zone_id,
-        unidad_academica_id,
-        zones:zone_id(name, price),
-        unidades_academicas:unidad_academica_id(nombre)
-      `),
-    // Consultar zonas
-    supabase.from('zones').select('id, name, price, capacity'),
-    // Consultar artículos de investigación (tabla personalizada)
-    (supabase as unknown as { from: (t: string) => { select: (s: string) => Promise<{ data: unknown; error: unknown }> } })
+  const viewClient = supabase as unknown as {
+    from: (relation: string) => {
+      select: (columns: string) => {
+        range: (
+          from: number,
+          to: number,
+        ) => PromiseLike<{
+          data: TicketDetalle[] | null
+          error: { message: string } | null
+        }>
+      }
+    }
+  }
+  const articlesClient = supabase as unknown as {
+    from: (relation: string) => {
+      select: (columns: string) => PromiseLike<{
+        data: ArticuloInvestigacion[] | null
+        error: { message: string } | null
+      }>
+    }
+  }
+
+  const [ticketsResult, articulosResult] = await Promise.all([
+    viewClient
+      .from('vista_reporte_ventas_tickets')
+      .select(
+        'id, identificador, cliente, correo, unidad_academica, zona, docente, estado_pago, total_abono, fecha_venta',
+      )
+      .range(0, 5000),
+    articlesClient
       .from('articulos_investigacion')
       .select('id, estatus_pago'),
   ])
 
-  const ticketsError = ticketsResult.error as { message: string } | null
-  const ticketsData = ticketsResult.data as Record<string, unknown>[] | null
-  const zonasError = zonasResult.error as { message: string } | null
-  const zonasData = zonasResult.data as Record<string, unknown>[] | null
-  const articulosError = articulosResult.error as { message: string } | null
-  const articulosData = articulosResult.data as Record<string, unknown>[] | null
-
-  if (ticketsError) console.error('Error al consultar tickets:', ticketsError)
-  if (zonasError) console.error('Error al consultar zonas:', zonasError)
-  if (articulosError) console.error('Error al consultar articulos:', articulosError)
-
-  // Contadores globales
-  let totalTickets = 0
-  let totalAlumnos = 0
-  let totalEmpresas = 0
-  let totalDocentes = 0
-  let ingresosTotales = 0
-  let asistenciasDia1 = 0
-  let asistenciasDia2 = 0
-
-  // Contadores por zona
-  const zonaCounts: Record<string, { name: string; count: number }> = {}
-
-  // Contadores por UA
-  // Contadores por UA
-  const uaCounts = new Map<string, {
-    nombre: string
-    totalTickets: number
-    totalAlumnos: number
-    totalEmpresas: number
-    totalDocentes: number
-    ingresos: number
-  }>()
-
-  if (ticketsData) {
-    ticketsData.forEach((ticket) => {
-      const estatusPago = ticket.estatus_pago as string | null
-      const type = ticket.type as string
-      const zoneId = ticket.zone_id as number | null
-      const zoneInfo = ticket.zones as { name: string; price: number } | null
-      const uaInfo = ticket.unidades_academicas as { nombre: string } | null
-
-      // Solo contar tickets con estatus de pago completado
-      if (estatusPago !== 'completed' && estatusPago !== 'pagado') {
-        return
-      }
-
-      totalTickets++
-
-      // Contar por tipo
-      if (type === 'alumno') totalAlumnos++
-      else if (type === 'empresa') totalEmpresas++
-      else if (type === 'docente') totalDocentes++
-
-      // Calcular ingresos por zona
-      const zonePrice = zoneInfo?.price || 0
-      ingresosTotales += zonePrice
-
-      // Contar por zona
-      if (zoneId) {
-        const zoneName = zoneInfo?.name || `Zona ${zoneId}`
-        if (!zonaCounts[String(zoneId)]) {
-          zonaCounts[String(zoneId)] = { name: zoneName, count: 0 }
-        }
-        zonaCounts[String(zoneId)].count++
-      }
-
-      // Contar por unidad academica
-      const uaNombre = uaInfo?.nombre || 'No Especificada'
-      if (!uaCounts.has(uaNombre)) {
-        uaCounts.set(uaNombre, {
-          nombre: uaNombre,
-          totalTickets: 0,
-          totalAlumnos: 0,
-          totalEmpresas: 0,
-          totalDocentes: 0,
-          ingresos: 0,
-        })
-      }
-      const ua = uaCounts.get(uaNombre)!
-      ua.totalTickets++
-      ua.ingresos += zonePrice
-
-      if (type === 'alumno') ua.totalAlumnos++
-      if (type === 'empresa') ua.totalEmpresas++
-      if (type === 'docente') ua.totalDocentes++
-
-      // Simular asistencia por dia
-      if (Math.random() > 0.3) asistenciasDia1++
-      if (Math.random() > 0.4) asistenciasDia2++
-    })
+  if (ticketsResult.error) {
+    throw new Error(
+      `Error al consultar vista_reporte_ventas_tickets: ${ticketsResult.error.message}`,
+    )
+  }
+  if (articulosResult.error) {
+    throw new Error(
+      `Error al consultar articulos_investigacion: ${articulosResult.error.message}`,
+    )
   }
 
-  // Procesar articulos de investigacion
+  const tickets = ticketsResult.data ?? []
+  const articulos = articulosResult.data ?? []
+  const uaCounts = new Map<
+    string,
+    {
+      totalTickets: number
+      totalPagados: number
+      totalApartados: number
+      ingresos: number
+    }
+  >()
+  const zonaCounts = new Map<string, { boletos: number; ingresos: number }>()
+
+  let totalPagados = 0
+  let totalApartados = 0
+  let ingresosTickets = 0
+
+  for (const ticket of tickets) {
+    const estado = (ticket.estado_pago ?? '').trim().toLowerCase()
+    const esPagado = estado === 'pagado' || estado === 'completed'
+    const esApartado = estado === 'apartado'
+
+    if (!esPagado && !esApartado) continue
+
+    const abono = toAmount(ticket.total_abono)
+    const unidad = ticket.unidad_academica?.trim() || 'No especificada'
+    const zona = ticket.zona?.trim() || 'Sin zona'
+    const ua = uaCounts.get(unidad) ?? {
+      totalTickets: 0,
+      totalPagados: 0,
+      totalApartados: 0,
+      ingresos: 0,
+    }
+    const zonaMetric = zonaCounts.get(zona) ?? { boletos: 0, ingresos: 0 }
+
+    ua.totalTickets++
+    ua.totalPagados += Number(esPagado)
+    ua.totalApartados += Number(esApartado)
+    ua.ingresos += abono
+    zonaMetric.boletos++
+    zonaMetric.ingresos += abono
+    ingresosTickets += abono
+    totalPagados += Number(esPagado)
+    totalApartados += Number(esApartado)
+
+    uaCounts.set(unidad, ua)
+    zonaCounts.set(zona, zonaMetric)
+  }
+
   let articulosAceptados = 0
   let articulosPendientes = 0
   let ingresosPorInvestigacion = 0
 
-  if (articulosData) {
-    articulosData.forEach((articulo) => {
-      const estatus = articulo.estatus_pago as string | null
-      if (estatus === 'completed' || estatus === 'pagado') {
-        articulosAceptados++
-        ingresosPorInvestigacion += 1500
-      } else {
-        articulosPendientes++
-      }
-    })
-  }
-
-  // Calcular zona top
-  let zonaTop = 'Ninguna'
-  let zonaTopTickets = 0
-  for (const z of Object.values(zonaCounts)) {
-    if (z.count > zonaTopTickets) {
-      zonaTop = z.name
-      zonaTopTickets = z.count
+  for (const articulo of articulos) {
+    const estado = (articulo.estatus_pago ?? '').trim().toLowerCase()
+    if (estado === 'completed' || estado === 'pagado') {
+      articulosAceptados++
+      ingresosPorInvestigacion += 1500
+    } else {
+      articulosPendientes++
     }
   }
 
-  // Calcular porcentajes
-  const porcentajeAlumnos = totalTickets > 0 ? Math.round((totalAlumnos / totalTickets) * 100) : 0
-  const porcentajeEmpresas = totalTickets > 0 ? Math.round((totalEmpresas / totalTickets) * 100) : 0
-  const porcentajeDocentes = totalTickets > 0 ? Math.round((totalDocentes / totalTickets) * 100) : 0
+  const totalActivos = totalPagados + totalApartados
+  const uas: UAMetrica[] = Array.from(uaCounts, ([nombre, metricas]) => ({
+    nombre,
+    totalTickets: metricas.totalTickets,
+    totalPagados: metricas.totalPagados,
+    totalApartados: metricas.totalApartados,
+    porcentaje:
+      totalActivos > 0
+        ? Math.round((metricas.totalTickets / totalActivos) * 100)
+        : 0,
+    totalAlumnos: 0,
+    totalEmpresas: 0,
+    totalDocentes: 0,
+    ingresos: metricas.ingresos,
+  })).sort((a, b) => b.totalTickets - a.totalTickets)
 
-  // Formatear UAs
-  const uasFormateadas: UAMetrica[] = Array.from(uaCounts.values())
-    .map((ua) => ({
-      nombre: ua.nombre,
-      totalTickets: ua.totalTickets,
-      porcentaje: totalTickets > 0 ? Math.round((ua.totalTickets / totalTickets) * 100) : 0,
-      totalAlumnos: ua.totalAlumnos,
-      totalEmpresas: ua.totalEmpresas,
-      totalDocentes: ua.totalDocentes,
-      ingresos: ua.ingresos,
-    }))
-    .sort((a, b) => b.totalTickets - a.totalTickets)
+  const zonas: ZonaMetrica[] = Array.from(zonaCounts, ([nombre, metricas]) => ({
+    nombre,
+    boletos: metricas.boletos,
+    ingresos: metricas.ingresos,
+  })).sort((a, b) => b.boletos - a.boletos)
+  const zonaTop = zonas[0]
 
   return {
-    uas: uasFormateadas,
+    uas,
+    zonas,
+    tickets,
     global: {
-      totalTickets,
-      totalAlumnos,
-      totalEmpresas,
-      totalDocentes,
-      porcentajeAlumnos,
-      porcentajeEmpresas,
-      porcentajeDocentes,
-      ingresosTotales: ingresosTotales + ingresosPorInvestigacion,
+      totalTickets: totalActivos,
+      totalAlumnos: 0,
+      totalEmpresas: 0,
+      totalDocentes: 0,
+      porcentajeAlumnos: 0,
+      porcentajeEmpresas: 0,
+      porcentajeDocentes: 0,
+      ingresosTotales: ingresosTickets + ingresosPorInvestigacion,
       ingresosPorInvestigacion,
-      asistenciasDia1,
-      asistenciasDia2,
-      totalAsistencias: asistenciasDia1 + asistenciasDia2,
+      asistenciasDia1: 0,
+      asistenciasDia2: 0,
+      totalAsistencias: 0,
       articulosAceptados,
       articulosPendientes,
-      totalArticulos: articulosData?.length || 0,
-      zonaTop,
-      zonaTopTickets,
+      totalArticulos: articulos.length,
+      zonaTop: zonaTop?.nombre ?? 'Ninguna',
+      zonaTopTickets: zonaTop?.boletos ?? 0,
+      totalPagados,
+      totalApartados,
+      totalPendientes: tickets.length - totalActivos,
     },
   }
 }
