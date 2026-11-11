@@ -1,13 +1,10 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { normalizeStudentModality } from '@/lib/tickets/modality'
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { generateAndSendCredential } from '@/lib/auth/actions-credentials';
-import { getSecureCallbackUrl, getSecureRedirectBase, isOriginAllowed } from '@/utils/supabase/get-redirect-url';
+import { getSecureCallbackUrl, isOriginAllowed } from '@/utils/supabase/get-redirect-url';
 import { ensureUserAccess, syncAuthMetadataWithProfile } from '@/db/perfiles';
-import { v4 as uuidv4 } from 'uuid';
 
 export type AuthResult = { error: string } | { success: true; redirectTo?: string };
 
@@ -74,11 +71,8 @@ export async function signInWithPassword(
 }
 
 /**
- * Registro de nuevo usuario con correo, contraseña, nombre completo y land de interés.
- * TAMBIÉN:
- *  1. Crea un ticket para el usuario
- *  2. Asigna un asiento automáticamente
- *  3. Genera y envía la credencial en PDF
+ * Registra la cuenta y garantiza su perfil. El ticket se crea después de que
+ * el usuario complete sus datos y seleccione una Unidad Académica.
  */
 export async function signUp(data: {
   email: string;
@@ -122,58 +116,6 @@ export async function signUp(data: {
   // Este candado es la única fuente de verdad para el nivel de acceso.
   const profile = await ensureUserAccess(userId);
   await syncAuthMetadataWithProfile(userId);
-
-  // ========== CREAR TICKET EN LA BASE DE DATOS ==========
-  const qrData = uuidv4();
-
-  const { data: ticketData, error: ticketError } = await supabase
-    .from('tickets')
-    .insert({
-      id: uuidv4(),
-      buyer_id: userId,
-      email: data.email,
-      nombre: data.fullName,
-      type: 'student', // Tipo por defecto
-      modalidad: normalizeStudentModality(null),
-      qr_data: qrData,
-      purchased_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (ticketError || !ticketData) {
-    // OWASP: En producción, no exponer errores internos en consola
-    // Solo loggear en desarrollo para debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error creando ticket:', ticketError?.message);
-    }
-    // No retornar error, el usuario se registró correctamente
-    // Pero sin ticket, no tendrá credencial
-  }
-
-  // ========== GENERAR Y ENVIAR CREDENCIAL ==========
-  if (ticketData && ticketData.id) {
-    try {
-      const credentialResult = await generateAndSendCredential(
-        ticketData.id,
-        userId
-      );
-
-      if (!credentialResult.success) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Advertencia: Credencial no generada');
-        }
-        // No bloqueamos el registro si la credencial falla
-      }
-    } catch {
-      // OWASP: Silenciar errores internos en producción
-      // Loggear solo en desarrollo
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Error generando credencial');
-      }
-      // Continuamos con el registro
-    }
-  }
 
   // Redirigir al dashboard según el id_rol REAL desde la BD (CANDADO)
   redirect(getDashboardPath(profile.id_rol));

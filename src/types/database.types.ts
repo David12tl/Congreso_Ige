@@ -448,6 +448,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      canjear_token_y_ticket: {
+        Args: {
+          p_buyer_id: string
+          p_event_id: string
+          p_token_code: string
+          p_unidad_academica_id: number | null
+        }
+        Returns: Json
+      }
       canjear_token_por_ticket: {
         Args: {
           p_carrera?: string
@@ -462,8 +471,35 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_venta_ticket_token: {
+        Args: {
+          p_buyer_id: string
+          p_event_id: string
+          p_monto: number
+          p_paid: boolean
+          p_ticket_data: Json
+          p_ticket_id: string | null
+          p_ticket_type: string
+          p_token_code: string
+          p_total: number
+          p_unidad_academica_id: number | null
+          p_zone_id: string
+        }
+        Returns: Json
+      }
       get_user_nivel: { Args: never; Returns: number }
       get_user_role_name: { Args: never; Returns: string }
+      liquidar_ticket_y_token: {
+        Args: {
+          p_buyer_id: string
+          p_event_id: string
+          p_monto: number
+          p_ticket_id: string
+          p_token_code: string
+          p_unidad_academica_id: number | null
+        }
+        Returns: Json
+      }
     }
     Enums: {
       estado_pago_enum: "sin_pago" | "faltante" | "completado"

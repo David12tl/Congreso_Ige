@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
+import { CONGRESO_IGE_EVENT_ID, ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { PerfilUsuarioCompleto } from '@/components/asientos/types'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
+import { resolveUnidadAcademicaId } from '@/lib/tickets/resolveUnidadAcademica'
 
 export interface AsientoInfo {
   id: string
@@ -194,11 +195,26 @@ export async function crearPreRegistro(input: PreRegistroInput) {
       return { success: false, message: 'Tu cuenta no tiene un correo electrónico válido.' }
     }
 
+    const unidadAcademicaId = await resolveUnidadAcademicaId(supabase, user.id, emailUsuario)
+    if (unidadAcademicaId == null) {
+      return { success: false, message: 'Selecciona una Unidad Académica antes de apartar tu boleto.' }
+    }
+
     const resolvedZoneId =
       getZoneUuid(input.zoneId) ||
       getZoneUuid(input.asientoZona) ||
       ZONE_UUIDS[input.asientoZona?.toLowerCase().replace(/[\s_-]/g, '')] ||
       input.zoneId
+
+    const { data: zone, error: zoneError } = await supabase
+      .from('zones')
+      .select('id')
+      .eq('id', resolvedZoneId)
+      .eq('event_id', CONGRESO_IGE_EVENT_ID)
+      .maybeSingle()
+
+    if (zoneError) throw zoneError
+    if (!zone) return { success: false, message: 'El asiento no pertenece al evento activo.' }
 
     // Insertar el registro mapeando los parámetros dinámicos del 'input'
     // Se añade el campo 'type' (exigido por tu base de datos) y 'zone_id' si tu tabla los requiere.
@@ -208,6 +224,8 @@ export async function crearPreRegistro(input: PreRegistroInput) {
       .insert({
         buyer_id: user.id,
         email: emailUsuario,
+        event_id: CONGRESO_IGE_EVENT_ID,
+        unidad_academica_id: unidadAcademicaId,
         asiento_zona: input.asientoZona,
         asiento_bloque: input.asientoBloque,
         asiento_fila: input.asientoFila,
@@ -215,7 +233,8 @@ export async function crearPreRegistro(input: PreRegistroInput) {
         zone_id: resolvedZoneId,
         type: esAlumno ? 'alumno' : 'externo',
         modalidad: esAlumno ? normalizeStudentModality(input.modalidad) : null,
-      })
+        estatus_pago: 'pre-registro',
+      } as never)
 
     if (error) {
       console.error('❌ [crearPreRegistro] Error de inserción:', error.message)

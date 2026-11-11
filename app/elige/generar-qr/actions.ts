@@ -6,6 +6,7 @@ import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
 import type { ActionResult } from '@/components/asientos/types'
 import { generateCredentialPDF } from '@/lib/credentials/pdf-generator'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
+import { resolveUnidadAcademicaId } from '@/lib/tickets/resolveUnidadAcademica'
 
 // ─── INTERFACES DE DATOS ESTRICTAS ───────────────────────────────────
 
@@ -41,7 +42,7 @@ export interface ResultadoValidacionQR {
 
 interface SupabaseFluentBuilder {
   select: (columns?: string) => SupabaseFluentBuilder
-  insert: (values: Record<string, unknown>) => SupabaseFluentBuilder
+  insert: (values: Record<string, unknown>) => Promise<{ error: unknown }>
   update: (values: Record<string, unknown>) => SupabaseFluentBuilder
   eq: (column: string, value: unknown) => SupabaseFluentBuilder
   or: (filters: string) => SupabaseFluentBuilder
@@ -87,6 +88,10 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
   const emailFinal = (ticketDb?.email as string) || (profileData?.email as string) || user.email || ''
   const matriculaFinal = (ticketDb?.matricula as string) || (profileData?.matricula as string) || null
 
+  if (!ticketDb) {
+    return { success: false, message: 'Primero debes completar el registro o comprar un boleto.' }
+  }
+
   if (tokenData?.type) {
     tipoFinal = tokenData.type === 'empresa' ? 'empresa' : 'alumno'
   } else if (ticketDb?.type) {
@@ -115,52 +120,48 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     }
   }
 
-  try {
-    const payloadBD = {
-      asiento_zona: asientoZona,
-      asiento_bloque: asientoBloque,
-      asiento_fila: asientoFila,
-      asiento_numero: asientoNumero,
-      qr_data: qrDataFinal,
-      nombre: nombreFinal,
-      email: emailFinal,
-      type: tipoFinal,
-      modalidad: tipoFinal === 'alumno'
-        ? normalizeStudentModality(ticketDb?.modalidad)
-        : null,
-      matricula: matriculaFinal,
-      carrera: profileData?.carrera || null,
-      semestre: profileData?.semestre || null,
-      telefono: profileData?.telefono || null,
-      offset_asiento: null,
-      unidad_academica_id: profileData?.unidad_academica_id || null
+  let unidadAcademicaId = Number(ticketDb?.unidad_academica_id || profileData?.unidad_academica_id) || null
+  if (!unidadAcademicaId) {
+    try {
+      unidadAcademicaId = await resolveUnidadAcademicaId(supabase, user.id, user.email ?? null)
+    } catch (profileError) {
+      console.error('[obtenerQRData] Error al consultar Unidad Académica:', profileError)
+      return { success: false, message: 'No se pudo validar tu Unidad Académica.' }
     }
-
-    if (ticketDb) {
-      if (ticketDb.asiento_fila === 'N/A' && asientoFila !== 'N/A') {
-        await client.from('tickets').update({
-          asiento_zona: asientoZona,
-          asiento_bloque: asientoBloque,
-          asiento_fila: asientoFila,
-          asiento_numero: asientoNumero,
-          qr_data: qrDataFinal,
-          modalidad: tipoFinal === 'alumno'
-            ? normalizeStudentModality(ticketDb.modalidad)
-            : null,
-        }).eq('id', ticketDb.id)
-      }
-    } else {
-      await client.from('tickets').insert({
-        id: user.id,
-        buyer_id: user.id,
-        ...payloadBD
-      })
-    }
-  } catch (dbError) {
-    console.warn('⚠️ Nota sobre base de datos:', dbError)
   }
 
-  const unidadId = ticketDb?.unidad_academica_id || profileData?.unidad_academica_id
+  if (!unidadAcademicaId) {
+    return { success: false, message: 'Asigna una Unidad Académica antes de generar tu boleto.' }
+  }
+
+  const payloadBD = {
+    event_id: CONGRESO_IGE_EVENT_ID,
+    asiento_zona: asientoZona,
+    asiento_bloque: asientoBloque,
+    asiento_fila: asientoFila,
+    asiento_numero: asientoNumero,
+    qr_data: qrDataFinal,
+    nombre: nombreFinal,
+    email: emailFinal,
+    type: tipoFinal,
+    modalidad: tipoFinal === 'alumno'
+      ? normalizeStudentModality(ticketDb?.modalidad)
+      : null,
+    matricula: matriculaFinal,
+    carrera: profileData?.carrera || null,
+    semestre: profileData?.semestre || null,
+    telefono: profileData?.telefono || null,
+    offset_asiento: null,
+    unidad_academica_id: unidadAcademicaId,
+  }
+
+  const { error: updateError } = await client.from('tickets').update(payloadBD).eq('id', ticketDb.id).maybeSingle()
+  if (updateError) {
+    console.error('[obtenerQRData] Error al actualizar el ticket:', updateError)
+    return { success: false, message: 'No se pudo actualizar tu boleto.' }
+  }
+
+  const unidadId = unidadAcademicaId
   let unidadNombre: string | null = null
   if (unidadId) {
     try {

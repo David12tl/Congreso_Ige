@@ -13,8 +13,8 @@ import type {
   OccupiedSeat,
 } from '@/components/asientos/types'
 import { getSeatKey } from '@/config/auditorioConfig'
-import { v4 as uuidv4 } from 'uuid'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
+import { resolveUnidadAcademicaId } from '@/lib/tickets/resolveUnidadAcademica'
 
 const PRECIO_POR_BOLETO = 650
 
@@ -32,6 +32,7 @@ export interface ApartadoInfoLocal {
 
 interface TicketWithPurchase {
   id: string
+  buyer_id: string | null
   nombre: string | null
   email: string | null
   zone_id: string | null
@@ -331,6 +332,9 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
   const supabase = await createClient()
   const { result: permissionResult, user } = await ensureStaffPermissions(supabase)
   if (permissionResult || !user) return permissionResult ?? { success: false, message: 'Usuario inválido.' }
+  if (input.estatusPago === 'pagado') {
+    return { success: false, message: 'Los tickets pagados deben procesarse desde el flujo transaccional de cobro.' }
+  }
 
   const client = supabase as unknown as AssignmentDataClient
   const profile = await getProfileRole(client, user.id)
@@ -345,9 +349,38 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
     ? { id: null, nombre: null }
     : await resolveEncargadoUnidad(client, user.id, profile.unidad_academica_id, unidades)
 
-  const unidadId = isAdmin ? input.unidadAcademicaId : encargadoUnidad.id
-  const unidad = unidades.find((item) => item.id === unidadId)
+  let unidadId = isAdmin ? input.unidadAcademicaId ?? null : encargadoUnidad.id
+  const nombre = cleanText(input.nombre, 160)
+  const email = cleanText(input.email, 180).toLowerCase()
 
+  if (!nombre || !email || !input.zoneId || !input.bloque || !input.fila || !input.numero) {
+    return { success: false, message: 'Completa los datos obligatorios del alumno y asiento.' }
+  }
+
+  const { data: buyerProfile, error: buyerProfileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .ilike('email', email)
+    .maybeSingle()
+
+  if (buyerProfileError) {
+    console.error('[createManualSeatTicket] Error al consultar el perfil del alumno:', buyerProfileError.message)
+    return { success: false, message: 'No se pudo validar la cuenta del alumno.' }
+  }
+  if (!buyerProfile) {
+    return { success: false, message: 'El alumno debe crear una cuenta antes de registrar su boleto.' }
+  }
+
+  if (!unidadId) {
+    try {
+      unidadId = await resolveUnidadAcademicaId(supabase, buyerProfile.id, email)
+    } catch (profileError) {
+      console.error('[createManualSeatTicket] Error al resolver Unidad Académica:', profileError)
+      return { success: false, message: 'No se pudo validar la Unidad Académica del alumno.' }
+    }
+  }
+
+  const unidad = unidades.find((item) => item.id === unidadId)
   if (!unidadId || !unidad) {
     return {
       success: false,
@@ -357,18 +390,11 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
     }
   }
 
-  const nombre = cleanText(input.nombre, 160)
-  const email = cleanText(input.email, 180).toLowerCase()
-
-  if (!nombre || !email || !input.zoneId || !input.bloque || !input.fila || !input.numero) {
-    return { success: false, message: 'Completa los datos obligatorios del alumno y asiento.' }
-  }
-
   const resolvedZoneId = getZoneUuid(input.zoneId) || getZoneUuid(input.zoneCode) || ZONE_UUIDS[input.zoneCode?.toLowerCase().replace(/[\s_-]/g, '')] || input.zoneId
-  const ticketType = input.estatusPago === 'pagado' ? (input.matricula ? 'alumno' : 'empresa') : 'alumno'
+  const ticketType = 'alumno'
 
   const ticketData = {
-    buyer_id: user.id,
+    buyer_id: buyerProfile.id,
     purchase_id: null,
     event_id: CONGRESO_IGE_EVENT_ID,
     zone_id: resolvedZoneId,
@@ -388,8 +414,8 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
     asiento_numero: input.numero,
     // NOTA: Si en un futuro la mutación falla por el campo 'estatus_pago' en la tabla 'tickets', 
     // asegúrate de que el campo real de la base de datos no se llame 'status'.
-    estatus_pago: input.estatusPago === 'pagado' ? 'pagado' : 'apartado',
-    purchased_at: input.estatusPago === 'pagado' ? new Date().toISOString() : null,
+    estatus_pago: 'apartado',
+    purchased_at: null,
   }
 
   const { error } = await supabase.from('tickets').insert(ticketData as never)
@@ -409,56 +435,66 @@ export async function confirmarPagoTicket(ticketId: string): Promise<ActionResul
   if (permissionResult) return permissionResult
 
   try {
-    const { error } = await supabase
-      .from('tickets')
-      .update({
-        estatus_pago: 'pagado',
-        purchased_at: new Date().toISOString(),
-      } as never)
-      .eq('id', ticketId)
-
-    if (error) {
-      console.error('[confirmarPagoTicket] Error al actualizar ticket:', error.message)
-      return { success: false, message: `Error al confirmar pago: ${error.message}` }
-    }
-
     const { data: ticketData, error: ticketError } = await supabase
       .from('tickets')
-      .select('event_id, zone_id')
+      .select('buyer_id, email, nombre, modalidad, event_id, zone_id, unidad_academica_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, purchase_id')
       .eq('id', ticketId)
       .maybeSingle()
 
-    if (ticketError) {
-      console.error('[confirmarPagoTicket] Error al obtener datos del ticket:', ticketError.message)
-      return { success: false, message: `Error al obtener datos del ticket: ${ticketError.message}` }
+    if (ticketError || !ticketData) {
+      console.error('[confirmarPagoTicket] Error al consultar ticket:', ticketError?.message)
+      return { success: false, message: 'No se encontró el boleto que se quiere cobrar.' }
     }
 
-    let tokenCode: string | undefined
-    if (ticketData) {
-      const t = ticketData as { event_id: string | null; zone_id: string | null }
+    const ticket = ticketData as unknown as {
+      buyer_id: string
+      email: string
+      nombre: string | null
+      modalidad: string | null
+      event_id: string | null
+      zone_id: string | null
+      unidad_academica_id: number | null
+      asiento_zona: string | null
+      asiento_bloque: string | null
+      asiento_fila: string | null
+      asiento_numero: number | null
+      purchase_id: string | null
+    }
 
-      const { data: tokens, error: tokensError } = await supabase
-        .from('tokens_canje')
-        .select('token_code')
-        .eq('event_id', t.event_id ?? '')
-        .eq('zone_id', t.zone_id ?? '')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    if (!ticket.zone_id || !ticket.asiento_zona || !ticket.asiento_bloque || !ticket.asiento_fila || !ticket.asiento_numero) {
+      return { success: false, message: 'El boleto no tiene un asiento completo asignado.' }
+    }
 
-      if (tokensError) {
-        console.error('[confirmarPagoTicket] Error al buscar token:', tokensError.message)
-      } else if (tokens) {
-        tokenCode = (tokens as { token_code: string }).token_code
+    if (ticket.purchase_id) {
+      const apartado = await getApartadoInfo(ticketId)
+      if (!apartado.success || !apartado.info) return apartado
+      const result = await liquidarRestoAsiento(ticketId, apartado.info.montoRestante)
+      return {
+        success: result.success,
+        message: result.message,
+        tokenCode: result.tokenCode,
       }
     }
 
-    revalidateTokenPaths()
+    const result = await cobrarAsientoYGenerarToken(
+      {
+        zoneId: ticket.zone_id,
+        zoneCode: ticket.asiento_zona,
+        bloque: ticket.asiento_bloque,
+        fila: ticket.asiento_fila,
+        numero: ticket.asiento_numero,
+      },
+      PRECIO_POR_BOLETO,
+      ticket.nombre ?? undefined,
+      ticket.email,
+      ticketId,
+      'pago',
+    )
 
     return {
-      success: true,
-      message: 'Pago confirmed. El asiento ahora está en verde (confirmado).',
-      tokenCode,
+      success: result.success,
+      message: result.message,
+      tokenCode: result.token,
     }
   } catch (err: unknown) {
     const errorDetails = err as Error
@@ -582,6 +618,20 @@ export async function cobrarAsientoYGenerarToken(
   if (permissionResult || !user) return permissionResult ?? { success: false, message: 'Usuario no verificado.' }
 
   try {
+    if (
+      !seat?.zoneId ||
+      !seat.zoneCode ||
+      !seat.bloque ||
+      !seat.fila ||
+      !Number.isInteger(seat.numero) ||
+      seat.numero < 1 ||
+      !Number.isFinite(montoRecibido) ||
+      montoRecibido <= 0 ||
+      montoRecibido > PRECIO_POR_BOLETO
+    ) {
+      return { success: false, message: 'Los datos del asiento o del pago no son válidos.' }
+    }
+
     let alumnoId: string | null = null
     let alumnoEmail = email?.trim() || null
     let modalidad = normalizeStudentModality(null)
@@ -603,6 +653,8 @@ export async function cobrarAsientoYGenerarToken(
         alumnoId = student.buyer_id
         alumnoEmail = student.email?.trim() || alumnoEmail
         modalidad = normalizeStudentModality(student.modalidad)
+      } else {
+        return { success: false, message: 'No se encontró el pre-registro seleccionado.' }
       }
     } else if (alumnoEmail) {
       const { data: ticket, error: ticketLookupError } = await supabase
@@ -623,6 +675,38 @@ export async function cobrarAsientoYGenerarToken(
         alumnoEmail = student.email?.trim() || alumnoEmail
         modalidad = normalizeStudentModality(student.modalidad)
       }
+    }
+
+    if (!alumnoId && alumnoEmail) {
+      const { data: buyerProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', alumnoEmail)
+        .maybeSingle()
+
+      if (profileError) {
+        console.error('[cobrarAsientoYGenerarToken] Error al buscar perfil del comprador:', profileError.message)
+        return { success: false, message: 'No se pudo validar la cuenta del comprador.' }
+      }
+
+      alumnoId = buyerProfile?.id ?? null
+      alumnoEmail = buyerProfile?.email?.trim() || alumnoEmail
+    }
+
+    if (!alumnoId || !alumnoEmail) {
+      return { success: false, message: 'El comprador debe tener una cuenta registrada para emitir el boleto.' }
+    }
+
+    let unidadAcademicaId: number | null
+    try {
+      unidadAcademicaId = await resolveUnidadAcademicaId(supabase, alumnoId, alumnoEmail)
+    } catch (profileError) {
+      console.error('[cobrarAsientoYGenerarToken] Error al resolver Unidad Académica:', profileError)
+      return { success: false, message: 'No se pudo validar la Unidad Académica del comprador.' }
+    }
+
+    if (unidadAcademicaId == null) {
+      return { success: false, message: 'El comprador debe asignar una Unidad Académica antes de comprar el boleto.' }
     }
 
     try {
@@ -657,8 +741,9 @@ export async function cobrarAsientoYGenerarToken(
     // en la intención del usuario (metodoRegistro) y NO en la comparación del monto,
     // para evitar que un anticipo >= PRECIO_POR_BOLETO se confunda con un pago total.
     const esPagoCompleto = metodoRegistro === 'pago'
-    const statusCompra = esPagoCompleto ? 'completed' : 'pending'
-
+    if (esPagoCompleto && montoRecibido < PRECIO_POR_BOLETO) {
+      return { success: false, message: `Se requieren $${PRECIO_POR_BOLETO.toFixed(2)} MXN para completar el pago.` }
+    }
     if (!esPagoCompleto && (!nombre?.trim() || !email?.trim())) {
       return { success: false, message: 'El nombre y correo son obligatorios para registrar un apartado.' }
     }
@@ -670,93 +755,36 @@ export async function cobrarAsientoYGenerarToken(
       throw rpcError
     }
 
-    const purchaseId = uuidv4()
-    const purchasePayload = {
-      id: purchaseId,
-      total: PRECIO_POR_BOLETO,
-      amount_paid: montoRecibido,
-      status: statusCompra,
-    }
-
-    const { error: purchaseError } = await supabase.from('purchases').insert(purchasePayload as never)
-
-    if (purchaseError) {
-      console.error('[cobrarAsientoYGenerarToken] Error al insertar purchase:', purchaseError.message)
-      throw purchaseError
-    }
-
     const resolvedZoneId = getZoneUuid(seat.zoneId) || getZoneUuid(seat.zoneCode) || seat.zoneId
+    if (!tokenCode) {
+      throw new Error('No se pudo generar el código del token.')
+    }
 
-    // Si se recibió un ticketId, significa que viene de un pre-registro.
-    // ACTUALIZAMOS el ticket existente para preservar sus datos originales (matrícula, carrera, semestre, etc.)
-    // y solo agregamos la información del asiento y de la compra.
-    if (ticketId) {
-      const ticketUpdatePayload = {
-        zone_id: resolvedZoneId,
-        asiento_zona: seat.zoneCode,
-        asiento_bloque: seat.bloque,
-        asiento_fila: seat.fila,
-        asiento_numero: seat.numero,
-        purchase_id: purchaseId,
-        type: 'alumno',
-        modalidad,
-        // NOTA: Si este update falla en runtime, revisa si el campo en DB se llama 'status' en lugar de 'estatus_pago'
-        estatus_pago: esPagoCompleto ? 'pagado' : 'apartado',
-        purchased_at: esPagoCompleto ? new Date().toISOString() : null,
-      }
-
-      const { error: ticketError } = await supabase
-        .from('tickets')
-        .update(ticketUpdatePayload as never)
-        .eq('id', ticketId)
-
-      if (ticketError) {
-        console.error('[cobrarAsientoYGenerarToken] Error al actualizar ticket pre-registrado:', ticketError.message)
-        throw ticketError
-      }
-    } else {
-      // Si NO hay ticketId, es una venta desde cero: creamos un nuevo ticket.
-      const ticketPayload = {
-        id: uuidv4(),
-        event_id: CONGRESO_IGE_EVENT_ID,
-        zone_id: resolvedZoneId,
-        asiento_zona: seat.zoneCode,
-        asiento_bloque: seat.bloque,
-        asiento_fila: seat.fila,
-        asiento_numero: seat.numero,
-        purchase_id: purchaseId,
-        type: 'alumno', // Ajustado con el valor permitido por el CHECK constraint de la tabla 'tickets'
-        modalidad,
+    const { error: saleError } = await supabase.rpc('registrar_venta_ticket_token', {
+      p_ticket_id: ticketId ?? null,
+      p_buyer_id: alumnoId,
+      p_event_id: CONGRESO_IGE_EVENT_ID,
+      p_zone_id: resolvedZoneId,
+      p_unidad_academica_id: unidadAcademicaId,
+      p_ticket_type: 'alumno',
+      p_ticket_data: {
         nombre: nombre?.trim() || null,
-        email: email?.trim() || null,
-        // NOTA: Si este insert falla en runtime, revisa si el campo en DB se llama 'status' en lugar de 'estatus_pago'
-        estatus_pago: esPagoCompleto ? 'pagado' : 'apartado',
-        purchased_at: esPagoCompleto ? new Date().toISOString() : null,
-      }
+        email: alumnoEmail,
+        modalidad,
+        asiento_zona: seat.zoneCode,
+        asiento_bloque: seat.bloque,
+        asiento_fila: seat.fila,
+        asiento_numero: seat.numero,
+      },
+      p_token_code: String(tokenCode),
+      p_total: PRECIO_POR_BOLETO,
+      p_monto: montoRecibido,
+      p_paid: esPagoCompleto,
+    })
 
-      const { error: ticketError } = await supabase.from('tickets').insert(ticketPayload as never)
-
-      if (ticketError) {
-        console.error('[cobrarAsientoYGenerarToken] Error al insertar ticket:', ticketError.message)
-        throw ticketError
-      }
-    }
-
-    const tokenPayload = {
-      token_code: String(tokenCode),
-      event_id: CONGRESO_IGE_EVENT_ID,
-      zone_id: resolvedZoneId,
-      creado_por: user.id,
-      status: 'disponible',
-      total_abonado: montoRecibido,
-      estado_pago: esPagoCompleto ? 'completado' : 'faltante',
-    }
-
-    const { error: tokenInsertError } = await supabase.from('tokens_canje').insert(tokenPayload as never)
-
-    if (tokenInsertError) {
-      console.error('[cobrarAsientoYGenerarToken] Error al insertar token_canje:', tokenInsertError.message)
-      throw tokenInsertError
+    if (saleError) {
+      console.error('[cobrarAsientoYGenerarToken] Error en la transacción de venta:', saleError.message)
+      throw saleError
     }
 
     revalidateTokenPaths()
@@ -778,123 +806,71 @@ export async function liquidarRestoAsiento(
   montoLiquidar: number,
 ): Promise<ActionResult & { tokenCode?: string }> {
   const supabase = await createClient()
-  const { result: permissionResult } = await ensureStaffPermissions(supabase)
-  if (permissionResult) return permissionResult
+  const { result: permissionResult, user } = await ensureStaffPermissions(supabase)
+  if (permissionResult || !user) return permissionResult ?? { success: false, message: 'Usuario no verificado.' }
+
+  if (!Number.isFinite(montoLiquidar) || montoLiquidar <= 0) {
+    return { success: false, message: 'El monto a liquidar debe ser mayor que cero.' }
+  }
 
   try {
-    // 1. Obtener los datos actuales del ticket usando el ticketId
     const { data: ticketRaw, error: ticketError } = await supabase
       .from('tickets')
-      .select('id, purchase_id, zone_id, estatus_pago')
+      .select('id, buyer_id, event_id, purchase_id, zone_id, email')
       .eq('id', ticketId)
-      .single<{ id: string; purchase_id: string | null; zone_id: string | null; estatus_pago: string | null }>()
+      .maybeSingle()
 
     if (ticketError || !ticketRaw) {
-      return { success: false, message: ticketError?.message || 'No se encontró el ticket especificado.' }
+      console.error('[liquidarRestoAsiento] Error al consultar ticket:', ticketError?.message)
+      return { success: false, message: 'No se encontró el boleto pendiente de liquidación.' }
     }
 
-    // Mapeamos a un Record seguro para que TypeScript no se queje por propiedades inexistentes
-    const ticketData = ticketRaw as Record<string, unknown>;
-    const rawZoneId = ticketData.zone_id as string | null;
-    const zoneId = getZoneUuid(rawZoneId) || rawZoneId;
-    const purchaseId = ticketData.purchase_id as string | null;
-
-    // Control preventivo crítico para el UUID de zone_id
-    if (!zoneId) {
-      return { success: false, message: 'El ticket no tiene una zona (zone_id) válida asignada.' }
+    const ticket = ticketRaw as unknown as {
+      id: string
+      buyer_id: string
+      event_id: string | null
+      purchase_id: string | null
+      zone_id: string | null
+      email: string
     }
 
-    // 2. Actualizar la compra vinculada (si existe)
-    if (purchaseId) {
-      const { data: purchaseRaw, error: pErr } = await supabase
-        .from('purchases')
-        .select('amount_paid, total')
-        .eq('id', purchaseId)
-        .single<{ amount_paid: number; total: number }>()
-
-      if (pErr) {
-        console.error('[liquidarRestoAsiento] Error al obtener purchase:', pErr.message)
-      } else {
-        const purchaseData = purchaseRaw as Record<string, unknown>;
-        const montoPrevio = Number(purchaseData?.amount_paid) || 0
-        const nuevoTotalPagado = montoPrevio + Number(montoLiquidar)
-        const totalEsperadoBoleto = Number(purchaseData?.total) || (typeof PRECIO_POR_BOLETO !== 'undefined' ? PRECIO_POR_BOLETO : 0)
-        const esPagoCompleto = nuevoTotalPagado >= totalEsperadoBoleto
-
-        // SOLUCIÓN ERROR 1: Casteamos el payload a Record<string, unknown> para evitar el tipo 'never'
-        const purchasePayload = {
-          amount_paid: nuevoTotalPagado,
-          status: esPagoCompleto ? 'completed' : 'pending',
-        } as unknown as Record<string, unknown>;
-
-        await supabase
-          .from('purchases')
-          .update(purchasePayload as never)
-          .eq('id', purchaseId)
-      }
+    if (!ticket.purchase_id || !ticket.zone_id) {
+      return { success: false, message: 'No hay una compra pendiente asociada a este boleto.' }
     }
 
-    // 3. Actualizar el ticket a 'pagado'
-    // SOLUCIÓN ERROR 2: Casteamos el payload del ticket de la misma manera segura
-    const ticketPayload = { 
-      estatus_pago: 'pagado', 
-      purchased_at: new Date().toISOString() 
-    } as unknown as Record<string, unknown>;
-
-    const { error: ticketUpdateError } = await supabase
-      .from('tickets')
-      .update(ticketPayload as never)
-      .eq('id', ticketId)
-
-    if (ticketUpdateError) {
-      console.error('[liquidarRestoAsiento] Error al actualizar ticket a pagado:', ticketUpdateError.message)
-      return { success: false, message: `Error al liquidar el ticket: ${ticketUpdateError.message}` }
+    let unidadAcademicaId: number | null
+    try {
+      unidadAcademicaId = await resolveUnidadAcademicaId(supabase, ticket.buyer_id, ticket.email)
+    } catch (profileError) {
+      console.error('[liquidarRestoAsiento] Error al consultar Unidad Académica:', profileError)
+      return { success: false, message: 'No se pudo validar la Unidad Académica del comprador.' }
     }
 
-    // 4. Sincronizar y actualizar el estado en la tabla tokens_canje (best-effort)
-    const tokenPayload = { estado_pago: 'completado' } as unknown as Record<string, unknown>;
-    
-    const { error: tokenUpdateError } = await supabase
-      .from('tokens_canje')
-      .update(tokenPayload as never)
-      .eq('zone_id', zoneId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    if (tokenUpdateError) {
-      console.warn('[liquidarRestoAsiento] Aviso: El ticket se liquidó, pero falló la actualización del token:', tokenUpdateError.message)
+    if (unidadAcademicaId == null) {
+      return { success: false, message: 'El comprador debe asignar una Unidad Académica antes de liquidar el boleto.' }
     }
 
-    // 5. Obtener el token para devolverlo al cliente (best-effort)
-    let tokenCode: string | null = null
-    const { data: tokenRaw, error: tokenFetchError } = await supabase
-      .from('tokens_canje')
-      .select('token_code')
-      .eq('zone_id', zoneId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle<{ token_code: string }>()
+    const { data, error } = await supabase.rpc('liquidar_ticket_y_token', {
+      p_ticket_id: ticket.id,
+      p_buyer_id: ticket.buyer_id,
+      p_event_id: ticket.event_id ?? CONGRESO_IGE_EVENT_ID,
+      p_unidad_academica_id: unidadAcademicaId,
+      p_monto: montoLiquidar,
+      p_token_code: '',
+    })
 
-    if (tokenFetchError) {
-      console.warn('[liquidarRestoAsiento] Aviso: No se pudo recuperar el código del token:', tokenFetchError.message)
-    } else if (tokenRaw) {
-      const tokenData = tokenRaw as Record<string, unknown>;
-      tokenCode = (tokenData.token_code as string) ?? null
+    if (error) {
+      console.error('[liquidarRestoAsiento] Error en la transacción de liquidación:', error.message)
+      return { success: false, message: error.message || 'No se pudo liquidar el boleto.' }
     }
 
-    // Invocación segura de la revalidación de Next.js
-    if (typeof revalidateTokenPaths === 'function') {
-      try {
-        revalidateTokenPaths();
-      } catch (revalidateError) {
-        console.warn('[liquidarRestoAsiento] Aviso: Falló revalidateTokenPaths:', revalidateError)
-      }
-    }
+    const result = data as { token_code?: string } | null
+    revalidateTokenPaths()
 
     return {
       success: true,
       message: 'Cobro liquidado correctamente.',
-      tokenCode: tokenCode ?? undefined,
+      tokenCode: result?.token_code,
     }
   } catch (err: unknown) {
     const errorDetails = err as Error
@@ -908,7 +884,7 @@ export async function getApartadoInfo(ticketId: string): Promise<ActionResult & 
 
   const { data: ticket, error } = await (supabase
     .from('tickets')
-    .select('id, nombre, email, purchase_id, zone_id, purchases(amount_paid, total, status)')
+    .select('id, buyer_id, nombre, email, purchase_id, zone_id, purchases(amount_paid, total, status)')
     .eq('id', ticketId)
     .maybeSingle() as unknown as Promise<{ data: Record<string, unknown> | null; error: DbError | null }>)
 
@@ -927,12 +903,13 @@ export async function getApartadoInfo(ticketId: string): Promise<ActionResult & 
 
   let tokenCode: string | null = null
 
-  if (t.purchase_id && t.zone_id) {
+  if (t.purchase_id && t.zone_id && t.buyer_id) {
     const { data: tokenData, error: tokenError } = await supabase
       .from('tokens_canje')
       .select('token_code')
       .eq('event_id', CONGRESO_IGE_EVENT_ID)
-      .eq('zone_id', t.zone_id!) // CORRECCIÓN: Usamos '!' para asegurar a TypeScript que t.zone_id no es nulo aquí.
+      .eq('zone_id', t.zone_id)
+      .eq('creado_por', t.buyer_id)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()

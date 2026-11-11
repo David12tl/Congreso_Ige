@@ -1,19 +1,22 @@
 'use client'
 
-import React, { useState, useEffect, useTransition } from 'react'
+import React, { useState, useEffect, useTransition, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { crearPreRegistro } from './actions'
 import { crearRegistroDocente } from './actions-docente'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
+import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
 import { HiUser, HiOfficeBuilding, HiCheckCircle, HiExclamationCircle, HiLockClosed, HiClock } from 'react-icons/hi'
 
 // Estructura de datos para el formulario local
 interface TicketFormData {
   buyer_id: string
+  event_id: string
+  unidad_academica_id: number
   email: string
   type: 'alumno' | 'empresa'
   nombre: string
   telefono: string | null
-  estatus_pago: string
   matricula: string | null
   carrera: string | null
   semestre: string | null
@@ -22,8 +25,16 @@ interface TicketFormData {
   departamento: string | null // Nuevo campo para docentes
 }
 
-export function PreTicketOnboarding({ userId, userEmail }: { userId: string; userEmail: string }) {
-  const supabase = createClient()
+export function PreTicketOnboarding({
+  userId,
+  userEmail,
+  unidadAcademicaId,
+}: {
+  userId: string
+  userEmail: string
+  unidadAcademicaId: number
+}) {
+  const supabase = useMemo(() => createClient(), [])
   const [isPending, startTransition] = useTransition()
   
   // Estados de flujo y control
@@ -50,14 +61,25 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
       try {
         const { data, error } = await supabase
           .from('tickets')
-          .select('estatus_pago')
+          .select('estatus_pago, unidad_academica_id, event_id, purchase_id')
           .eq('buyer_id', userId)
-          .returns<Array<{ estatus_pago: string }>>()
+          .returns<Array<{
+            estatus_pago: string | null
+            unidad_academica_id: number | null
+            event_id: string | null
+            purchase_id: string | null
+          }>>()
           .maybeSingle()
 
         if (error) throw error
 
-        if (data) {
+        const hasCompleteTicket = Boolean(
+          data?.purchase_id ||
+          data?.estatus_pago === 'pagado' ||
+          (data?.unidad_academica_id != null && data?.event_id === CONGRESO_IGE_EVENT_ID),
+        )
+
+        if (data && hasCompleteTicket) {
           setExistingStatus(data.estatus_pago)
           setStep('already_registered')
         } else {
@@ -106,10 +128,12 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
         }
       } else {
         // --- Lógica original para alumnos y externos ---
-        const payload: Omit<TicketFormData, 'type' | 'departamento' | 'estatus_pago'> & { type: 'alumno' | 'empresa' } = {
+        const payload: Omit<TicketFormData, 'departamento'> = {
           buyer_id: userId,
+          event_id: CONGRESO_IGE_EVENT_ID,
+          unidad_academica_id: unidadAcademicaId,
           email: userEmail,
-          type: type as 'alumno' | 'empresa',
+          type,
           nombre: nombre.trim(),
           telefono: telefono.trim() || null,
           matricula: type === 'alumno' ? matricula.trim() : null,
@@ -119,10 +143,10 @@ export function PreTicketOnboarding({ userId, userEmail }: { userId: string; use
           empresa: type === 'empresa' ? empresa.trim() : null,
         }
 
-        const { error } = await supabase.from('tickets').insert(payload)
+        const result = await crearPreRegistro(payload)
 
-        if (error) {
-          setErrorMsg('Error al procesar tu pre-registro. Es posible que ya tengas un ticket asignado.')
+        if (!result.success) {
+          setErrorMsg(result.message)
         } else {
           setStep('success')
         }

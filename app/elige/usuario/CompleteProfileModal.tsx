@@ -1,17 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { HiOutlineAcademicCap, HiOutlineBriefcase, HiOutlineX, HiCheckCircle, HiExclamation } from 'react-icons/hi'
 import { actualizarInformacionPerfil } from './actions'
-
-const UNIDADES_ACADEMICAS = [
-  "Unidad Académica Nogales",
-  "Unidad Académica Tezonapa",
-  "Unidad Académica Tehuipango",
-  "Unidad Académica Tequila",
-  "Unidad Académica Cuichapa",
-  "Unidad Académica Acultzinapa"
-]
+import { getUnidadesAcademicas } from '../perfil/actions'
+import type { UnidadAcademica } from '../perfil/actions'
 
 interface CompleteProfileModalProps {
   isOpen: boolean
@@ -30,16 +23,28 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
   const [tipo, setTipo] = useState<'alumno' | 'empresa'>('alumno')
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState<NotificationState>(null)
+  const [unidadesAcademicas, setUnidadesAcademicas] = useState<UnidadAcademica[]>([])
   
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
     matricula: '',
-    unidad: UNIDADES_ACADEMICAS[0],
+    unidad: '',
     semestre: '1',
     carrera: '',
     telefono: ''
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    getUnidadesAcademicas()
+      .then(setUnidadesAcademicas)
+      .catch((error: unknown) => {
+        console.error('[CompleteProfileModal] Error al consultar Unidades Académicas:', error)
+        setNotification({ type: 'error', message: 'No se pudieron cargar las Unidades Académicas.' })
+      })
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -51,7 +56,7 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
         nombre: '',
         email: '',
         matricula: '',
-        unidad: UNIDADES_ACADEMICAS[0],
+        unidad: '',
         semestre: '1',
         carrera: '',
         telefono: ''
@@ -196,6 +201,24 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
                     />
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">
+                      Unidad Académica
+                    </label>
+                    <select
+                      required
+                      disabled={loading}
+                      value={formData.unidad}
+                      onChange={event => setFormData({ ...formData, unidad: event.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-light disabled:opacity-60"
+                    >
+                      <option value="">Selecciona una Unidad Académica</option>
+                      {unidadesAcademicas.map((unidad) => (
+                        <option key={unidad.id} value={unidad.id}>{unidad.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Formulario Específico para Alumnos */}
                   {tipo === 'alumno' ? (
                     <>
@@ -224,20 +247,6 @@ export default function CompleteProfileModal({ isOpen, onClose, onSuccess }: Com
                             ))}
                           </select>
                         </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Unidad Académica</label>
-                        <select 
-                          value={formData.unidad} 
-                          disabled={loading}
-                          onChange={e => setFormData({...formData, unidad: e.target.value})} 
-                          className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none font-light disabled:opacity-60"
-                        >
-                          {UNIDADES_ACADEMICAS.map(u => (
-                            <option key={u} value={u} className="bg-white dark:bg-[#2a2a2f]">{u}</option>
-                          ))}
-                        </select>
                       </div>
 
                       <div className="space-y-1">

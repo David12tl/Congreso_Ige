@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/types/database.types'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
-
-type TicketInsert = Database['public']['Tables']['tickets']['Insert']
+import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
+import { resolveUnidadAcademicaId } from '@/lib/tickets/resolveUnidadAcademica'
+import { crearPreRegistro } from '../perfil/actions'
 
 export interface ResumenDashboard {
   userEmail: string | null
@@ -117,36 +117,58 @@ export async function actualizarInformacionPerfil(formData: UpdateAsistenteData)
 
     if (!user) return { success: false, message: 'Sesión expirada o no válida.' }
 
-    const isAlumno = formData.tipo === 'alumno'
+    let unidadAcademicaId = formData.unidad_academica
+      ? Number(formData.unidad_academica) || null
+      : null
 
-    // 💡 PAYLOAD TIPIFICADO: Usa el tipo Insert de la tabla tickets para evitar errores de TypeScript
-    const updatePayload: TicketInsert = {
+    if (unidadAcademicaId == null && formData.unidad_academica) {
+      const { data: selectedUnit, error: unitError } = await supabase
+        .from('unidades_academicas')
+        .select('id')
+        .eq('nombre', formData.unidad_academica)
+        .maybeSingle()
+
+      if (unitError) {
+        console.error('[actualizarInformacionPerfil] Error al consultar Unidad Académica:', unitError.message)
+        return { success: false, message: 'No se pudo validar la Unidad Académica seleccionada.' }
+      }
+
+      unidadAcademicaId = selectedUnit?.id ?? null
+    }
+
+    if (unidadAcademicaId == null) {
+      unidadAcademicaId = await resolveUnidadAcademicaId(supabase, user.id, user.email ?? null)
+    }
+
+    if (unidadAcademicaId == null) {
+      return { success: false, message: 'Selecciona una Unidad Académica antes de completar tu perfil.' }
+    }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ unidad_academica_id: unidadAcademicaId })
+      .eq('id', user.id)
+
+    if (profileError) {
+      console.error('[actualizarInformacionPerfil] Error al guardar Unidad Académica:', profileError.message)
+      return { success: false, message: 'No se pudo guardar la Unidad Académica.' }
+    }
+
+    const isAlumno = formData.tipo === 'alumno'
+    return crearPreRegistro({
       buyer_id: user.id,
+      event_id: CONGRESO_IGE_EVENT_ID,
+      unidad_academica_id: unidadAcademicaId,
+      type: isAlumno ? 'alumno' : 'empresa',
       nombre: formData.nombre,
       email: formData.email,
-      type: isAlumno ? 'alumno' : 'empresa',
-      matricula: isAlumno ? (formData.matricula ?? null) : null,
-      unidad_academica_id: formData.unidad_academica
-        ? Number(formData.unidad_academica) || null
-        : null,
-      semestre: isAlumno ? (formData.semestre ?? null) : null,
-      carrera: isAlumno ? (formData.carrera ?? null) : null,
-      telefono: !isAlumno ? (formData.telefono ?? null) : null,
-      modalidad: isAlumno
-        ? normalizeStudentModality(formData.modalidad)
-        : null,
-    }
-
-    const { error: updateError } = await supabase
-      .from('tickets')
-      .upsert(updatePayload, { onConflict: 'buyer_id' })
-
-    if (updateError) {
-      console.error("🛑 Error Detallado de Postgres en el Servidor:", updateError.message)
-      return { success: false, message: `Error de escritura en tickets: ${updateError.message}` }
-    }
-
-    return { success: true, message: '¡Información guardada exitosamente!' }
+      telefono: formData.telefono ?? null,
+      matricula: isAlumno ? formData.matricula ?? null : null,
+      carrera: isAlumno ? formData.carrera ?? null : null,
+      semestre: isAlumno ? formData.semestre ?? null : null,
+      modalidad: isAlumno ? normalizeStudentModality(formData.modalidad) : null,
+      empresa: null,
+    })
   } catch (err) {
     console.error('[actualizarInformacionPerfil] Excepción no controlada:', err instanceof Error ? err.message : String(err))
     return { success: false, message: 'Error crítico al guardar la información.' }

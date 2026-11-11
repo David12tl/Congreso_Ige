@@ -1,19 +1,76 @@
  'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 import { HiOutlineKey, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineArrowRight } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { validarToken } from './actions'
+import { actualizarMiUnidadAcademica, getMiPerfil, getUnidadesAcademicas } from '../perfil/actions'
+import type { UnidadAcademica } from '../perfil/actions'
 
 export default function IngresarTokenPage() {
   const [token, setToken] = useState('')
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [unidadStatus, setUnidadStatus] = useState<'checking' | 'required' | 'ready'>('checking')
+  const [unidades, setUnidades] = useState<UnidadAcademica[]>([])
+  const [selectedUA, setSelectedUA] = useState<number | ''>('')
+  const [savingUA, setSavingUA] = useState(false)
+  const [uaError, setUaError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadProfile() {
+      const [profile, availableUnits] = await Promise.all([
+        getMiPerfil(),
+        getUnidadesAcademicas(),
+      ])
+
+      if (!active) return
+
+      setUnidades(availableUnits)
+      if (profile?.unidadAcademicaId != null) {
+        setSelectedUA(profile.unidadAcademicaId)
+        setUnidadStatus('ready')
+      } else {
+        setUnidadStatus('required')
+      }
+    }
+
+    loadProfile().catch((loadError: unknown) => {
+      console.error('[IngresarTokenPage] Error al consultar el perfil:', loadError)
+      if (active) {
+        setUaError('No se pudo consultar tu perfil. Recarga la página para continuar.')
+        setUnidadStatus('required')
+      }
+    })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleSaveUA = async () => {
+    if (selectedUA === '') {
+      setUaError('Selecciona una Unidad Académica.')
+      return
+    }
+
+    setSavingUA(true)
+    setUaError(null)
+    const result = await actualizarMiUnidadAcademica(Number(selectedUA))
+    setSavingUA(false)
+
+    if (!result.success) {
+      setUaError(result.message)
+      return
+    }
+
+    setUnidadStatus('ready')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setFeedback(null)
 
     startTransition(async () => {
@@ -85,7 +142,7 @@ export default function IngresarTokenPage() {
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || unidadStatus !== 'ready'}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 text-white font-bold rounded-xl uppercase tracking-widest hover:bg-amber-500 transition shadow-sm disabled:opacity-40"
           >
             {isPending ? (
@@ -99,6 +156,61 @@ export default function IngresarTokenPage() {
           </button>
         </form>
       </GlassCard>
+
+      {unidadStatus !== 'ready' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unidad-academica-title"
+            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-[#2a2a2f] dark:text-white"
+          >
+            <h2 id="unidad-academica-title" className="text-lg font-bold">
+              Unidad Académica obligatoria
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Selecciona tu Unidad Académica para poder canjear el boleto.
+            </p>
+
+            {unidadStatus === 'checking' ? (
+              <p className="mt-5 text-sm" role="status">Verificando tu perfil...</p>
+            ) : (
+              <>
+                <select
+                  aria-label="Unidad Académica"
+                  value={selectedUA}
+                  onChange={(event) => setSelectedUA(Number(event.target.value) || '')}
+                  className="mt-5 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                  disabled={savingUA}
+                >
+                  <option value="">Selecciona una unidad</option>
+                  {unidades.map((unidad) => (
+                    <option key={unidad.id} value={unidad.id}>{unidad.nombre}</option>
+                  ))}
+                </select>
+
+                {uaError && (
+                  <p className="mt-3 text-sm text-red-600" role="alert">{uaError}</p>
+                )}
+                {unidades.length === 0 && !uaError && (
+                  <p className="mt-3 text-sm text-red-600" role="alert">
+                    No hay Unidades Académicas disponibles. Intenta más tarde.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSaveUA}
+                  disabled={savingUA || selectedUA === '' || unidades.length === 0}
+                  className="mt-5 w-full rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingUA ? 'Guardando...' : 'Guardar y continuar'}
+                </button>
+              </>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   )
 }

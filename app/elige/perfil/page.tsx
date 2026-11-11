@@ -244,6 +244,7 @@ export default function PerfilPage() {
               <PreTicketOnboarding
                 userId={perfilId}
                 userEmail={perfilEmail ?? ''}
+                unidadAcademicaId={perfil?.unidadAcademicaId ?? 0}
               />
             </div>
           )

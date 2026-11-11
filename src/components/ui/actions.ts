@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { normalizeStudentModality } from '@/lib/tickets/modality'
+import { resolveUnidadAcademicaId } from '@/lib/tickets/resolveUnidadAcademica'
+import { CONGRESO_IGE_EVENT_ID } from '@/config/auditorioConfig'
 
 interface TicketSelect {
   qr_data: string | null
@@ -32,17 +34,31 @@ export async function obtenerAsientosOcupados(eventId: string) {
 // 2. Apartar los asientos vinculándolos al evento real enviado desde el cliente
 export async function apartarAsientosEnBD(asientosIds: string[], eventId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  if (!user) return { success: false, message: 'Usuario no autenticado.' }
-  if (!eventId) return { success: false, message: 'Error: No se especificó un ID de evento válido.' }
-  if (!user.email) return { success: false, message: 'Error: Tu cuenta de usuario no tiene un email asociado.' }
+  if (authError || !user) return { success: false, message: 'Usuario no autenticado.' }
+  if (eventId !== CONGRESO_IGE_EVENT_ID) return { success: false, message: 'El evento seleccionado no es válido.' }
+  const userEmail = user.email
+  if (!userEmail) return { success: false, message: 'Error: Tu cuenta de usuario no tiene un email asociado.' }
+
+  let unidadAcademicaId: number | null
+  try {
+    unidadAcademicaId = await resolveUnidadAcademicaId(supabase, user.id, userEmail)
+  } catch (error) {
+    console.error('[apartarAsientosEnBD] Error al consultar Unidad Académica:', error)
+    return { success: false, message: 'No se pudo validar tu Unidad Académica. Intenta de nuevo.' }
+  }
+
+  if (unidadAcademicaId == null) {
+    return { success: false, message: 'Selecciona una Unidad Académica antes de apartar tu boleto.' }
+  }
 
   const filasAInsertar = asientosIds.map((id) => ({
     buyer_id: user.id,
-    email: user.email!,
+    email: userEmail,
     qr_data: id,
-    event_id: eventId,
+    event_id: CONGRESO_IGE_EVENT_ID,
+    unidad_academica_id: unidadAcademicaId,
     type: 'student',
     modalidad: normalizeStudentModality(null),
   }))
