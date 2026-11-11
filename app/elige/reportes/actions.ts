@@ -34,6 +34,26 @@ export interface TicketDetalle {
   fecha_venta: string
 }
 
+export interface ReporteVentaTicket {
+  ticket_id: string
+  asistente: string
+  email: string
+  matricula: string
+  tipo_asistente: string
+  modalidad: string
+  unidad_academica: string
+  docente_generador: string
+  asiento_zona: string
+  asiento_bloque: string
+  asiento_fila: string
+  asiento_numero: string
+  estatus_pago: string
+  codigo_token: string
+  estado_token: 'Asignado' | 'Sin Asignar'
+  monto_abonado: number
+  fecha_registro: string
+}
+
 export interface ResumenGlobal {
   totalTickets: number
   totalAlumnos: number
@@ -70,9 +90,7 @@ interface QueryResult {
   error: { message: string } | null
 }
 
-interface QueryBuilder extends PromiseLike<QueryResult> {
-  range(from: number, to: number): PromiseLike<QueryResult>
-}
+type QueryBuilder = PromiseLike<QueryResult>
 
 interface UntypedSupabaseClient {
   from(relation: string): {
@@ -125,7 +143,7 @@ function isRecord(value: unknown): value is RawRecord {
 }
 
 function stringValue(value: unknown): string {
-  return String(value || '')
+  return String(value ?? '')
 }
 
 function toAmount(value: string): number {
@@ -133,8 +151,63 @@ function toAmount(value: string): number {
   return Number.isFinite(amount) ? amount : 0
 }
 
+function tokenStatus(value: unknown): ReporteVentaTicket['estado_token'] {
+  if (typeof value === 'boolean') return value ? 'Asignado' : 'Sin Asignar'
+
+  const status = String(value ?? '').trim().toLowerCase()
+  const unassignedStatuses = [
+    '',
+    '0',
+    'false',
+    'null',
+    'none',
+    'sin asignar',
+    'sin_asignar',
+    'no asignado',
+    'no_asignado',
+    'unassigned',
+  ]
+  return unassignedStatuses.includes(status)
+    ? 'Sin Asignar'
+    : 'Asignado'
+}
+
 function percentage(value: number, total: number): number {
   return total > 0 ? Math.round((value / total) * 100) : 0
+}
+
+export async function getReporteVentasTickets(): Promise<ReporteVentaTicket[]> {
+  const supabase = await createClient()
+  const viewClient = supabase as unknown as UntypedSupabaseClient
+  const { data, error } = await viewClient
+    .from('vista_reporte_ventas_tickets')
+    .select('*')
+
+  if (error) {
+    throw new Error(
+      `Error al consultar vista_reporte_ventas_tickets: ${error.message}`,
+    )
+  }
+
+  return (data ?? []).filter(isRecord).map((ticket) => ({
+    ticket_id: stringValue(ticket.ticket_id),
+    asistente: stringValue(ticket.asistente),
+    email: stringValue(ticket.email),
+    matricula: stringValue(ticket.matricula),
+    tipo_asistente: stringValue(ticket.tipo_asistente),
+    modalidad: stringValue(ticket.modalidad),
+    unidad_academica: stringValue(ticket.unidad_academica),
+    docente_generador: stringValue(ticket.docente_generador),
+    asiento_zona: stringValue(ticket.asiento_zona),
+    asiento_bloque: stringValue(ticket.asiento_bloque),
+    asiento_fila: stringValue(ticket.asiento_fila),
+    asiento_numero: stringValue(ticket.asiento_numero),
+    estatus_pago: stringValue(ticket.estatus_pago),
+    codigo_token: stringValue(ticket.codigo_token),
+    estado_token: tokenStatus(ticket.estado_token),
+    monto_abonado: toAmount(stringValue(ticket.monto_abonado)),
+    fecha_registro: stringValue(ticket.fecha_registro),
+  }))
 }
 
 export async function getReportesData(): Promise<{
@@ -149,7 +222,6 @@ export async function getReportesData(): Promise<{
     const ticketsResult = await viewClient
       .from('vista_reporte_ventas_tickets')
       .select('*')
-      .range(0, 2000)
 
     if (ticketsResult.error) {
       throw new Error(

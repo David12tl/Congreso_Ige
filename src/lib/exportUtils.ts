@@ -1,4 +1,5 @@
-import type { TicketDetalle } from '@/../app/elige/reportes/actions'
+import ExcelJS from 'exceljs'
+import type { ReporteVentaTicket } from '@/../app/elige/reportes/actions'
 
 export async function exportarReportePDF() {
   // Obtener el PDF generado en el servidor via API
@@ -19,125 +20,87 @@ export async function exportarReportePDF() {
   URL.revokeObjectURL(url)
 }
 
-const MOJIBAKE_REPLACEMENTS: Record<string, string> = {
-  'ÃƒÂ¡': 'á',
-  'ÃƒÂ©': 'é',
-  'ÃƒÂ­': 'í',
-  'ÃƒÂ³': 'ó',
-  'ÃƒÂº': 'ú',
-  'ÃƒÂ±': 'ñ',
-  'ÃƒÂ¼': 'ü',
-  'ÃƒÂ': 'Á',
-  'ÃƒÂ‰': 'É',
-  'ÃƒÂ': 'Í',
-  'ÃƒÂ“': 'Ó',
-  'ÃƒÂš': 'Ú',
-  'Ãƒâ€˜': 'Ñ',
-  'Ã¡': 'á',
-  'Ã©': 'é',
-  'Ã­': 'í',
-  'Ã³': 'ó',
-  'Ãº': 'ú',
-  'Ã±': 'ñ',
-  'Ã¼': 'ü',
-  'Ã': 'Á',
-  'Ã‰': 'É',
-  'Ã': 'Í',
-  'Ã“': 'Ó',
-  'Ãš': 'Ú',
-  'Ã‘': 'Ñ',
-  'Â¡': '¡',
-  'Â¿': '¿',
-  'â€™': '’',
-  'â€œ': '“',
-  'â€\u009d': '”',
-  'â€“': '–',
-  'â€”': '—',
-}
-
-function fixUtf8Encoding(value: string): string {
-  return Object.entries(MOJIBAKE_REPLACEMENTS).reduce(
-    (result, [broken, corrected]) => result.replaceAll(broken, corrected),
-    value,
-  )
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-
-function cell(value: string, backgroundColor: string): string {
-  return `<td style="background-color:${backgroundColor};border:1px solid #000000;padding:4px;mso-number-format:\\@">${escapeHtml(value)}</td>`
-}
-
-export function exportarReporteExcel(tickets: TicketDetalle[]): void {
-  const headers = [
-    'id',
-    'identificador',
-    'cliente',
-    'correo',
-    'unidad_academica',
-    'escolaridad',
-    'zona',
-    'docente',
-    'estado_pago',
-    'total_abono',
-    'fecha_venta',
+export async function exportarReporteExcel(
+  tickets: ReporteVentaTicket[],
+): Promise<void> {
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('Ventas de tickets')
+  const columns: {
+    key: keyof ReporteVentaTicket
+    header: string
+    width: number
+  }[] = [
+    { key: 'ticket_id', header: 'ticket_id', width: 38 },
+    { key: 'asistente', header: 'asistente', width: 28 },
+    { key: 'email', header: 'email', width: 32 },
+    { key: 'matricula', header: 'matricula', width: 18 },
+    { key: 'tipo_asistente', header: 'tipo_asistente', width: 20 },
+    { key: 'modalidad', header: 'modalidad', width: 18 },
+    { key: 'unidad_academica', header: 'unidad_academica', width: 28 },
+    {
+      key: 'docente_generador',
+      header: 'Docente Generador',
+      width: 28,
+    },
+    { key: 'asiento_zona', header: 'asiento_zona', width: 18 },
+    { key: 'asiento_bloque', header: 'asiento_bloque', width: 18 },
+    { key: 'asiento_fila', header: 'asiento_fila', width: 16 },
+    { key: 'asiento_numero', header: 'asiento_numero', width: 18 },
+    { key: 'estatus_pago', header: 'estatus_pago', width: 18 },
+    { key: 'codigo_token', header: 'codigo_token', width: 24 },
+    { key: 'estado_token', header: 'estado_token', width: 18 },
+    { key: 'monto_abonado', header: 'monto_abonado', width: 18 },
+    { key: 'fecha_registro', header: 'fecha_registro', width: 24 },
   ]
-  const headerCells = headers
-    .map(
-      (header) =>
-        `<th style="background-color:#FFFF00;border:1px solid #000000;padding:5px;font-weight:bold;text-align:center">${header}</th>`,
-    )
-    .join('')
-  const ticketRows = tickets
-    .map((ticket) => {
-      const cells = [
-        cell(ticket.id, '#FFF2CC'),
-        cell(ticket.identificador, '#FFF2CC'),
-        cell(fixUtf8Encoding(ticket.cliente), '#9BC2E6'),
-        cell(ticket.correo, '#FCE4D6'),
-        cell(fixUtf8Encoding(ticket.unidad_academica), '#FFF2CC'),
-        cell(fixUtf8Encoding(ticket.escolaridad), '#E2EFDA'),
-        cell(ticket.zona, '#FFFFFF'),
-        cell(fixUtf8Encoding(ticket.docente), '#FFFFFF'),
-        cell(ticket.estado_pago, '#FFF2CC'),
-        cell(ticket.total_abono, '#FFF2CC'),
-        cell(ticket.fecha_venta, '#FFFFFF'),
-      ]
 
-      return `<tr>${cells.join('')}</tr>`
+  worksheet.columns = columns.map(({ key, header, width }) => ({
+    header,
+    key,
+    width,
+  }))
+  worksheet.addRows(tickets)
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }]
+
+  worksheet.eachRow((row, rowNumber) => {
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFA6A6A6' } },
+        left: { style: 'thin', color: { argb: 'FFA6A6A6' } },
+        bottom: { style: 'thin', color: { argb: 'FFA6A6A6' } },
+        right: { style: 'thin', color: { argb: 'FFA6A6A6' } },
+      }
+
+      if (rowNumber === 1) {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF1F4E78' },
+        }
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      }
     })
-    .join('')
-  const fechaActual = new Date().toLocaleDateString('en-US')
-  const html = `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-  <meta charset="UTF-8">
-  <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Venta de tickets</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-  <style>table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt}td,th{border:1px solid #000000}.title{text-align:center;font-weight:bold;font-size:14pt}</style>
-</head>
-<body>
-  <table>
-    <tr><td></td><td class="title" colspan="6">REPORTE DE VENTA DE TICKETS</td><td style="font-weight:bold">Fecha: ${fechaActual}</td></tr>
-    <tr><td colspan="11">&nbsp;</td></tr>
-    <tr>${headerCells}</tr>
-    ${ticketRows}
-  </table>
-</body>
-</html>`
-  const blob = new Blob([`\uFEFF${html}`], {
-    type: 'application/vnd.ms-excel;charset=utf-8;',
+
+    if (rowNumber > 1) {
+      const tokenCell = row.getCell(15)
+      tokenCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: {
+          argb: tokenCell.value === 'Asignado' ? 'FFE2EFDA' : 'FFFCE4D6',
+        },
+      }
+      row.getCell(16).numFmt = '$#,##0.00'
+    }
+  })
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `Reporte_Venta_Tickets_IGE_2026_${Date.now()}.xls`
+  link.download = `Reporte_Ventas_Tickets_${new Date().toISOString().slice(0, 10)}.xlsx`
   document.body.appendChild(link)
   link.click()
   link.remove()

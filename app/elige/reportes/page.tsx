@@ -26,7 +26,11 @@ import {
   Users,
 } from 'lucide-react'
 import { exportarReporteExcel } from '@/lib/exportUtils'
-import { getReportesData, type TicketDetalle } from './actions'
+import {
+  getReporteVentasTickets,
+  getReportesData,
+  type TicketDetalle,
+} from './actions'
 
 interface ZonaMetrica {
   nombre: string
@@ -129,6 +133,8 @@ export default function ReportesPage() {
   const [data, setData] = useState<ReportesData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -178,8 +184,22 @@ export default function ReportesPage() {
     }
   }, [])
 
-  const handleDescargarExcel = () => {
-    if (data) exportarReporteExcel(data.tickets)
+  const handleDescargarExcel = async () => {
+    setExporting(true)
+    setExportError(null)
+    try {
+      const tickets = await getReporteVentasTickets()
+      await exportarReporteExcel(tickets)
+    } catch (exportFailure) {
+      console.error('Error al exportar el reporte de ventas:', exportFailure)
+      setExportError(
+        exportFailure instanceof Error
+          ? exportFailure.message
+          : 'No fue posible generar el archivo Excel.',
+      )
+    } finally {
+      setExporting(false)
+    }
   }
 
   const zonasData = data?.zonas ?? []
@@ -249,16 +269,24 @@ export default function ReportesPage() {
             </div>
             <button
               type="button"
-              onClick={handleDescargarExcel}
-              disabled={loading || !data}
+              onClick={() => void handleDescargarExcel()}
+              disabled={loading || !data || exporting}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              Descargar Excel
-              {data && <span className="font-medium">({data.tickets.length})</span>}
+              {exporting ? 'Generando Excel...' : 'Descargar Excel'}
             </button>
           </div>
         </header>
+
+        {exportError && (
+          <div
+            role="alert"
+            className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          >
+            No se pudo exportar el reporte: {exportError}
+          </div>
+        )}
 
         {error && (
           <div
