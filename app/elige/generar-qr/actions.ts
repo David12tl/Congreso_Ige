@@ -74,14 +74,12 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
   let qrDataFinal = `ELIGE2026|${user.id}|SIN_MATRICULA|General-Único-N/A-NA`
   let tipoFinal = 'alumno'
 
-  const [profileRes, tokenRes, ticketRes] = await Promise.all([
+  const [profileRes, ticketRes] = await Promise.all([
     client.from('profiles').select('nombre, email, matricula, carrera, semestre, telefono, unidad_academica_id').eq('id', user.id).maybeSingle(),
-    client.from('tokens_canje').select('id, seat_id, type').eq('utilizado_por', user.id).maybeSingle(),
     client.from('tickets').select('id, qr_data, nombre, email, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type, matricula, modalidad, carrera, semestre, telefono, unidad_academica_id').or(`id.eq.${user.id},buyer_id.eq.${user.id}`).maybeSingle()
   ])
 
   const profileData = profileRes?.data as Record<string, unknown> | null
-  const tokenData = tokenRes?.data as { id: string; seat_id: string | null; type: string } | null
   const ticketDb = ticketRes?.data as Record<string, unknown> | null
 
   const nombreFinal = (ticketDb?.nombre as string) || (profileData?.nombre as string) || 'Usuario Registrado'
@@ -92,9 +90,7 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     return { success: false, message: 'Primero debes completar el registro o comprar un boleto.' }
   }
 
-  if (tokenData?.type) {
-    tipoFinal = tokenData.type === 'empresa' ? 'empresa' : 'alumno'
-  } else if (ticketDb?.type) {
+  if (ticketDb?.type) {
     tipoFinal = ticketDb.type as string
   }
 
@@ -104,20 +100,6 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     asientoFila = (ticketDb.asiento_fila as string) || 'N/A'
     asientoNumero = ticketDb.asiento_numero !== null ? Number(ticketDb.asiento_numero) : null
     qrDataFinal = (ticketDb.qr_data as string) || `ELIGE2026|${ticketDb.id}|${matriculaFinal || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
-  } else if (tokenData?.seat_id) {
-    const { data: seatData } = await client
-      .from('seats')
-      .select('zona, bloque, fila, numero')
-      .eq('id', tokenData.seat_id)
-      .maybeSingle() as unknown as { data: { zona: string; bloque: string; fila: string; numero: number } | null }
-
-    if (seatData) {
-      asientoZona = seatData.zona
-      asientoBloque = seatData.bloque
-      asientoFila = seatData.fila
-      asientoNumero = Number(seatData.numero)
-      qrDataFinal = `ELIGE2026|${ticketDb?.id || user.id}|${matriculaFinal || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
-    }
   }
 
   let unidadAcademicaId = Number(ticketDb?.unidad_academica_id || profileData?.unidad_academica_id) || null
@@ -151,7 +133,6 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     carrera: profileData?.carrera || null,
     semestre: profileData?.semestre || null,
     telefono: profileData?.telefono || null,
-    offset_asiento: null,
     unidad_academica_id: unidadAcademicaId,
   }
 

@@ -62,7 +62,7 @@ interface DbError {
 interface TokenDetailLookupClient {
   from: (table: 'vista_tokens_detalles') => {
     select: (columns: 'id') => {
-      ilike: (column: 'cliente_correo', value: string) => {
+      ilike: (column: 'email' | 'email_alumno', value: string) => {
         limit: (count: number) => Promise<{ data: Array<{ id: string }> | null; error: DbError | null }>
       }
     }
@@ -711,19 +711,22 @@ export async function cobrarAsientoYGenerarToken(
 
     try {
       const detailLookup = supabase as unknown as TokenDetailLookupClient
-      const [usedTokenLookup, emailTokenLookup] = await Promise.all([
+      const [usedTokenLookup, emailTokenLookup, studentEmailTokenLookup] = await Promise.all([
         alumnoId
           ? supabase.from('tokens_canje').select('id').eq('utilizado_por', alumnoId).maybeSingle()
           : Promise.resolve({ data: null, error: null }),
         alumnoEmail
-          ? detailLookup.from('vista_tokens_detalles').select('id').ilike('cliente_correo', alumnoEmail).limit(1)
+          ? detailLookup.from('vista_tokens_detalles').select('id').ilike('email', alumnoEmail).limit(1)
+          : Promise.resolve({ data: null, error: null }),
+        alumnoEmail
+          ? detailLookup.from('vista_tokens_detalles').select('id').ilike('email_alumno', alumnoEmail).limit(1)
           : Promise.resolve({ data: null, error: null }),
       ])
 
-      const identityLookupError = usedTokenLookup.error || emailTokenLookup.error
+      const identityLookupError = usedTokenLookup.error || emailTokenLookup.error || studentEmailTokenLookup.error
       if (identityLookupError) throw identityLookupError
 
-      if (usedTokenLookup.data || emailTokenLookup.data?.length) {
+      if (usedTokenLookup.data || emailTokenLookup.data?.length || studentEmailTokenLookup.data?.length) {
         return {
           success: false,
           message: 'Este alumno ya tiene un token asignado. No se generó otro.',
