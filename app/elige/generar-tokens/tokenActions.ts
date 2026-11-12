@@ -54,6 +54,16 @@ interface StaffTicketRow {
   unidad_academica?: string | null
 }
 
+interface ExistingManualTicketRow {
+  id: string
+  estatus_pago: string | null
+  zone_id: string | null
+  asiento_zona: string | null
+  asiento_bloque: string | null
+  asiento_fila: string | null
+  asiento_numero: number | null
+}
+
 interface DbError {
   code?: string
   message: string
@@ -93,6 +103,13 @@ interface AssignmentDataClient {
       }>
     }
     insert: (values: unknown) => Promise<{ error: DbError | null }>
+    update: (values: unknown) => {
+      eq: (column: string, value: string) => {
+        select: (columns: string) => {
+          maybeSingle: () => Promise<{ data: { id: string } | null; error: DbError | null }>
+        }
+      }
+    }
   }
 }
 
@@ -317,6 +334,10 @@ function cleanText(value: string, maxLength: number) {
 function getControlledErrorMessage(error: DbError) {
   const normalized = error.message.toLowerCase()
 
+  if (error.code === '23505' && normalized.includes('tickets_buyer_id_unique')) {
+    return 'El registro del alumno cambió durante la asignación. Actualiza el mapa y vuelve a intentarlo.'
+  }
+
   if (error.code === '23505' || normalized.includes('duplicate') || normalized.includes('unique')) {
     return 'Ese asiento acaba de ser ocupado. Actualiza el mapa o elige otro lugar.'
   }
@@ -395,7 +416,6 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
 
   const ticketData = {
     buyer_id: buyerProfile.id,
-    purchase_id: null,
     event_id: CONGRESO_IGE_EVENT_ID,
     zone_id: resolvedZoneId,
     type: ticketType,
@@ -415,14 +435,62 @@ export async function createManualSeatTicket(input: ManualTicketInput): Promise<
     // NOTA: Si en un futuro la mutación falla por el campo 'estatus_pago' en la tabla 'tickets', 
     // asegúrate de que el campo real de la base de datos no se llame 'status'.
     estatus_pago: 'apartado',
-    purchased_at: null,
   }
 
-  const { error } = await supabase.from('tickets').insert(ticketData as never)
+  const { data: existingTicketData, error: existingTicketError } = await supabase
+    .from('tickets')
+    .select('id, estatus_pago, zone_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
+    .eq('buyer_id', buyerProfile.id)
+    .maybeSingle()
 
-  if (error) {
-    console.error('[createManualSeatTicket] Error:', error.message)
-    return { success: false, message: getControlledErrorMessage(error) }
+  if (existingTicketError) {
+    console.error('[createManualSeatTicket] Error al consultar el ticket existente:', existingTicketError.message)
+    return { success: false, message: 'No se pudo validar si el alumno ya cuenta con un registro.' }
+  }
+
+  const existingTicket = existingTicketData as ExistingManualTicketRow | null
+  let mutationError: DbError | null
+
+  if (existingTicket) {
+    const hasAssignedSeat = Boolean(
+      existingTicket.zone_id &&
+      existingTicket.asiento_zona &&
+      existingTicket.asiento_bloque &&
+      existingTicket.asiento_fila &&
+      existingTicket.asiento_numero !== null,
+    )
+    const existingStatus = existingTicket.estatus_pago?.toLowerCase()
+    const hasActivePaidRegistration = ['pagado', 'completado', 'apartado'].includes(existingStatus ?? '')
+
+    if (hasAssignedSeat && hasActivePaidRegistration) {
+      return {
+        success: false,
+        message: 'El alumno ya cuenta con un registro activo o pagado y un asiento asignado.',
+      }
+    }
+
+    const { data: updatedTicket, error } = await client
+      .from('tickets')
+      .update(ticketData)
+      .eq('id', existingTicket.id)
+      .select('id')
+      .maybeSingle()
+
+    if (!error && !updatedTicket) {
+      console.error('[createManualSeatTicket] No se actualizó el ticket existente del alumno.')
+      return { success: false, message: 'No se pudo actualizar el registro previo del alumno.' }
+    }
+    mutationError = error
+  } else {
+    const { error } = await client
+      .from('tickets')
+      .insert({ ...ticketData, purchase_id: null, purchased_at: null })
+    mutationError = error
+  }
+
+  if (mutationError) {
+    console.error('[createManualSeatTicket] Error:', mutationError.message)
+    return { success: false, message: getControlledErrorMessage(mutationError) }
   }
 
   revalidateTokenPaths()
