@@ -15,9 +15,18 @@ function limpiarValor(value: string | null | undefined): string | null {
 
 const ITEMS_PER_PAGE = 10
 
+function normalizarBusqueda(value: string | null | undefined): string {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
 export default function UsuariosUAClient() {
   const [usuarios, setUsuarios] = useState<UsuarioUA[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   
   const [search, setSearch] = useState('')
   const [selectedUA, setSelectedUA] = useState('TODAS')
@@ -28,29 +37,35 @@ export default function UsuariosUAClient() {
     let isMounted = true
 
     async function loadData() {
-      const data = await getUsuariosPorUA()
-      if (isMounted) {
-        setUsuarios(data.map((u) => ({
-          ...u,
-          nombre: limpiarValor(u.nombre),
-          email: limpiarValor(u.email) || '',
-          carrera: limpiarValor(u.carrera),
-          semestre: limpiarValor(u.semestre),
-          matricula: limpiarValor(u.matricula),
-          unidad_academica: limpiarValor(u.unidad_academica),
-        })))
-        
-        const uasUnicas: string[] = Array.from(
-          new Set(
-            data
-              .map((u) => u.unidad_academica)
-              .filter((ua): ua is string => typeof ua === 'string' && ua.length > 0)
+      try {
+        const data = await getUsuariosPorUA()
+        if (isMounted) {
+          setUsuarios(data.map((u) => ({
+            ...u,
+            nombre: limpiarValor(u.nombre),
+            email: limpiarValor(u.email) || '',
+            carrera: limpiarValor(u.carrera),
+            semestre: limpiarValor(u.semestre),
+            matricula: limpiarValor(u.matricula),
+            unidad_academica: limpiarValor(u.unidad_academica),
+          })))
+
+          const uasUnicas: string[] = Array.from(
+            new Set(
+              data
+                .map((u) => u.unidad_academica)
+                .filter((ua): ua is string => typeof ua === 'string' && ua.length > 0)
+            )
           )
-        )
-        uasUnicas.sort()
-        
-        setListaUAs(uasUnicas)
-        setLoading(false)
+          uasUnicas.sort()
+          setListaUAs(uasUnicas)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.')
+        }
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 
@@ -62,14 +77,17 @@ export default function UsuariosUAClient() {
   }, [])
 
   const usuariosFiltrados = useMemo(() => {
-    const termino = search.trim().toLowerCase()
+    const termino = normalizarBusqueda(search)
     return usuarios.filter((usuario) => {
-      const matchesSearch = 
-        (usuario.nombre || '').toLowerCase().includes(termino) ||
-        (usuario.email || '').toLowerCase().includes(termino) ||
-        (usuario.matricula || '').toLowerCase().includes(termino) ||
-        (usuario.carrera || '').toLowerCase().includes(termino) ||
-        (usuario.unidad_academica || '').toLowerCase().includes(termino)
+      const matriculaCorreo = usuario.email.split('@')[0]
+      const matchesSearch = [
+        usuario.nombre,
+        usuario.email,
+        usuario.matricula,
+        matriculaCorreo,
+        usuario.carrera,
+        usuario.unidad_academica,
+      ].some((value) => normalizarBusqueda(value).includes(termino))
 
       const matchesUA = selectedUA === 'TODAS' || usuario.unidad_academica === selectedUA
 
@@ -105,10 +123,18 @@ export default function UsuariosUAClient() {
     )
   }
 
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        Error al cargar usuarios por UA: {loadError}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
       <UsuariosUAHeader
-        totalFiltrados={usuariosFiltrados.length}
+        totalAlumnos={usuarios.length}
         search={search}
         setSearch={setSearch}
         selectedUA={selectedUA}

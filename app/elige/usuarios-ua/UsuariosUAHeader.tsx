@@ -4,7 +4,7 @@ import React from 'react'
 import { HiOutlineUsers, HiOutlineSearch, HiOutlineFilter } from 'react-icons/hi'
 
 interface UsuariosUAHeaderProps {
-  totalFiltrados: number
+  totalAlumnos: number
   search: string
   setSearch: (val: string) => void
   selectedUA: string
@@ -13,7 +13,7 @@ interface UsuariosUAHeaderProps {
 }
 
 export function UsuariosUAHeader({
-  totalFiltrados,
+  totalAlumnos,
   search,
   setSearch,
   selectedUA,
@@ -32,7 +32,7 @@ export function UsuariosUAHeader({
         <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full">
           <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
           <span className="text-purple-700 text-xs font-bold uppercase tracking-widest">
-            {totalFiltrados} Filtrados
+            {totalAlumnos} Alumnos cargados
           </span>
         </div>
       </header>

@@ -1,6 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSessionClient } from '@/lib/supabase/server'
 
 export interface UsuarioUA {
   id: string
@@ -55,7 +56,12 @@ interface QueryResult {
 
 interface PaginatedQuery extends PromiseLike<QueryResult> {
   order(column: string, options?: { ascending?: boolean; nullsFirst?: boolean }): PaginatedQuery
+  eq(column: string, value: string | number): PaginatedQuery
   range(from: number, to: number): PromiseLike<QueryResult>
+  maybeSingle(): PromiseLike<{
+    data: Record<string, unknown> | null
+    error: { message: string } | null
+  }>
 }
 
 interface SupabaseBypass {
@@ -82,55 +88,98 @@ async function obtenerTodasLasFilas(
 }
 
 export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
-  const supabase = await createClient()
-  const cli = supabase as unknown as SupabaseBypass
+  const sessionClient = await createSessionClient()
+  const { data: { user }, error: authError } = await sessionClient.auth.getUser()
+  if (authError) throw new Error(`[getUsuariosPorUA] Error validando sesión: ${authError.message}`)
+  if (!user) throw new Error('[getUsuariosPorUA] Se requiere una sesión autenticada.')
 
-  let ticketRows: TicketFila[]
-  try {
-    ticketRows = (await obtenerTodasLasFilas(() =>
-      cli
-        .from('tickets')
-        .select(`
-          id,
-          buyer_id,
-          nombre,
-          email,
-          matricula,
-          carrera,
-          semestre,
-          modalidad,
-          unidad_academica_id,
-          purchased_at,
-          estatus_pago
-        `)
-        .order('purchased_at', { ascending: false, nullsFirst: false })
-        .order('id', { ascending: false })
-    )) as unknown as TicketFila[]
-  } catch (error) {
-    console.error('[getUsuariosPorUA] Error leyendo tickets:', error)
-    return []
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('[getUsuariosPorUA] Configura NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en el entorno del servidor.')
   }
 
-  let profileRows: ProfileFila[]
-  try {
-    profileRows = (await obtenerTodasLasFilas(() =>
-      cli
-        .from('profiles')
-        .select(`
-          *,
-          roles!profiles_id_rol_fkey (
-            nombre_rol
-          ),
-          unidades_academicas!profiles_unidad_academica_id_fkey (
-            nombre
-          )
-        `)
-        .order('id', { ascending: true })
-    )) as unknown as ProfileFila[]
-  } catch (error) {
-    console.error('[getUsuariosPorUA] Error leyendo perfiles:', error)
-    return []
+  const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+  const cli = adminClient as unknown as SupabaseBypass
+
+  const { data: perfilActual, error: perfilActualError } = await cli
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (perfilActualError) {
+    throw new Error(`[getUsuariosPorUA] Error consultando el perfil de la sesión: ${perfilActualError.message}`)
   }
+  if (!perfilActual) throw new Error('[getUsuariosPorUA] No se encontró el perfil de la sesión.')
+
+  const rolActual = Number(perfilActual.role_id ?? perfilActual.id_rol)
+  if (rolActual !== 1 && rolActual !== 2) {
+    throw new Error('[getUsuariosPorUA] No tienes permisos para consultar usuarios por UA.')
+  }
+
+  const unidadActualRaw = perfilActual.unidad_academica_id
+  const unidadActual = Number(unidadActualRaw)
+  if (rolActual === 2 && (unidadActualRaw == null || !Number.isFinite(unidadActual))) return []
+
+  const usuariosAuth = []
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      page,
+      perPage: PAGE_SIZE,
+    })
+    if (error) {
+      throw new Error(`[getUsuariosPorUA] Error listando usuarios de Auth (página ${page}): ${error.message}`)
+    }
+
+    usuariosAuth.push(...data.users)
+    if (data.users.length < PAGE_SIZE) break
+  }
+
+  const emailAuthPorId = new Map(
+    usuariosAuth.flatMap((authUser) => authUser.email ? [[authUser.id, authUser.email] as const] : [])
+  )
+
+  const ticketRows = (await obtenerTodasLasFilas(() =>
+    cli
+      .from('tickets')
+      .select(`
+        id,
+        buyer_id,
+        nombre,
+        email,
+        matricula,
+        carrera,
+        semestre,
+        modalidad,
+        unidad_academica_id,
+        purchased_at,
+        estatus_pago
+      `)
+      .order('purchased_at', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+  )) as unknown as TicketFila[]
+
+  const construirConsultaPerfiles = () => {
+    const query = cli
+      .from('profiles')
+      .select(`
+        *,
+        roles!profiles_id_rol_fkey (
+          nombre_rol
+        ),
+        unidades_academicas!profiles_unidad_academica_id_fkey (
+          nombre
+        )
+      `)
+
+    if (rolActual === 2) query.eq('unidad_academica_id', unidadActual)
+    return query.order('id', { ascending: true })
+  }
+
+  const profileRows = (await obtenerTodasLasFilas(construirConsultaPerfiles)) as unknown as ProfileFila[]
 
   const ticketMasRecientePorAlumno = new Map<string, TicketFila>()
   for (const ticket of ticketRows) {
@@ -147,8 +196,9 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
     return [{
       id: perfil.id,
       nombre: valorUtilizable(ticket?.nombre) || valorUtilizable(perfil.nombre),
-      email: valorUtilizable(ticket?.email) || perfil.email || '',
-      matricula: ticket ? valorUtilizable(ticket.matricula) : null,
+      email: emailAuthPorId.get(perfil.id) || perfil.email || ticket?.email || '',
+      matricula: valorUtilizable(ticket?.matricula) ||
+        valorUtilizable((emailAuthPorId.get(perfil.id) || perfil.email || '').split('@')[0]),
       carrera: ticket ? valorUtilizable(ticket.carrera) : null,
       semestre: ticket ? valorUtilizable(ticket.semestre) : null,
       modalidad: ticket?.modalidad ?? null,
