@@ -6,6 +6,7 @@ import { getUsuariosPorUA, UsuarioUA } from './action'
 import { UsuariosUAHeader } from './UsuariosUAHeader'
 import { UsuariosUATable } from './UsuariosUATable'
 import { UsuariosUAPagination } from './UsuariosUAPagination'
+import { coincideBusquedaPorPalabras } from '@/lib/search'
 
 function limpiarValor(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return value ?? null
@@ -14,14 +15,6 @@ function limpiarValor(value: string | null | undefined): string | null {
 }
 
 const ITEMS_PER_PAGE = 10
-
-function normalizarBusqueda(value: string | null | undefined): string {
-  return (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-}
 
 export default function UsuariosUAClient() {
   const [usuarios, setUsuarios] = useState<UsuarioUA[]>([])
@@ -76,31 +69,35 @@ export default function UsuariosUAClient() {
     }
   }, [])
 
-  const usuariosFiltrados = useMemo(() => {
-    const termino = normalizarBusqueda(search)
-    return usuarios.filter((usuario) => {
-      const matriculaCorreo = usuario.email.split('@')[0]
-      const matchesSearch = [
+  const usuariosFiltrados = useMemo(
+    () => usuarios.filter((usuario) => {
+      const matchesSearch = coincideBusquedaPorPalabras(search, [
+        ...usuario.nombres_busqueda,
+        ...usuario.correos_busqueda,
+        ...usuario.matriculas_busqueda,
         usuario.nombre,
         usuario.email,
         usuario.matricula,
-        matriculaCorreo,
         usuario.carrera,
+        usuario.semestre,
         usuario.unidad_academica,
-      ].some((value) => normalizarBusqueda(value).includes(termino))
-
-      const matchesUA = selectedUA === 'TODAS' || usuario.unidad_academica === selectedUA
+      ])
+      const matchesUA = selectedUA === 'TODAS' ||
+        usuario.unidad_academica === selectedUA ||
+        usuario.unidad_academica == null
 
       return matchesSearch && matchesUA
-    })
-  }, [usuarios, search, selectedUA])
+    }),
+    [usuarios, search, selectedUA]
+  )
 
-  const [prevSearch, setPrevSearch] = useState(search)
-  const [prevUA, setPrevUA] = useState(selectedUA)
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    setCurrentPage(1)
+  }
 
-  if (prevSearch !== search || prevUA !== selectedUA) {
-    setPrevSearch(search)
-    setPrevUA(selectedUA)
+  const handleUAChange = (value: string) => {
+    setSelectedUA(value)
     setCurrentPage(1)
   }
 
@@ -136,9 +133,9 @@ export default function UsuariosUAClient() {
       <UsuariosUAHeader
         totalAlumnos={usuarios.length}
         search={search}
-        setSearch={setSearch}
+        setSearch={handleSearchChange}
         selectedUA={selectedUA}
-        setSelectedUA={setSelectedUA}
+        setSelectedUA={handleUAChange}
         listaUAs={listaUAs}
       />
 

@@ -1,9 +1,13 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { HiOutlineUserGroup, HiOutlineSearch, HiOutlineAcademicCap, HiOutlineFilter, HiOutlineGlobeAlt, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getTodosLosAsistentes, AsistenteGlobal } from './actions'
+import { coincideBusquedaPorPalabras } from '@/lib/search'
+import { UsuariosUAPagination } from '../usuarios-ua/UsuariosUAPagination'
+
+const ITEMS_PER_PAGE = 10
 
 // ─── Mapa de estilos para badges de estatus ──────────────────────────────────
 // Map en lugar de Record para evitar "security/detect-object-injection"
@@ -30,28 +34,35 @@ function getStatusBadge(estatus: string | null) {
 export default function UsuariosListPage() {
   const [asistentes, setAsistentes] = useState<AsistenteGlobal[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   
   // Filtros de navegación e interactivos
   const [search, setSearch] = useState('')
   const [selectedUA, setSelectedUA] = useState('TODAS')
   const [activeTab, setActiveTab] = useState<'TODOS' | 'INTERNOS' | 'EXTERNOS'>('TODOS')
   const [listaUAs, setListaUAs] = useState<string[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     let isMounted = true
 
     async function loadData() {
-      const data = await getTodosLosAsistentes()
-      if (isMounted) {
-        setAsistentes(data)
-        
-        // Extraemos las UAs únicas mapeando estrictamente
-        const uasUnicas: string[] = Array.from(
-          new Set(data.map((a: AsistenteGlobal) => a.unidad_academica).filter((ua): ua is string => typeof ua === 'string' && ua !== ''))
-        ).sort()
-        
-        setListaUAs(uasUnicas)
-        setLoading(false)
+      try {
+        const data = await getTodosLosAsistentes()
+        if (isMounted) {
+          setAsistentes(data)
+          const uasUnicas = Array.from(
+            new Set(data.map((asistente) => asistente.unidad_academica)
+              .filter((ua): ua is string => typeof ua === 'string' && ua !== ''))
+          ).sort()
+          setListaUAs(uasUnicas)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los asistentes.')
+        }
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
 
@@ -63,26 +74,67 @@ export default function UsuariosListPage() {
   }, [])
 
   // Triple cruce de filtros en tiempo real (Buscador + Selector UA + Pestaña de Tipo)
-  const asistentesFiltrados = asistentes.filter((asistente) => {
-    const matchesSearch = 
-      (asistente.nombre?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (asistente.email?.toLowerCase() || '').includes(search.toLowerCase()) ||
-      (asistente.matricula?.toLowerCase() || '').includes(search.toLowerCase())
+  const asistentesFiltrados = useMemo(
+    () => asistentes.filter((asistente) => {
+      const matchesSearch = coincideBusquedaPorPalabras(search, [
+        ...asistente.nombres_busqueda,
+        ...asistente.correos_busqueda,
+        ...asistente.matriculas_busqueda,
+        asistente.nombre,
+        asistente.email,
+        asistente.matricula,
+        asistente.carrera,
+        asistente.semestre,
+        asistente.unidad_academica,
+      ])
+      const matchesUA = selectedUA === 'TODAS' ||
+        asistente.unidad_academica === selectedUA ||
+        asistente.unidad_academica == null
+      const matchesTab = activeTab === 'TODOS' ||
+        (activeTab === 'INTERNOS' && asistente.type === 'alumno') ||
+        (activeTab === 'EXTERNOS' && asistente.type === 'empresa')
 
-    const matchesUA = selectedUA === 'TODAS' || asistente.unidad_academica === selectedUA
+      return matchesSearch && matchesUA && matchesTab
+    }),
+    [asistentes, search, selectedUA, activeTab]
+  )
 
-    let matchesTab = true
-    if (activeTab === 'INTERNOS') matchesTab = asistente.type === 'alumno'
-    if (activeTab === 'EXTERNOS') matchesTab = asistente.type === 'empresa'
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    setCurrentPage(1)
+  }
 
-    return matchesSearch && matchesUA && matchesTab
-  })
+  const handleUAChange = (value: string) => {
+    setSelectedUA(value)
+    setCurrentPage(1)
+  }
+
+  const handleTabChange = (tab: 'TODOS' | 'INTERNOS' | 'EXTERNOS') => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
+
+  const totalPages = Math.ceil(asistentesFiltrados.length / ITEMS_PER_PAGE) || 1
+  const currentItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return asistentesFiltrados.slice(start, start + ITEMS_PER_PAGE)
+  }, [asistentesFiltrados, currentPage])
+  const startRange = asistentesFiltrados.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1
+  const endRange = Math.min(currentPage * ITEMS_PER_PAGE, asistentesFiltrados.length)
 
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
         <p className="text-slate-500 dark:text-slate-400 font-light text-xs uppercase tracking-widest">Sincronizando padrón completo...</p>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        Error al cargar asistentes: {loadError}
       </div>
     )
   }
@@ -105,19 +157,19 @@ export default function UsuariosListPage() {
         {/* Pestañas de Filtrado Rápido */}
         <div className="flex bg-slate-50 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200 dark:border-slate-700 space-x-1">
           <button
-            onClick={() => setActiveTab('TODOS')}
+            onClick={() => handleTabChange('TODOS')}
             className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'TODOS' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Todos
           </button>
           <button
-            onClick={() => setActiveTab('INTERNOS')}
+            onClick={() => handleTabChange('INTERNOS')}
             className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'INTERNOS' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Alumnos
           </button>
           <button
-            onClick={() => setActiveTab('EXTERNOS')}
+            onClick={() => handleTabChange('EXTERNOS')}
             className={`px-4 py-1.5 text-xs font-light uppercase rounded-lg transition-all ${activeTab === 'EXTERNOS' ? 'bg-pink-50 text-pink-700 border border-pink-200' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
           >
             Externos
@@ -133,7 +185,7 @@ export default function UsuariosListPage() {
             type="text"
             placeholder="Buscar por nombre, correo, matrícula..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-[#0f172a] dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all"
           />
         </div>
@@ -142,7 +194,7 @@ export default function UsuariosListPage() {
           <HiOutlineFilter className="absolute left-3 top-3.5 text-slate-400 dark:text-slate-500 w-5 h-5 pointer-events-none" />
           <select
             value={selectedUA}
-            onChange={(e) => setSelectedUA(e.target.value)}
+            onChange={(e) => handleUAChange(e.target.value)}
             className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
           >
             <option value="TODAS">Filtrar por Unidad Académica</option>
@@ -175,14 +227,14 @@ export default function UsuariosListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {asistentesFiltrados.length === 0 ? (
+              {currentItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400 font-light">
                     No se encontraron asistentes con los filtros seleccionados.
                   </td>
                 </tr>
               ) : (
-                asistentesFiltrados.map((asistente) => (
+                currentItems.map((asistente) => (
                   <tr key={asistente.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <span className="text-sm font-light text-slate-700 dark:text-slate-200 group-hover:text-blue-700 transition-colors block">
@@ -232,6 +284,14 @@ export default function UsuariosListPage() {
             </tbody>
           </table>
         </div>
+        <UsuariosUAPagination
+          startRange={startRange}
+          endRange={endRange}
+          totalItems={asistentesFiltrados.length}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </GlassCard>
     </div>
   )

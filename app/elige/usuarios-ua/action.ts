@@ -6,12 +6,16 @@ import { createClient as createSessionClient } from '@/lib/supabase/server'
 export interface UsuarioUA {
   id: string
   nombre: string | null
+  nombres_busqueda: string[]
   email: string
+  correos_busqueda: string[]
   carrera: string | null
   semestre: string | null
   matricula: string | null
+  matriculas_busqueda: string[]
   modalidad: 'escolarizado' | 'mixto' | null
   unidad_academica: string | null
+  unidad_academica_id: number | null
   id_rol: string | null
   created_at: string
   estatus_pago: string | null
@@ -71,6 +75,13 @@ interface SupabaseBypass {
 }
 
 const PAGE_SIZE = 1000
+
+function valoresTexto(...values: unknown[]): string[] {
+  return Array.from(new Set(values.flatMap((value) => {
+    const texto = valorUtilizable(value)
+    return texto ? [texto] : []
+  })))
+}
 
 async function obtenerTodasLasFilas(
   construirConsulta: () => PaginatedQuery
@@ -138,9 +149,7 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
     if (data.users.length < PAGE_SIZE) break
   }
 
-  const emailAuthPorId = new Map(
-    usuariosAuth.flatMap((authUser) => authUser.email ? [[authUser.id, authUser.email] as const] : [])
-  )
+  const usuarioAuthPorId = new Map(usuariosAuth.map((authUser) => [authUser.id, authUser]))
 
   const ticketRows = (await obtenerTodasLasFilas(() =>
     cli
@@ -181,28 +190,60 @@ export async function getUsuariosPorUA(): Promise<UsuarioUA[]> {
 
   const profileRows = (await obtenerTodasLasFilas(construirConsultaPerfiles)) as unknown as ProfileFila[]
 
-  const ticketMasRecientePorAlumno = new Map<string, TicketFila>()
+  const ticketsPorAlumno = new Map<string, TicketFila[]>()
   for (const ticket of ticketRows) {
-    if (ticket.buyer_id && !ticketMasRecientePorAlumno.has(ticket.buyer_id)) {
-      ticketMasRecientePorAlumno.set(ticket.buyer_id, ticket)
-    }
+    if (!ticket.buyer_id) continue
+    const ticketsAlumno = ticketsPorAlumno.get(ticket.buyer_id) ?? []
+    ticketsAlumno.push(ticket)
+    ticketsPorAlumno.set(ticket.buyer_id, ticketsAlumno)
   }
 
   return profileRows.flatMap((perfil): UsuarioUA[] => {
     const idRol = Number(perfil.role_id ?? perfil.id_rol)
     if (idRol !== 3) return []
 
-    const ticket = ticketMasRecientePorAlumno.get(perfil.id)
+    const ticketsAlumno = ticketsPorAlumno.get(perfil.id) ?? []
+    const ticket = ticketsAlumno[0]
+    const usuarioAuth = usuarioAuthPorId.get(perfil.id)
+    const metadata = usuarioAuth?.user_metadata
+    const nombreAuthCompleto = valorUtilizable(metadata?.full_name)
+    const nombreAuth = valorUtilizable(metadata?.name)
+    const emailAuth = valorUtilizable(usuarioAuth?.email)
+    const emailPerfil = valorUtilizable(perfil.email)
+    const emailTicket = valorUtilizable(ticket?.email)
+    const correosBusqueda = valoresTexto(
+      emailAuth,
+      emailPerfil,
+      ...ticketsAlumno.map((fila) => fila.email)
+    )
+    const nombresBusqueda = valoresTexto(
+      ...ticketsAlumno.map((fila) => fila.nombre),
+      perfil.nombre,
+      nombreAuthCompleto,
+      nombreAuth
+    )
+    const matriculasBusqueda = valoresTexto(
+      ...ticketsAlumno.map((fila) => fila.matricula),
+      ...correosBusqueda.map((email) => email.split('@')[0])
+    )
+
     return [{
       id: perfil.id,
-      nombre: valorUtilizable(ticket?.nombre) || valorUtilizable(perfil.nombre),
-      email: emailAuthPorId.get(perfil.id) || perfil.email || ticket?.email || '',
+      nombre: valorUtilizable(ticket?.nombre) ||
+        nombreAuthCompleto ||
+        nombreAuth ||
+        valorUtilizable(perfil.nombre),
+      nombres_busqueda: nombresBusqueda,
+      email: emailAuth || emailPerfil || emailTicket || '',
+      correos_busqueda: correosBusqueda,
       matricula: valorUtilizable(ticket?.matricula) ||
-        valorUtilizable((emailAuthPorId.get(perfil.id) || perfil.email || '').split('@')[0]),
+        valorUtilizable((emailAuth || emailPerfil || emailTicket || '').split('@')[0]),
+      matriculas_busqueda: matriculasBusqueda,
       carrera: ticket ? valorUtilizable(ticket.carrera) : null,
       semestre: ticket ? valorUtilizable(ticket.semestre) : null,
       modalidad: ticket?.modalidad ?? null,
       unidad_academica: perfil.unidades_academicas?.nombre || null,
+      unidad_academica_id: perfil.unidad_academica_id ?? null,
       id_rol: perfil.roles?.nombre_rol || 'Usuario',
       created_at: ticket?.purchased_at || perfil.created_at || '',
       estatus_pago: ticket?.estatus_pago ?? null,
