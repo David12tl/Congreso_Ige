@@ -30,6 +30,8 @@ export interface DatosTicketParaQR {
 export interface AsistenteValidado {
   nombre: string
   matricula: string | null
+  carrera?: string | null
+  email?: string | null
   asiento: string
   tipo: string
 }
@@ -38,6 +40,7 @@ export interface ResultadoValidacionQR {
   success: boolean
   message: string
   asistente?: AsistenteValidado
+  ticketId?: string
 }
 
 interface SupabaseFluentBuilder {
@@ -94,11 +97,11 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
     tipoFinal = ticketDb.type as string
   }
 
-  if (ticketDb && ticketDb.asiento_fila && ticketDb.asiento_fila !== 'N/A') {
-    asientoZona = (ticketDb.asiento_zona as string) || 'General'
-    asientoBloque = (ticketDb.asiento_bloque as string) || 'Único'
-    asientoFila = (ticketDb.asiento_fila as string) || 'N/A'
-    asientoNumero = ticketDb.asiento_numero !== null ? Number(ticketDb.asiento_numero) : null
+  if (ticketDb) {
+    asientoZona = (ticketDb.asiento_zona as string) || asientoZona
+    asientoBloque = (ticketDb.asiento_bloque as string) || asientoBloque
+    asientoFila = (ticketDb.asiento_fila as string) || asientoFila
+    asientoNumero = ticketDb.asiento_numero != null ? Number(ticketDb.asiento_numero) : null
     qrDataFinal = (ticketDb.qr_data as string) || `ELIGE2026|${ticketDb.id}|${matriculaFinal || 'SIN_MATRICULA'}|${asientoZona}-${asientoBloque}-${asientoFila}-${asientoNumero}`
   }
 
@@ -130,9 +133,9 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
       ? normalizeStudentModality(ticketDb?.modalidad)
       : null,
     matricula: matriculaFinal,
-    carrera: profileData?.carrera || null,
-    semestre: profileData?.semestre || null,
-    telefono: profileData?.telefono || null,
+    carrera: profileData?.carrera || ticketDb?.carrera || null,
+    semestre: profileData?.semestre || ticketDb?.semestre || null,
+    telefono: profileData?.telefono || ticketDb?.telefono || null,
     unidad_academica_id: unidadAcademicaId,
   }
 
@@ -178,8 +181,7 @@ export async function obtenerQRData(): Promise<ActionResult & { ticket?: DatosTi
 }
 
 /**
- * 2. PROCESAR Y VALIDAR CÓDIGO QR PARA EL ENCARGADO / STAFF
- * ¡Buscador ultra-flexible para evitar falsos negativos escaneando UUID, Texto Largo o Matrícula!
+ * 2. Valida QR de boletos y tokens usados para su dueño o personal autorizado.
  */
 export async function validarCodigoQR(qrData: string): Promise<ResultadoValidacionQR> {
   try {
@@ -187,44 +189,118 @@ export async function validarCodigoQR(qrData: string): Promise<ResultadoValidaci
       return { success: false, message: 'Código QR vacío o ilegible.' }
     }
 
-    let ticketIdEnQR = qrData.trim()
-
-    // Si viene en formato extendido, extraemos el ID central
-    if (qrData.startsWith('ELIGE2026|')) {
-      const partes = qrData.split('|')
-      ticketIdEnQR = partes[1]?.trim() || qrData.trim()
-    }
+    const qrText = qrData.trim()
+    const ticketIdEnQR = qrText.match(/(?:^|\n)ID:\s*(.+)$/im)?.[1]?.trim() || qrText
+    const esQRDeTicket = ticketIdEnQR.startsWith('ELIGE2026|')
 
     if (!ticketIdEnQR) {
       return { success: false, message: 'La estructura interna del código no contiene un identificador válido.' }
     }
 
     const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, message: 'Debes iniciar sesión para verificar un código QR.' }
+    }
+
     const client = supabase as unknown as SupabaseBypass
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id_rol')
+      .eq('id', user.id)
+      .maybeSingle()
 
-    // Ampliamos .or para verificar id primario, id de comprador o coincidencia parcial en la columna completa de qr_data
-    const { data: t, error } = await client
-      .from('tickets')
-      .select('id, nombre, matricula, type, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, qr_data')
-      .or(`id.eq.${ticketIdEnQR},buyer_id.eq.${ticketIdEnQR},qr_data.ilike.%${ticketIdEnQR}%`)
-      .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
+    if (profileError) {
+      console.error('[validarCodigoQR] Error al consultar el rol:', profileError.message)
+      return { success: false, message: 'No se pudo validar tu permiso para consultar el boleto.' }
+    }
 
-    // Si por alguna razón sigue sin aparecer, hacemos un fallback directo por Matrícula escolar
-    if (error || !t) {
-      const { data: tPorMatricula } = await client
+    const esPersonal = profile?.id_rol === 1 || profile?.id_rol === 2
+    const columnasTicket = 'id, buyer_id, event_id, nombre, email, matricula, carrera, type, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, qr_data'
+
+    if (!esQRDeTicket) {
+      const { data: token, error: tokenError } = await client
+        .from('tokens_canje')
+        .select('status, utilizado_por, event_id')
+        .eq('token_code', ticketIdEnQR)
+        .maybeSingle()
+
+      if (tokenError) {
+        console.error('[validarCodigoQR] Error al consultar el token:', tokenError)
+        return { success: false, message: 'No se pudo consultar el token escaneado.' }
+      }
+
+      if (token) {
+        if (token.status !== 'usado') {
+          return { success: false, message: 'Este token todavía no está canjeado y no corresponde a un boleto asignado.' }
+        }
+
+        if (!token.utilizado_por || (token.utilizado_por !== user.id && !esPersonal)) {
+          return { success: false, message: 'El token ya fue canjeado por otra persona.' }
+        }
+
+        const { data: ticket, error: ticketError } = await client
+          .from('tickets')
+          .select(columnasTicket)
+          .eq('buyer_id', token.utilizado_por)
+          .or(`event_id.eq.${token.event_id},event_id.is.null`)
+          .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
+
+        if (ticketError) {
+          console.error('[validarCodigoQR] Error al consultar el boleto asignado:', ticketError)
+          return { success: false, message: 'No se pudo consultar el boleto asignado al token.' }
+        }
+
+        if (!ticket) {
+          return { success: false, message: 'El token está usado, pero no se encontró el boleto asignado.' }
+        }
+
+        return estructurarRespuestaExitosa(
+          ticket,
+          'Token ya canjeado. Estos son los datos del boleto asignado; puedes descargar su PDF.',
+        )
+      }
+    }
+
+    let ticketId = ticketIdEnQR
+    if (ticketId.startsWith('ELIGE2026|')) {
+      ticketId = ticketId.split('|')[1]?.trim() || ticketId
+    }
+
+    let t: Record<string, unknown> | null = null
+    for (const [column, value] of [
+      ['id', ticketId],
+      ['buyer_id', ticketId],
+      ['qr_data', qrText],
+      ['matricula', ticketId],
+    ]) {
+      const { data, error } = await client
         .from('tickets')
-        .select('id, nombre, matricula, type, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
-        .eq('matricula', ticketIdEnQR)
+        .select(columnasTicket)
+        .eq(column, value)
         .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
 
-      if (!tPorMatricula) {
-        return { 
-          success: false, 
-          message: `El registro (${ticketIdEnQR.substring(0, 8)}...) no se encuentra indexado bajo ningún boleto activo en el sistema.` 
-        }
+      if (error) {
+        console.error(`[validarCodigoQR] Error al consultar tickets por ${column}:`, error)
+        return { success: false, message: 'No se pudo consultar el boleto escaneado.' }
       }
-      
-      return estructurarRespuestaExitosa(tPorMatricula)
+
+      if (data) {
+        t = data
+        break
+      }
+    }
+
+    if (!t) {
+      return {
+        success: false,
+        message: `El registro (${ticketIdEnQR.substring(0, 8)}...) no se encuentra indexado bajo ningún boleto activo en el sistema.`,
+      }
+    }
+
+    if (t.buyer_id !== user.id && t.id !== user.id && !esPersonal) {
+      return { success: false, message: 'No tienes permiso para consultar el boleto de otra persona.' }
     }
 
     return estructurarRespuestaExitosa(t)
@@ -236,7 +312,10 @@ export async function validarCodigoQR(qrData: string): Promise<ResultadoValidaci
 }
 
 // Función auxiliar para formatear la respuesta sin duplicar lógica
-function estructurarRespuestaExitosa(t: Record<string, unknown>): ResultadoValidacionQR {
+function estructurarRespuestaExitosa(
+  t: Record<string, unknown>,
+  message = '¡Acceso Autorizado! Bienvenido/a al congreso.',
+): ResultadoValidacionQR {
   const zona = (t.asiento_zona as string) || 'General'
   const bloque = (t.asiento_bloque as string) || 'Único'
   const fila = (t.asiento_fila as string) || 'N/A'
@@ -245,10 +324,13 @@ function estructurarRespuestaExitosa(t: Record<string, unknown>): ResultadoValid
 
   return {
     success: true,
-    message: '¡Acceso Autorizado! Bienvenido/a al congreso.',
+    message,
+    ticketId: t.id as string,
     asistente: {
       nombre: (t.nombre as string) || 'Asistente Registrado',
       matricula: (t.matricula as string) || null,
+      carrera: (t.carrera as string) || null,
+      email: (t.email as string) || null,
       asiento: asientoFormateado,
       tipo: (t.type as string) || 'alumno'
     }
@@ -319,7 +401,7 @@ export async function descargarGafeteDocentePDF(): Promise<{ success: boolean; p
 /**
  * 3. GENERAR Y DESCARGAR PDF DEL TICKET
  */
-export async function descargarTicketPDF(): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
+export async function descargarTicketPDF(ticketId?: string): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -330,17 +412,41 @@ export async function descargarTicketPDF(): Promise<{ success: boolean; pdfBase6
 
     const client = supabase as unknown as SupabaseBypass
 
-    const { data: ticket } = await client
+    const ticketQuery = client
       .from('tickets')
-      .select('id, nombre, email, matricula, carrera, qr_data, asiento_zona, asiento_fila, asiento_numero')
-      .or(`id.eq.${user.id},buyer_id.eq.${user.id}`)
-      .maybeSingle() as unknown as { data: Record<string, unknown> | null }
+      .select('id, buyer_id, nombre, email, matricula, carrera, qr_data, asiento_zona, asiento_bloque, asiento_fila, asiento_numero')
+    const { data: ticket, error: ticketError } = ticketId
+      ? await ticketQuery.eq('id', ticketId).maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
+      : await ticketQuery
+          .or(`id.eq.${user.id},buyer_id.eq.${user.id}`)
+          .maybeSingle() as unknown as { data: Record<string, unknown> | null; error: unknown }
 
+    if (ticketError) {
+      console.error('[descargarTicketPDF] Error al consultar el ticket:', ticketError)
+      return { success: false, error: 'No se pudo consultar el boleto en la base de datos.' }
+    }
     if (!ticket) {
       return { success: false, error: 'No tienes un ticket generado.' }
     }
 
-    const ticketId = ticket.id as string
+    if (ticket.buyer_id !== user.id && ticket.id !== user.id) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id_rol')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profileError) {
+        console.error('[descargarTicketPDF] Error al consultar el rol:', profileError.message)
+        return { success: false, error: 'No se pudo validar tu permiso para descargar el boleto.' }
+      }
+
+      if (profile?.id_rol !== 1 && profile?.id_rol !== 2) {
+        return { success: false, error: 'No tienes permiso para descargar el boleto de otra persona.' }
+      }
+    }
+
+    const idTicket = ticket.id as string
     const nombre = (ticket.nombre as string) || 'Usuario'
     const email = (ticket.email as string) || user.email || ''
     const matricula = (ticket.matricula as string) || 'S/N'
@@ -348,13 +454,14 @@ export async function descargarTicketPDF(): Promise<{ success: boolean; pdfBase6
     const asientoZona = (ticket.asiento_zona as string) || 'General'
     const asientoFila = (ticket.asiento_fila as string) || 'A'
     const asientoNumero = ticket.asiento_numero !== null ? Number(ticket.asiento_numero) : 0
-    const qr_data = (ticket.qr_data as string) || ticketId
+    const qr_data = (ticket.qr_data as string) || idTicket
 
     const credentialData = {
       nombre,
       matricula,
       carrera,
       asiento_zona: asientoZona,
+      asiento_bloque: (ticket.asiento_bloque as string | null) || null,
       asiento_fila: asientoFila,
       asiento_numero: asientoNumero,
       qr_data,

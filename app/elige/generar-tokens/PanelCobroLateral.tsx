@@ -160,7 +160,7 @@ export function PanelCobroLateral({
                 type="text"
                 value={busqueda}
                 onChange={(e) => onBusquedaChange(e.target.value)}
-                placeholder="Buscar por Correo o Nombre..."
+                placeholder="Buscar por Nombre, Correo o Matrícula..."
                 className="flex-1 bg-[#f5f5f5] border border-[#e5e5e5] rounded-lg px-3 py-1.5 text-xs text-[#1a1a1a] focus:outline-none focus:border-[#00a354]"
               />
               <button
@@ -184,6 +184,11 @@ export function PanelCobroLateral({
                     <div className="truncate pr-2">
                       <span className="font-bold text-[#1a1a1a] block truncate">{u.nombre}</span>
                       <span className="text-[#4a4a4a] font-mono text-[10px] block truncate">{u.email}</span>
+                      {u.matricula && (
+                        <span className="text-[#4a4a4a] font-mono text-[10px] block truncate">
+                          Matrícula: {u.matricula}
+                        </span>
+                      )}
                     </div>
                   </button>
                 ))}

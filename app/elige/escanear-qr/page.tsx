@@ -3,13 +3,42 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { HiOutlineCamera, HiCheckCircle, HiXCircle, HiRefresh, HiOutlineShieldCheck } from 'react-icons/hi'
-import { validarCodigoQR, type ResultadoValidacionQR } from '../generar-qr/actions'
+import { descargarTicketPDF, validarCodigoQR, type ResultadoValidacionQR } from '../generar-qr/actions'
 
 export default function EscanearQRPage() {
   const [scanResult, setScanResult] = useState<ResultadoValidacionQR | null>(null)
   const [isScanning, setIsScanning] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
+
+  async function handleDownloadTicket() {
+    if (!scanResult?.ticketId) return
+
+    setDownloadingPdf(true)
+    try {
+      const resultado = await descargarTicketPDF(scanResult.ticketId)
+      if (!resultado.success || !resultado.pdfBase64) {
+        alert(resultado.error || 'No se pudo generar el PDF')
+        return
+      }
+
+      const byteArray = Uint8Array.from(atob(resultado.pdfBase64), (char) => char.charCodeAt(0))
+      const blob = new Blob([byteArray], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ticket-congreso-ige-${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Error al descargar el ticket')
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
 
   // Callback exitoso de escaneo
   async function onScanSuccess(decodedText: string) {
@@ -87,7 +116,7 @@ export default function EscanearQRPage() {
           <HiOutlineCamera className="text-purple-500 w-8 h-8" />
           Control de <span className="text-purple-500">Acceso QR</span>
         </h1>
-        <p className="text-slate-400 dark:text-slate-500 text-sm">Escanea las credenciales de los asistentes para validar su entrada al evento.</p>
+        <p className="text-slate-400 dark:text-slate-500 text-sm">Escanea las credenciales o tokens de acceso para consultar el boleto asignado.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[400px]">
@@ -166,6 +195,18 @@ export default function EscanearQRPage() {
                     <p className="text-slate-300 dark:text-slate-400 text-xs font-mono">{scanResult.asistente.matricula}</p>
                   </div>
                 )}
+                {scanResult.asistente.carrera && (
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Carrera</span>
+                    <p className="text-slate-300 dark:text-slate-400 text-xs">{scanResult.asistente.carrera}</p>
+                  </div>
+                )}
+                {scanResult.asistente.email && (
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Correo</span>
+                    <p className="text-slate-300 dark:text-slate-400 text-xs break-all">{scanResult.asistente.email}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900">
                   <div>
                     <span className="text-[10px] uppercase font-mono text-slate-500 dark:text-slate-400">Asiento</span>
@@ -177,6 +218,17 @@ export default function EscanearQRPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {scanResult.success && scanResult.ticketId && (
+              <button
+                type="button"
+                onClick={handleDownloadTicket}
+                disabled={downloadingPdf}
+                className="w-full mb-3 py-3 rounded-xl font-black uppercase tracking-widest text-sm text-white bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 transition-all"
+              >
+                {downloadingPdf ? 'Generando PDF...' : 'Descargar PDF del boleto'}
+              </button>
             )}
 
             <button

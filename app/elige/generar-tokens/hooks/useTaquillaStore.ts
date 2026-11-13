@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { coincideBusquedaPorPalabras, normalizarTextoBusqueda } from '@/lib/search'
 import { getSeatKey, ZONE_UUIDS, getZoneUuid } from '@/config/auditorioConfig'
 import type { SeatIdentity, ZoneCode } from '@/config/auditorioConfig'
 import type { SeatEstatusPago as SeatStatus, AssignmentContext } from '@/components/asientos/types'
@@ -11,6 +12,7 @@ import {
   cobrarAsientoYGenerarToken,
   liquidarRestoAsiento,
   getApartadoInfo,
+  obtenerPreRegistros,
 } from '../actions'
 import {
   resolveSeatIdentityFromModal,
@@ -431,21 +433,36 @@ export function useTaquillaStore({
     if (!busqueda.trim()) return
     setErrorMsg(null)
     try {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('id, nombre, email, buyer_id')
-        .is('asiento_numero', null)
-        .or(`email.ilike.%${busqueda.trim()}%,nombre.ilike.%${busqueda.trim()}%`)
-        .limit(5)
-      if (error) throw error
-      setUsuariosPendientes((data as TicketSelectResponse[]) || [])
-      if (!data || data.length === 0) {
+      const resultado = await obtenerPreRegistros()
+      if (!resultado.success) {
+        setUsuariosPendientes([])
+        setErrorMsg(resultado.message)
+        return
+      }
+
+      const estadosPendientes = new Set(['pre-registro', 'pending'])
+      const usuariosEncontrados = resultado.usuarios.filter((usuario) =>
+        estadosPendientes.has(normalizarTextoBusqueda(usuario.estatus_pago)) &&
+        usuario.asiento_numero == null &&
+        coincideBusquedaPorPalabras(busqueda, [
+          usuario.nombre,
+          usuario.email,
+          ...(usuario.correosBusqueda ?? []),
+          usuario.matricula,
+          ...(usuario.matriculasBusqueda ?? []),
+        ]),
+      )
+
+      setUsuariosPendientes(usuariosEncontrados)
+      if (usuariosEncontrados.length === 0) {
         setErrorMsg('No se encontraron usuarios pre-registrados con esos criterios.')
       }
-    } catch {
-      setErrorMsg('Error al buscar en la base de datos de pre-registros.')
+    } catch (error) {
+      console.error('[useTaquillaStore] Error al buscar pre-registros:', error)
+      setUsuariosPendientes([])
+      setErrorMsg(error instanceof Error ? error.message : 'Error al buscar pre-registros.')
     }
-  }, [busqueda, supabase])
+  }, [busqueda])
 
   // ── Handler: confirmar venta directa o apartado inicial ──────────────
   const handleConfirmarNuevoCobro = useCallback(

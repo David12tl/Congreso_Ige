@@ -4,6 +4,8 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { HiOutlineKey, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineArrowRight } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { validarToken } from './actions'
+import type { DatosTicketCanjeado } from './actions'
+import { descargarTicketPDF } from '../generar-qr/actions'
 import { actualizarMiUnidadAcademica, getMiPerfil, getUnidadesAcademicas } from '../perfil/actions'
 import type { UnidadAcademica } from '../perfil/actions'
 
@@ -11,6 +13,8 @@ export default function IngresarTokenPage() {
   const [token, setToken] = useState('')
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [ticket, setTicket] = useState<DatosTicketCanjeado | null>(null)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [unidadStatus, setUnidadStatus] = useState<'checking' | 'required' | 'ready'>('checking')
   const [unidades, setUnidades] = useState<UnidadAcademica[]>([])
   const [selectedUA, setSelectedUA] = useState<number | ''>('')
@@ -72,21 +76,52 @@ export default function IngresarTokenPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFeedback(null)
+    setTicket(null)
 
     startTransition(async () => {
       const result = await validarToken(token)
       if (result.success) {
-        // Lógica para diferenciar el mensaje de éxito
-        const successMessage = result.ticket?.tipo === 'docente'
-          ? 'Gafete de organizador activado correctamente.'
-          : 'Token validado correctamente. ¡Tu ticket está activo!'
+        const successMessage = result.message.includes('ya fue canjeado por ti')
+          ? result.message
+          : result.ticket?.tipo === 'docente'
+            ? 'Gafete de organizador activado correctamente.'
+            : result.message
 
         setFeedback({ type: 'success', message: successMessage })
+        setTicket(result.ticket ?? null)
         setToken('')
       } else {
         setFeedback({ type: 'error', message: result.message })
       }
     })
+  }
+
+  const handleDownloadTicket = async () => {
+    if (!ticket) return
+
+    setDownloadingPdf(true)
+    try {
+      const resultado = await descargarTicketPDF(ticket.ticketId)
+      if (!resultado.success || !resultado.pdfBase64) {
+        alert(resultado.error || 'No se pudo generar el PDF')
+        return
+      }
+
+      const byteArray = Uint8Array.from(atob(resultado.pdfBase64), (char) => char.charCodeAt(0))
+      const blob = new Blob([byteArray], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ticket-congreso-ige-${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Error al descargar el ticket')
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   return (
@@ -156,6 +191,33 @@ export default function IngresarTokenPage() {
           </button>
         </form>
       </GlassCard>
+
+      {ticket && (
+        <GlassCard className="p-6 max-w-2xl mx-auto space-y-4" glowColor="emerald">
+          <h2 className="text-lg font-bold text-[#0f172a] dark:text-white">Boleto asignado</h2>
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
+            <p><span className="font-semibold">Nombre:</span> {ticket.nombre || 'No disponible'}</p>
+            <p><span className="font-semibold">Matrícula:</span> {ticket.matricula || 'No disponible'}</p>
+            <p><span className="font-semibold">Carrera:</span> {ticket.carrera || 'No disponible'}</p>
+            <p><span className="font-semibold">Unidad Académica:</span> {ticket.unidadAcademica || 'No disponible'}</p>
+            <p><span className="font-semibold">Tipo:</span> {ticket.tipo}</p>
+            <p>
+              <span className="font-semibold">Asiento:</span>{' '}
+              {[ticket.asientoZona, ticket.asientoBloque, ticket.asientoFila, ticket.asientoNumero]
+                .filter((value) => value !== null && value !== '')
+                .join(' - ') || 'General'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleDownloadTicket}
+            disabled={downloadingPdf}
+            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white disabled:opacity-50"
+          >
+            {downloadingPdf ? 'Generando PDF...' : 'Descargar PDF del boleto'}
+          </button>
+        </GlassCard>
+      )}
 
       {unidadStatus !== 'ready' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">

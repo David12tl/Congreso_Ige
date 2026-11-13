@@ -47,6 +47,37 @@ export default function GenerarQRPage() {
     }
   }, [])
 
+  async function handleDownload(esDocente: boolean, ticketId?: string) {
+    setDescargando(true)
+    try {
+      const resultado = esDocente
+        ? await descargarGafeteDocentePDF()
+        : await descargarTicketPDF(ticketId)
+
+      if (!resultado.success || !resultado.pdfBase64) {
+        alert(resultado.error || 'No se pudo generar el PDF')
+        return
+      }
+
+      const byteArray = Uint8Array.from(atob(resultado.pdfBase64), (char) => char.charCodeAt(0))
+      const blob = new Blob([byteArray], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = esDocente
+        ? `gafete-organizador-${Date.now()}.pdf`
+        : `ticket-congreso-ige-${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Error al descargar el ticket')
+    } finally {
+      setDescargando(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
@@ -81,6 +112,15 @@ export default function GenerarQRPage() {
           <div className="space-y-4">
             <HiOutlineExclamationCircle className="w-16 h-16 text-amber-700 mx-auto" />
             <p className="text-amber-700 font-light text-sm">{error}</p>
+            <button
+              type="button"
+              onClick={() => handleDownload(false)}
+              disabled={descargando}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-cyan-500 transition-all disabled:opacity-50"
+            >
+              <HiOutlineDownload className="w-4 h-4" />
+              {descargando ? 'Generando PDF...' : 'Descargar mi boleto'}
+            </button>
             <a 
               href="/elige/ingresar-token"
               className="inline-block px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-amber-100 transition-all"
@@ -117,43 +157,7 @@ export default function GenerarQRPage() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={async () => {
-                  setDescargando(true)
-                  try {
-                    const esDocente = ticketInfo?.tipo === 'docente'
-                    const resultado = esDocente
-                      ? await descargarGafeteDocentePDF()
-                      : await descargarTicketPDF()
-
-                    if (resultado.success && resultado.pdfBase64) {
-                      const byteCharacters = atob(resultado.pdfBase64)
-                      const byteNumbers = new Array(byteCharacters.length)
-                      const fileName = esDocente
-                        ? `gafete-organizador-${Date.now()}.pdf`
-                        : `ticket-congreso-ige-${Date.now()}.pdf`
-
-                      for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i)
-                      }
-                      const byteArray = new Uint8Array(byteNumbers)
-                      const blob = new Blob([byteArray], { type: 'application/pdf' })
-                      const url = URL.createObjectURL(blob)
-                      const link = document.createElement('a')
-                      link.href = url;
-                      link.download = fileName
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                      URL.revokeObjectURL(url)
-                    } else {
-                      alert(resultado.error || 'No se pudo generar el PDF')
-                    }
-                  } catch {
-                    alert('Error al descargar el ticket')
-                  } finally {
-                    setDescargando(false)
-                  }
-                }}
+                onClick={() => handleDownload(ticketInfo?.tipo === 'docente', ticketInfo?.ticketId)}
                 disabled={descargando}
                 className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >

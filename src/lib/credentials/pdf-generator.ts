@@ -6,6 +6,7 @@ export interface CredentialData {
   matricula: string;
   carrera: string;
   asiento_zona: string;
+  asiento_bloque?: string | null;
   asiento_fila: string;
   asiento_numero: number;
   qr_data: string;
@@ -125,7 +126,11 @@ export async function generateCredentialPDF(
       doc.fontSize(14);
       doc.font("Helvetica-Bold");
       doc.text(
-        `${data.asiento_zona.toUpperCase()} • Fila ${data.asiento_fila}`,
+        [
+          data.asiento_zona.toUpperCase(),
+          data.asiento_bloque ? `Bloque ${data.asiento_bloque}` : null,
+          `Fila ${data.asiento_fila}`,
+        ].filter(Boolean).join(" • "),
         50,
         yPos + 15
       );

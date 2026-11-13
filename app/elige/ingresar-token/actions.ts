@@ -34,12 +34,7 @@ export interface DatosTicketCanjeado {
 }
 
 /**
- * Canjea un token de 8 dígitos:
- * 1. Busca el token en tokens_canje por token_code
- * 2. Verifica que esté 'disponible'
- * 3. Cambia status a 'usado', guarda el UUID del alumno y la fecha
- * 4. Asocia el ticket del asiento al buyer_id del alumno
- * 5. Retorna los datos del ticket para generar QR y PDF
+ * Canjea un token disponible, o devuelve sin cambios el boleto al dueño de un token usado.
  */
 export async function validarToken(tokenCode: string): Promise<ActionResult & { ticket?: DatosTicketCanjeado }> {
   const parsed = TokenSchema.safeParse(tokenCode)
@@ -55,6 +50,79 @@ export async function canjearTokenPorCodigo(tokenCode: string): Promise<ActionRe
 
   if (authError || !user) {
     return { success: false, message: 'Debes iniciar sesión para canjear un token.' }
+  }
+
+  const { data: token, error: tokenError } = await supabase
+    .from('tokens_canje')
+    .select('status, utilizado_por, event_id')
+    .eq('token_code', tokenCode)
+    .eq('event_id', CONGRESO_IGE_EVENT_ID)
+    .maybeSingle()
+
+  if (tokenError) {
+    console.error('[canjearTokenPorCodigo] Error al consultar el token:', tokenError.message)
+    return { success: false, message: 'No se pudo consultar el token. Intenta de nuevo.' }
+  }
+
+  if (token?.status === 'usado') {
+    if (token.utilizado_por !== user.id) {
+      return { success: false, message: 'El token ya fue canjeado.' }
+    }
+
+    const { data: ticket, error: ticketError } = await supabase
+      .from('tickets')
+      .select('id, nombre, email, matricula, carrera, semestre, telefono, unidad_academica_id, asiento_zona, asiento_bloque, asiento_fila, asiento_numero, type')
+      .eq('buyer_id', user.id)
+      .or(`event_id.eq.${token.event_id},event_id.is.null`)
+      .neq('type', 'docente')
+      .order('purchased_at', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (ticketError) {
+      console.error('[canjearTokenPorCodigo] Error al consultar el boleto ya asignado:', ticketError.message)
+      return { success: false, message: 'No se pudo consultar el boleto asignado.' }
+    }
+
+    if (!ticket) {
+      return { success: false, message: 'El token está usado, pero no se encontró el boleto asignado a tu cuenta.' }
+    }
+
+    const { data: unidad, error: unidadError } = ticket.unidad_academica_id
+      ? await supabase
+          .from('unidades_academicas')
+          .select('nombre')
+          .eq('id', ticket.unidad_academica_id)
+          .maybeSingle()
+      : { data: null, error: null }
+
+    if (unidadError) {
+      console.error('[canjearTokenPorCodigo] Error al consultar nombre de Unidad Académica:', unidadError.message)
+    }
+
+    revalidatePath('/elige/ingresar-token')
+    revalidatePath('/elige/mis-asientos')
+
+    return {
+      success: true,
+      message: 'Este token ya fue canjeado por ti. Aquí están los datos de tu boleto asignado.',
+      ticket: {
+        ticketId: ticket.id,
+        nombre: ticket.nombre,
+        email: ticket.email,
+        matricula: ticket.matricula,
+        carrera: ticket.carrera,
+        semestre: ticket.semestre,
+        telefono: ticket.telefono,
+        unidadAcademica: unidad?.nombre ?? null,
+        asientoZona: ticket.asiento_zona,
+        asientoBloque: ticket.asiento_bloque,
+        asientoFila: ticket.asiento_fila,
+        asientoNumero: ticket.asiento_numero,
+        departamento: null,
+        tipo: ticket.type,
+      },
+    }
   }
 
   let unidadAcademicaId: number | null

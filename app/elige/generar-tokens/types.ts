@@ -99,6 +99,11 @@ export interface TicketSelectResponse {
   email: string | null
   buyer_id?: string | null
   type?: string | null
+  matricula?: string | null
+  matriculasBusqueda?: string[]
+  correosBusqueda?: string[]
+  estatus_pago?: string | null
+  asiento_numero?: number | null
 }
 
 export interface ApartadoPendienteRow {
