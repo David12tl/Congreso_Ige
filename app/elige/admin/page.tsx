@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[11px] text-slate-500 dark:text-slate-400 font-light">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Mexico_City' }) : '—'}
                       </td>
                     </tr>
                   ))
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
                       <td className="px-4 py-3 text-[11px]">
                         <span className="text-slate-700 dark:text-slate-200 block">{t.unidad_academica ?? 'Externa'}</span>
                         <span className="text-slate-500 dark:text-slate-400 font-light text-[10px]">
-                          {t.purchased_at ? new Date(t.purchased_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '—'}
+                          {t.purchased_at ? new Date(t.purchased_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', timeZone: 'America/Mexico_City' }) : '—'}
                         </span>
                       </td>
                     </tr>

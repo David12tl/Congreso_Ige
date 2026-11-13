@@ -410,7 +410,8 @@ export default function TicketsVendidosPage() {
                         month: 'short',
                         year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        timeZone: 'America/Mexico_City',
                       }) : 'N/A'}
                     </td>
                   </tr>

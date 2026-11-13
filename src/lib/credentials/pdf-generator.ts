@@ -219,7 +219,8 @@ export async function generateCredentialPDF(
       doc.fontSize(8);
       doc.text(
         `Credencial digital generada automáticamente • ${new Date().toLocaleDateString(
-          "es-MX"
+          "es-MX",
+          { timeZone: "America/Mexico_City" }
         )}`,
         40,
         yPos,

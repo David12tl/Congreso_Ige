@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import SeatMap from '@/components/asientos/zonaExternos'
 import Zona1 from '@/components/asientos/zona_1'
 import Zona2 from '@/components/asientos/zona_2'
@@ -29,6 +29,7 @@ export function TaquillaTokensView({
   initialSeatStatusMap,
   initialStats,
 }: TaquillaTokensViewProps) {
+  const [hasMounted, setHasMounted] = useState(false)
   const {
     zonaActiva,
     onZonaActivaChange,
@@ -79,6 +80,21 @@ export function TaquillaTokensView({
     onTipoPagoLiquidacionChange,
     onRecargarApartados,
   } = useTaquillaStore({ assignmentContext, initialOccupiedSeatKeys, initialSeatStatusMap, initialStats })
+
+  useEffect(() => {
+    const timerId = setTimeout(() => setHasMounted(true), 0)
+    return () => clearTimeout(timerId)
+  }, [])
+
+  if (!hasMounted) {
+    return (
+      <div
+        className="w-full min-h-screen rounded-3xl bg-white dark:bg-[#2a2a2f]"
+        aria-busy="true"
+        aria-label="Cargando taquilla"
+      />
+    )
+  }
 
   return (
     /* ✅ 1. w-full + grid-cols-12 para control fino del ancho horizontal */

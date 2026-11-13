@@ -36,6 +36,7 @@ export const TokensGeneralTable: React.FC = () => {
   const [tokens, setTokens] = useState<TokenGeneralItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
 
   // Estados de filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -48,6 +49,11 @@ export const TokensGeneralTable: React.FC = () => {
 
   // Estado visual para retroalimentación al copiar
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timerId = setTimeout(() => setHasMounted(true), 0);
+    return () => clearTimeout(timerId);
+  }, []);
 
   /**
    * Consulta a Supabase equivalente a:
@@ -188,7 +194,10 @@ export const TokensGeneralTable: React.FC = () => {
 
   // Carga automática al montar el componente
   useEffect(() => {
-    fetchTodosLosTokens();
+    const timerId = setTimeout(() => {
+      void fetchTodosLosTokens();
+    }, 0);
+    return () => clearTimeout(timerId);
   }, [fetchTodosLosTokens]);
 
   // Manejo de copiado al portapapeles con feedback temporal
@@ -227,11 +236,6 @@ export const TokensGeneralTable: React.FC = () => {
       return matchesSearch && matchesStatus && matchesPago;
     });
   }, [tokens, searchTerm, statusFilter, soloCompletados]);
-
-  // Reiniciar a la página 1 cuando cambien los criterios de búsqueda o filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, soloCompletados, itemsPerPage]);
 
   // Cálculos de Paginación
   const totalPages = Math.max(1, Math.ceil(filteredTokens.length / itemsPerPage));
@@ -285,7 +289,7 @@ export const TokensGeneralTable: React.FC = () => {
               Tokens Generales de Alumnos
             </h2>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-              {tokens.length} registros
+              {hasMounted ? tokens.length : '—'} registros
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
@@ -315,7 +319,10 @@ export const TokensGeneralTable: React.FC = () => {
             type="text"
             placeholder="Buscar por token, alumno, email o matrícula..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setCurrentPage(1);
+              setSearchTerm(e.target.value);
+            }}
             className="w-full pl-10 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 bg-slate-50/70 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition"
           />
         </div>
@@ -326,7 +333,10 @@ export const TokensGeneralTable: React.FC = () => {
             <HiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setStatusFilter(e.target.value);
+              }}
               className="w-full pl-9 pr-8 py-2 text-sm text-slate-800 bg-slate-50/70 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer transition"
             >
               <option value="todos">Todos los estados</option>
@@ -343,7 +353,10 @@ export const TokensGeneralTable: React.FC = () => {
             <input
               type="checkbox"
               checked={soloCompletados}
-              onChange={(e) => setSoloCompletados(e.target.checked)}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setSoloCompletados(e.target.checked);
+              }}
               className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
             />
             <span>Solo pagos completados</span>
@@ -354,7 +367,10 @@ export const TokensGeneralTable: React.FC = () => {
             <span>Mostrar:</span>
             <select
               value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setItemsPerPage(Number(e.target.value));
+              }}
               className="py-1 px-2 text-xs border border-slate-200 rounded-md bg-white text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value={5}>5</option>

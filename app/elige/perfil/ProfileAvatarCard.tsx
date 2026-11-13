@@ -45,7 +45,7 @@ export function ProfileAvatarCard({ email, avatarUrl, rolNombre, createdAt }: Pr
       <p className="text-[10px] text-[#475569] dark:text-slate-400 font-semibold mt-4 uppercase tracking-wider">
         Miembro desde:{' '}
         <span className="font-light text-[#1e293b] dark:text-slate-100">
-          {createdAt ? new Date(createdAt).toLocaleDateString() : '—'}
+          {createdAt ? new Date(createdAt).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : '—'}
         </span>
       </p>
     </GlassCard>

@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
           ? new Date(ticket.attended_day1_at).toLocaleTimeString("es-MX", {
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "America/Mexico_City",
             })
           : "desconocida";
 
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
           ? new Date(ticket.attended_day2_at).toLocaleTimeString("es-MX", {
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "America/Mexico_City",
             })
           : "desconocida";
 

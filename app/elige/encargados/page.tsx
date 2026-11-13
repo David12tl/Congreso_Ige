@@ -140,7 +140,7 @@ export default function EncargadosPage() {
                       <span className="text-sm text-slate-700 dark:text-slate-200 font-light">{enc.nombre_ua ?? 'No asignada'}</span>
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-light">
-                      {enc.created_at ? new Date(enc.created_at).toLocaleDateString('es-MX') : '—'}
+                      {enc.created_at ? new Date(enc.created_at).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : '—'}
                     </td>
                   </tr>
                 ))

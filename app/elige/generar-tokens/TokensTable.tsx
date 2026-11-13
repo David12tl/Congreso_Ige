@@ -258,7 +258,10 @@ export const TokensTable: React.FC<TokensTableProps> = ({ tokens = [], isLoading
 
                   <td className="px-6 py-4 text-xs text-[#7D7D7D] whitespace-nowrap">
                     {token.created_at ? new Date(token.created_at).toLocaleDateString('es-MX', {
-                      day: '2-digit', month: 'short', year: 'numeric'
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      timeZone: 'America/Mexico_City',
                     }) : '—'}
                   </td>
 

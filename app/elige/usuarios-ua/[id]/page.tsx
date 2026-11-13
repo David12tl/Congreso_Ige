@@ -239,7 +239,7 @@ export default function DetalleUsuarioVouchersPage({ params }: { params: Promise
                       {comp.estado}
                     </span>
                     <span className="text-[10px] text-slate-400 font-semibold">
-                      {comp.created_at ? new Date(comp.created_at).toLocaleDateString() : '—'}
+                      {comp.created_at ? new Date(comp.created_at).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : '—'}
                     </span>
                   </div>
                 </div>

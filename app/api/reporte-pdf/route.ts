@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import React from 'react'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { Document, renderToBuffer } from '@react-pdf/renderer'
 import { ReportePDF } from '../../elige/reportes/ReportePDF'
 import { getReportesData } from '../../elige/reportes/actions'
 
@@ -16,6 +16,7 @@ export async function GET() {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'America/Mexico_City',
     })
 
     const pdfBuffer = await renderToBuffer(
@@ -23,7 +24,7 @@ export async function GET() {
         global,
         uas,
         fechaGeneracion,
-      }) as any
+      }) as React.ReactElement<React.ComponentProps<typeof Document>>
     )
 
     return new NextResponse(new Uint8Array(pdfBuffer), {

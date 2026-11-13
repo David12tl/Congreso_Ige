@@ -87,7 +87,9 @@ export async function getMiPerfil(): Promise<PerfilUsuario | null> {
     const uaData = Array.isArray(data.unidades_academicas) ? data.unidades_academicas[0] : data.unidades_academicas
 
     const dateObj = data.created_at ? new Date(data.created_at) : null
-    const createdAtFormatted = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString() : '—'
+    const createdAtFormatted = dateObj && !isNaN(dateObj.getTime())
+      ? dateObj.toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' })
+      : '—'
 
     return {
       id: user.id,

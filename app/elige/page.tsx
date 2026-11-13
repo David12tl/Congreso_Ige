@@ -25,6 +25,7 @@ function formatDateRange(start: string, end: string) {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'America/Mexico_City',
   }
   return `${startDate.toLocaleDateString('es-MX', options)} - ${endDate.toLocaleDateString('es-MX', options)}`
 }

@@ -453,6 +453,7 @@ export type Database = {
           p_buyer_id: string
           p_event_id: string
           p_token_code: string
+          p_utilizado_el: string
           p_unidad_academica_id: number | null
         }
         Returns: Json

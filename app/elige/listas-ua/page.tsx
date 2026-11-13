@@ -354,6 +354,7 @@ export default function ListasUAPage() {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',
+                                    timeZone: 'America/Mexico_City',
                                   })
                                 : '—'}
                             </td>
