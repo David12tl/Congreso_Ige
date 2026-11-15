@@ -5,7 +5,7 @@ import { HiOutlinePlay } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 
 // Configurable YouTube live stream ID
-const YOUTUBE_LIVE_ID = 'NGBb_4N4i8U'
+const YOUTUBE_LIVE_ID = 'taWhlY42r08'
 
 export default function EnVivoPage() {
   const chatFrameRef = useRef<HTMLIFrameElement>(null)
