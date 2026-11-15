@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import {
   HiOutlineUsers,
   HiOutlineShieldCheck,
@@ -37,6 +37,10 @@ const TYPE_BADGES = new Map<string, string>([
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [streamUrl, setStreamUrl] = useState('')
+  const [streamLoading, setStreamLoading] = useState(true)
+  const [streamSaving, setStreamSaving] = useState(false)
+  const [streamFeedback, setStreamFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -55,6 +59,70 @@ export default function AdminDashboardPage() {
     load()
     return () => { isMounted = false }
   }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadStreamConfig = async () => {
+      try {
+        const response = await fetch('/api/live-stream', { cache: 'no-store' })
+        const result: { youtubeVideoId?: unknown; error?: unknown } = await response.json()
+
+        if (!response.ok) {
+          throw new Error(typeof result.error === 'string' ? result.error : 'No se pudo cargar el enlace actual.')
+        }
+        if (typeof result.youtubeVideoId !== 'string') {
+          throw new Error('La configuración de transmisión no tiene un formato válido.')
+        }
+
+        if (isMounted) setStreamUrl(`https://youtube.com/live/${result.youtubeVideoId}`)
+      } catch (error) {
+        if (isMounted) {
+          setStreamFeedback({
+            type: 'error',
+            message: error instanceof Error ? error.message : 'No se pudo cargar el enlace actual.',
+          })
+        }
+      } finally {
+        if (isMounted) setStreamLoading(false)
+      }
+    }
+
+    void loadStreamConfig()
+    return () => { isMounted = false }
+  }, [])
+
+  const updateLiveStream = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setStreamSaving(true)
+    setStreamFeedback(null)
+
+    try {
+      const response = await fetch('/api/live-stream', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtubeUrl: streamUrl }),
+      })
+      const result: { youtubeVideoId?: unknown; error?: unknown } = await response.json()
+
+      if (!response.ok) {
+        throw new Error(typeof result.error === 'string' ? result.error : 'No se pudo actualizar la transmisión.')
+      }
+      if (typeof result.youtubeVideoId !== 'string') {
+        throw new Error('El servidor no devolvió un código de transmisión válido.')
+      }
+
+      setStreamUrl(`https://youtube.com/live/${result.youtubeVideoId}`)
+      setStreamFeedback({ type: 'success', message: 'Enlace de transmisión actualizado correctamente.' })
+    } catch (error) {
+      setStreamFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'No se pudo actualizar la transmisión.',
+      })
+    } finally {
+      setStreamSaving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -276,6 +344,43 @@ export default function AdminDashboardPage() {
           </div>
         </GlassCard>
       </div>
+
+      <GlassCard className="p-6 md:p-8" glowColor="emerald">
+        <div className="mb-5">
+          <h2 className="text-xl font-bold text-[#1E2A39] dark:text-white">Enlace de transmisión en vivo</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Pega el enlace de YouTube. El sistema extraerá el código y actualizará el video y el chat de la página En Vivo.
+          </p>
+        </div>
+        <form onSubmit={updateLiveStream} className="flex flex-col gap-3 sm:flex-row">
+          <label htmlFor="live-stream-url" className="sr-only">Enlace del directo de YouTube</label>
+          <input
+            id="live-stream-url"
+            type="url"
+            required
+            value={streamUrl}
+            onChange={(event) => setStreamUrl(event.target.value)}
+            placeholder="https://youtube.com/live/..."
+            disabled={streamLoading || streamSaving}
+            className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+          />
+          <button
+            type="submit"
+            disabled={streamLoading || streamSaving || !streamUrl.trim()}
+            className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {streamSaving ? 'Guardando...' : 'Guardar enlace'}
+          </button>
+        </form>
+        {streamFeedback && (
+          <p
+            role="status"
+            className={`mt-3 text-sm ${streamFeedback.type === 'success' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+          >
+            {streamFeedback.message}
+          </p>
+        )}
+      </GlassCard>
     </div>
   )
 }
