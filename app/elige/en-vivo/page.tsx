@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { HiOutlinePlay } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { isLiveStreamConfig, type LiveStreamConfig } from '@/types/live-stream'
+import ChatEnVivoSupabase from './ChatEnVivoSupabase'
 
 function getErrorMessage(value: unknown, fallback: string): string {
   if (typeof value === 'object' && value !== null && 'error' in value && typeof value.error === 'string') {
@@ -13,7 +14,6 @@ function getErrorMessage(value: unknown, fallback: string): string {
 }
 
 export default function EnVivoPage() {
-  const chatFrameRef = useRef<HTMLIFrameElement>(null)
   const [streamState, setStreamState] = useState<LiveStreamConfig | null>(null)
   const [streamError, setStreamError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -59,14 +59,6 @@ export default function EnVivoPage() {
 
   const isLive = streamState?.isLive === true
   const videoId = isLive ? streamState.videoId : null
-
-  useEffect(() => {
-    const chatFrame = chatFrameRef.current
-    if (!videoId || !chatFrame) return
-
-    const embedDomain = encodeURIComponent(window.location.hostname)
-    chatFrame.src = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${embedDomain}`
-  }, [videoId])
 
   const unavailableMessage = streamError || (
     isLoading
@@ -116,40 +108,7 @@ export default function EnVivoPage() {
           </p>
         </GlassCard>
 
-        <GlassCard className="p-5" glowColor="emerald">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-[#0f172a] dark:text-white">Preguntas y chat</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Envía tus preguntas y participa en la conversación en vivo.
-            </p>
-          </div>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700">
-            {videoId ? (
-              <iframe
-                ref={chatFrameRef}
-                title="Chat en vivo de YouTube"
-                className="h-[520px] w-full"
-              />
-            ) : (
-              <div className="flex h-[520px] items-center justify-center px-6 text-center text-sm text-slate-500">
-                {unavailableMessage}
-              </div>
-            )}
-          </div>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            Inicia sesión en YouTube para enviar mensajes.
-          </p>
-          {videoId && (
-            <a
-              href={`https://www.youtube.com/live_chat?v=${videoId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:text-emerald-800 dark:text-emerald-400"
-            >
-              Abrir el chat en YouTube
-            </a>
-          )}
-        </GlassCard>
+        <ChatEnVivoSupabase />
       </section>
     </div>
   )

@@ -37,7 +37,7 @@ export default function ProgramaCompleto() {
     {
       id: 1,
       nombre: "Día 1",
-      fecha: "Martes 18 de Noviembre de 2026",
+      fecha: "Miercoles 18 de Noviembre de 2026",
       actividades: [
         {
           hora: "09:30 – 10:30",
@@ -65,7 +65,7 @@ export default function ProgramaCompleto() {
     {
       id: 2,
       nombre: "Día 2",
-      fecha: "Miércoles 19 de Noviembre de 2026",
+      fecha: "Jueves 19 de Noviembre de 2026",
       actividades: [
         {
           hora: "11:00 – 12:00",

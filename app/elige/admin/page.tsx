@@ -13,6 +13,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getAdminDashboardData, AdminDashboardData } from './actions'
 import { isLiveStreamConfig, type LiveStreamConfig } from '@/types/live-stream'
+import ModeradorPreguntasLive from './ModeradorPreguntasLive'
 
 // ─── Mapas de estilos por rol y tipo ─────────────────────────────────────────
 // Se usa Map en lugar de Record<K, V>[key] para evitar advertencias de
@@ -402,6 +403,8 @@ export default function AdminDashboardPage() {
           </p>
         )}
       </GlassCard>
+
+      <ModeradorPreguntasLive />
     </div>
   )
 }

@@ -39,6 +39,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_en_vivo: {
+        Row: {
+          id: string
+          user_id: string
+          nombre_usuario: string
+          matricula: string | null
+          mensaje: string
+          es_destacada: boolean
+          visible: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          nombre_usuario: string
+          matricula?: string | null
+          mensaje: string
+          es_destacada?: boolean
+          visible?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          nombre_usuario?: string
+          matricula?: string | null
+          mensaje?: string
+          es_destacada?: boolean
+          visible?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       comprobantes_pago: {
         Row: {
           id: string
