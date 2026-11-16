@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getAdminDashboardData, AdminDashboardData } from './actions'
+import { isLiveStreamConfig, type LiveStreamConfig } from '@/types/live-stream'
 
 // ─── Mapas de estilos por rol y tipo ─────────────────────────────────────────
 // Se usa Map en lugar de Record<K, V>[key] para evitar advertencias de
@@ -34,10 +35,18 @@ const TYPE_BADGES = new Map<string, string>([
   ['empresa', 'bg-amber-50 text-amber-700 border-amber-200'],
 ])
 
+function getErrorMessage(value: unknown, fallback: string): string {
+  if (typeof value === 'object' && value !== null && 'error' in value && typeof value.error === 'string') {
+    return value.error
+  }
+  return fallback
+}
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [streamUrl, setStreamUrl] = useState('')
+  const [streamState, setStreamState] = useState<LiveStreamConfig | null>(null)
   const [streamLoading, setStreamLoading] = useState(true)
   const [streamSaving, setStreamSaving] = useState(false)
   const [streamFeedback, setStreamFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -65,17 +74,20 @@ export default function AdminDashboardPage() {
 
     const loadStreamConfig = async () => {
       try {
-        const response = await fetch('/api/live-stream', { cache: 'no-store' })
-        const result: { youtubeVideoId?: unknown; error?: unknown } = await response.json()
+        const response = await fetch('/api/stream', { cache: 'no-store' })
+        const result: unknown = await response.json()
 
         if (!response.ok) {
-          throw new Error(typeof result.error === 'string' ? result.error : 'No se pudo cargar el enlace actual.')
+          throw new Error(getErrorMessage(result, 'No se pudo cargar la configuración.'))
         }
-        if (typeof result.youtubeVideoId !== 'string') {
+        if (!isLiveStreamConfig(result)) {
           throw new Error('La configuración de transmisión no tiene un formato válido.')
         }
 
-        if (isMounted) setStreamUrl(`https://youtube.com/live/${result.youtubeVideoId}`)
+        if (isMounted) {
+          setStreamUrl(result.youtubeUrl)
+          setStreamState(result)
+        }
       } catch (error) {
         if (isMounted) {
           setStreamFeedback({
@@ -98,26 +110,35 @@ export default function AdminDashboardPage() {
     setStreamFeedback(null)
 
     try {
-      const response = await fetch('/api/live-stream', {
-        method: 'PUT',
+      const response = await fetch('/api/stream', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtubeUrl: streamUrl }),
+        body: JSON.stringify({
+          isLive: true,
+          youtubeUrl: streamUrl,
+          titulo: streamState?.titulo || 'Congreso IGE 2026',
+        }),
       })
-      const result: { youtubeVideoId?: unknown; error?: unknown } = await response.json()
+
+      const result: unknown = await response.json()
 
       if (!response.ok) {
-        throw new Error(typeof result.error === 'string' ? result.error : 'No se pudo actualizar la transmisión.')
+        throw new Error(getErrorMessage(result, 'No se pudo guardar la configuración.'))
       }
-      if (typeof result.youtubeVideoId !== 'string') {
-        throw new Error('El servidor no devolvió un código de transmisión válido.')
+      if (!isLiveStreamConfig(result)) {
+        throw new Error('El servidor devolvió una configuración no válida.')
       }
 
-      setStreamUrl(`https://youtube.com/live/${result.youtubeVideoId}`)
-      setStreamFeedback({ type: 'success', message: 'Enlace de transmisión actualizado correctamente.' })
+      setStreamUrl(result.youtubeUrl)
+      setStreamState(result)
+      setStreamFeedback({
+        type: 'success',
+        message: 'Configuración guardada exitosamente.',
+      })
     } catch (error) {
       setStreamFeedback({
         type: 'error',
-        message: error instanceof Error ? error.message : 'No se pudo actualizar la transmisión.',
+        message: error instanceof Error ? error.message : 'Error al guardar la configuración.',
       })
     } finally {
       setStreamSaving(false)
