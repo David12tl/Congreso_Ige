@@ -243,8 +243,8 @@ export default function ChatEnVivoSupabase() {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <header className="mb-4 flex items-center justify-between gap-3">
+    <section className="flex h-full min-h-0 flex-col rounded-2xl bg-white p-4 dark:bg-slate-900">
+      <header className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Preguntas y Chat en Vivo</h2>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           {messages.length} mensajes
@@ -252,12 +252,12 @@ export default function ChatEnVivoSupabase() {
       </header>
 
       {errorMessage && (
-        <p role="alert" className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p role="alert" className="mb-3 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
           {errorMessage}
         </p>
       )}
 
-      <div className="max-h-[440px] min-h-40 space-y-3 overflow-y-auto rounded-xl bg-slate-50 p-3 dark:bg-slate-950/50">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-xl bg-slate-50 p-3 dark:bg-slate-950/50">
         {isLoading ? (
           <p className="py-8 text-center text-sm text-slate-500">Cargando mensajes...</p>
         ) : messages.length > 0 ? (
@@ -296,7 +296,7 @@ export default function ChatEnVivoSupabase() {
       </div>
 
       {user ? (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+        <form onSubmit={handleSubmit} className="mt-3 shrink-0 space-y-2">
           <label htmlFor="chat-en-vivo-mensaje" className="sr-only">Escribe tu pregunta</label>
           <textarea
             id="chat-en-vivo-mensaje"
@@ -308,7 +308,7 @@ export default function ChatEnVivoSupabase() {
             maxLength={400}
             rows={3}
             placeholder="Escribe tu pregunta... (Enter para enviar, Shift+Enter para nueva línea)"
-            className="w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
           <div className="flex items-center justify-between gap-3">
             <span className={`text-xs ${Array.from(draft).length >= 400 ? 'text-amber-600' : 'text-slate-400'}`}>
@@ -324,7 +324,7 @@ export default function ChatEnVivoSupabase() {
           </div>
         </form>
       ) : (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center dark:border-emerald-900 dark:bg-emerald-950/30">
+        <div className="mt-3 shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center dark:border-emerald-900 dark:bg-emerald-950/30">
           <p className="mb-3 text-sm text-slate-700 dark:text-slate-200">Inicia sesión en la plataforma para enviar preguntas.</p>
           <Link
             href="/login"

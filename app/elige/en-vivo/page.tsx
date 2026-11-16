@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, type KeyboardEvent } from 'react'
 import { HiOutlinePlay } from 'react-icons/hi'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { isLiveStreamConfig, type LiveStreamConfig } from '@/types/live-stream'
@@ -17,6 +17,8 @@ export default function EnVivoPage() {
   const [streamState, setStreamState] = useState<LiveStreamConfig | null>(null)
   const [streamError, setStreamError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [activeChatTab, setActiveChatTab] = useState<'questions' | 'youtube'>('questions')
+  const [hostname, setHostname] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -66,6 +68,30 @@ export default function EnVivoPage() {
       : 'La transmisión no está disponible en este momento.'
   )
 
+  const selectChatTab = (tab: 'questions' | 'youtube') => {
+    if (tab === 'youtube') setHostname(window.location.hostname)
+    setActiveChatTab(tab)
+  }
+
+  const handleChatTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    let nextTab: 'questions' | 'youtube' | null = null
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextTab = activeChatTab === 'questions' ? 'youtube' : 'questions'
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextTab = activeChatTab === 'questions' ? 'youtube' : 'questions'
+    } else if (event.key === 'Home') {
+      nextTab = 'questions'
+    } else if (event.key === 'End') {
+      nextTab = 'youtube'
+    }
+
+    if (nextTab) {
+      event.preventDefault()
+      selectChatTab(nextTab)
+      document.getElementById(`chat-tab-${nextTab}`)?.focus()
+    }
+  }
+
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto p-4 md:p-0">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -108,7 +134,89 @@ export default function EnVivoPage() {
           </p>
         </GlassCard>
 
-        <ChatEnVivoSupabase />
+        <aside className="flex h-[500px] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 lg:h-[540px]">
+          <div
+            role="tablist"
+            aria-label="Chats de la transmisión"
+            className="grid shrink-0 grid-cols-2 border-b border-slate-200 dark:border-slate-700"
+          >
+            <button
+              id="chat-tab-questions"
+              type="button"
+              role="tab"
+              aria-selected={activeChatTab === 'questions'}
+              aria-controls="chat-panel-questions"
+              tabIndex={activeChatTab === 'questions' ? 0 : -1}
+              onClick={() => selectChatTab('questions')}
+              onKeyDown={handleChatTabKeyDown}
+              className={`px-3 py-3 text-sm font-bold transition ${
+                activeChatTab === 'questions'
+                  ? 'border-b-2 border-emerald-700 text-emerald-800 dark:text-emerald-300'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              Preguntas y Chat
+            </button>
+            <button
+              id="chat-tab-youtube"
+              type="button"
+              role="tab"
+              aria-selected={activeChatTab === 'youtube'}
+              aria-controls="chat-panel-youtube"
+              tabIndex={activeChatTab === 'youtube' ? 0 : -1}
+              onClick={() => selectChatTab('youtube')}
+              onKeyDown={handleChatTabKeyDown}
+              className={`px-3 py-3 text-sm font-bold transition ${
+                activeChatTab === 'youtube'
+                  ? 'border-b-2 border-emerald-700 text-emerald-800 dark:text-emerald-300'
+                  : 'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              Chat YouTube
+            </button>
+          </div>
+
+          <div
+            id="chat-panel-questions"
+            role="tabpanel"
+            aria-labelledby="chat-tab-questions"
+            hidden={activeChatTab !== 'questions'}
+            className={`min-h-0 flex-1 ${activeChatTab === 'questions' ? 'flex flex-col' : 'hidden'}`}
+          >
+            <ChatEnVivoSupabase />
+          </div>
+
+          <div
+            id="chat-panel-youtube"
+            role="tabpanel"
+            aria-labelledby="chat-tab-youtube"
+            hidden={activeChatTab !== 'youtube'}
+            className={`min-h-0 flex-1 p-3 ${activeChatTab === 'youtube' ? 'flex flex-col' : 'hidden'}`}
+          >
+            {videoId && hostname ? (
+              <iframe
+                src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${hostname}`}
+                title="Chat de YouTube de la transmisión en vivo"
+                allow="autoplay"
+                className="min-h-0 w-full flex-1 rounded-xl border-0"
+              />
+            ) : (
+              <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-slate-50 px-4 text-center text-sm text-slate-500 dark:bg-slate-950/50 dark:text-slate-400">
+                {unavailableMessage}
+              </div>
+            )}
+            {videoId && (
+              <a
+                href={`https://www.youtube.com/live_chat?is_popout=1&v=${videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 shrink-0 text-center text-xs text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300"
+              >
+                Abrir chat en ventana externa
+              </a>
+            )}
+          </div>
+        </aside>
       </section>
     </div>
   )
